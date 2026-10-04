@@ -1,0 +1,11 @@
+PLAN.md
+BRIEF.md
+NOTES_FOR_ADRIAN.md
+pnpm-lock.yaml
+docs
+dist
+coverage
+.angular
+bench/results
+e2e/baselines
+public
