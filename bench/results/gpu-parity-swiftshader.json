@@ -1,0 +1,208 @@
+{
+  "generatedAt": "2026-10-04T04:02:19.092Z",
+  "node": "v24.21.0",
+  "platform": "linux 6.6.87.2-microsoft-standard-WSL2 x64",
+  "cpu": "12th Gen Intel(R) Core(TM) i7-12700H",
+  "cores": 20,
+  "memoryGigabytes": 15,
+  "chromium": "153.0.8010.12",
+  "chromiumFlags": [
+    "--enable-unsafe-webgpu",
+    "--use-webgpu-adapter=swiftshader",
+    "--use-angle=swiftshader",
+    "--enable-features=Vulkan,DefaultANGLEVulkan,VulkanFromANGLE"
+  ],
+  "adapter": {
+    "vendor": "google",
+    "architecture": "swiftshader",
+    "device": "",
+    "description": ""
+  },
+  "software": true,
+  "pass": true,
+  "shaderCompileMessages": {
+    "image": [],
+    "parity": [],
+    "blit": []
+  },
+  "rayCount": 4096,
+  "spec": {
+    "count": 4096,
+    "seed": 20261004,
+    "distances": [
+      10,
+      30,
+      60
+    ],
+    "inclinationsDegrees": [
+      5,
+      30,
+      60,
+      80,
+      88
+    ],
+    "diskOuterRadius": 20,
+    "criticalMargin": 0.02,
+    "diskEdgeMargin": 0.002,
+    "lowestImpactFactor": 0.5,
+    "highestImpactParameter": 40
+  },
+  "gpuMilliseconds": 98,
+  "cpuMilliseconds": 794.8105989999999,
+  "shaderMessages": {
+    "parity": []
+  },
+  "crossingStatistics": {
+    "multiCrossing": 246,
+    "laterCrossingHit": 104,
+    "diskHits": 1761
+  },
+  "gpuAgainstFloat64": {
+    "total": 4096,
+    "outcomeMatches": 4096,
+    "outcomeMismatches": [],
+    "referenceOutcomeCounts": {
+      "captured": 1064,
+      "escaped": 1271,
+      "disk": 1761
+    },
+    "directionError": {
+      "count": 1271,
+      "max": 0.00015637800358565503,
+      "mean": 0.0000011254719512332867,
+      "p99": 0.000017567897549994725
+    },
+    "hitRadiusRelativeError": {
+      "count": 1761,
+      "max": 0.00014212079924309345,
+      "mean": 6.722784184731983e-7,
+      "p99": 0.000008390313333638345
+    },
+    "hitLambdaError": {
+      "count": 1761,
+      "max": 0.000018207420046323364,
+      "mean": 0.0000014412309447771221,
+      "p99": 0.000010205925424111584
+    },
+    "directionViolations": [],
+    "hitRadiusViolations": [],
+    "hitLambdaViolations": [],
+    "stepLimitRays": 0,
+    "meanSteps": {
+      "reference": 128.55615234375,
+      "candidate": 128.55615234375
+    },
+    "tolerances": {
+      "directionRadians": 0.001,
+      "hitRadiusRelative": 0.001,
+      "hitLambdaAbsolute": 0.001
+    },
+    "pass": true
+  },
+  "float32TwinAgainstFloat64": {
+    "total": 4096,
+    "outcomeMatches": 4096,
+    "outcomeMismatches": [],
+    "referenceOutcomeCounts": {
+      "captured": 1064,
+      "escaped": 1271,
+      "disk": 1761
+    },
+    "directionError": {
+      "count": 1271,
+      "max": 0.000170904237988374,
+      "mean": 0.0000010766430018384388,
+      "p99": 0.000017133430796443193
+    },
+    "hitRadiusRelativeError": {
+      "count": 1761,
+      "max": 0.00010715594930208076,
+      "mean": 7.019732318815996e-7,
+      "p99": 0.000009433366043907156
+    },
+    "hitLambdaError": {
+      "count": 1761,
+      "max": 0.000017116097348335302,
+      "mean": 0.0000014059204881410282,
+      "p99": 0.000010501173232313477
+    },
+    "directionViolations": [],
+    "hitRadiusViolations": [],
+    "hitLambdaViolations": [],
+    "stepLimitRays": 0,
+    "meanSteps": {
+      "reference": 128.55615234375,
+      "candidate": 128.55615234375
+    },
+    "tolerances": {
+      "directionRadians": 0.001,
+      "hitRadiusRelative": 0.001,
+      "hitLambdaAbsolute": 0.001
+    },
+    "pass": true
+  },
+  "gpuAgainstFloat32Twin": {
+    "total": 4096,
+    "outcomeMatches": 4096,
+    "outcomeMismatches": [],
+    "referenceOutcomeCounts": {
+      "captured": 1064,
+      "escaped": 1271,
+      "disk": 1761
+    },
+    "directionError": {
+      "count": 1271,
+      "max": 0.00007127690735382474,
+      "mean": 4.395247237990856e-7,
+      "p99": 0.000005586040748952737
+    },
+    "hitRadiusRelativeError": {
+      "count": 1761,
+      "max": 0.00007024497150339603,
+      "mean": 2.10852909067537e-7,
+      "p99": 0.000001692054355977145
+    },
+    "hitLambdaError": {
+      "count": 1761,
+      "max": 0.00000762939453125,
+      "mean": 4.0655509314369167e-7,
+      "p99": 0.000003337860107421875
+    },
+    "directionViolations": [],
+    "hitRadiusViolations": [],
+    "hitLambdaViolations": [],
+    "stepLimitRays": 0,
+    "meanSteps": {
+      "reference": 128.55615234375,
+      "candidate": 128.55615234375
+    },
+    "tolerances": {
+      "directionRadians": 0.001,
+      "hitRadiusRelative": 0.001,
+      "hitLambdaAbsolute": 0.001
+    },
+    "pass": true
+  },
+  "image": {
+    "size": {
+      "width": 128,
+      "height": 128
+    },
+    "pixelCount": 16384,
+    "agreeingPixels": 16384,
+    "mismatchedPixels": 0,
+    "mismatchesOutsideBand": 0,
+    "outcomeCounts": {
+      "captured": 2634,
+      "escaped": 2088,
+      "disk": 11662
+    },
+    "diskShadeMeanRelativeError": 0.0000021937899990350514,
+    "diskShadeMaxRelativeError": 0.0026618871927360723,
+    "escapedShadeMismatches": 0,
+    "disagreementBand": {
+      "criticalMargin": 0.05,
+      "diskEdgeMargin": 0.005
+    }
+  }
+}
