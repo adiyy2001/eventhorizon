@@ -1,0 +1,16 @@
+@if (open()) {
+  <section class="help" aria-labelledby="help-heading" data-testid="keyboard-help">
+    <h2 id="help-heading">Keyboard</h2>
+    <dl>
+      @for (entry of entries; track entry.keys) {
+        <dt>{{ entry.keys }}</dt>
+        <dd>{{ entry.action }}</dd>
+      }
+    </dl>
+    <p class="note">
+      Dragging on the image orbits, the wheel or a pinch zooms. Keys do nothing while a slider has
+      focus, so the slider keeps its arrow keys.
+    </p>
+    <button #close type="button" data-testid="close-help" (click)="closed.emit()">Close</button>
+  </section>
+}

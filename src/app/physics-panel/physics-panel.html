@@ -1,0 +1,26 @@
+<section class="physics" aria-labelledby="physics-heading" data-testid="physics-panel">
+  <h2 id="physics-heading">Physics</h2>
+  <p class="intro">
+    Units are G = c = M = 1, so the horizon is at 2. Each equation links to its derivation.
+  </p>
+  @if (ready() === null) {
+    <p role="status">Loading the equations.</p>
+  }
+  <ol class="list">
+    @for (equation of equations; track equation.id) {
+      <li [attr.data-testid]="'equation-' + equation.id">
+        <h3>{{ equation.title }}</h3>
+        <app-equation [latex]="equation.latex" [label]="equation.title" />
+        <p class="caption">{{ equation.caption }}</p>
+        <a
+          [href]="documentUrl + '#' + equation.section.anchor"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Derivation: {{ equation.section.heading }}
+          <span class="visually-hidden">(opens in a new tab)</span>
+        </a>
+      </li>
+    }
+  </ol>
+</section>
