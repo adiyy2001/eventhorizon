@@ -27,4 +27,4 @@ The sources for every equation are listed at the end of `docs/physics.md`.
 
 ## Tooling
 
-Runtime and development dependencies are listed in `package.json`. All of them are MIT, Apache 2.0, BSD or ISC licensed. KaTeX (MIT) joins the list with the physics side panel.
+Runtime and development dependencies are listed in `package.json`. All of them are MIT, Apache 2.0, BSD or ISC licensed. KaTeX (MIT) joins the list with the physics side panel. Its fonts ship with the package under the same MIT license and are bundled with the build. Lighthouse (Apache 2.0) is a development dependency for `pnpm lighthouse`.
