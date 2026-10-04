@@ -135,7 +135,6 @@ export class RenderLoop {
   private tick(time: number): void {
     this.handle = null;
     if (this.renderer.framesInFlight >= this.maxFramesInFlight) {
-      this.lastTime = null;
       this.schedule();
       return;
     }
@@ -148,11 +147,11 @@ export class RenderLoop {
     }
     this.wasMoving = moving;
     const measurement = this.renderer.gpuMeasurement;
-    if (frameMs !== null) {
+    if (frameMs !== null || measurement !== null) {
       this.resolution = advanceResolution(
         this.resolution,
         {
-          frameMs,
+          frameMs: frameMs ?? 0,
           gpuMs: measurement?.milliseconds ?? null,
           ...(measurement === null ? {} : { gpuScale: measurement.tag }),
           moving,

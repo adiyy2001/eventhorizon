@@ -221,6 +221,40 @@ describe('RenderLoop', () => {
     expect(renderer.calls).toHaveLength(2);
   });
 
+  it('still adapts when the GPU is slower than the frame interval and ticks are blocked', () => {
+    const clock = new FakeClock();
+    const renderer = new FakeRenderer(120, true);
+    const loop = new RenderLoop(renderer, clock, defaultSettings, { maxFramesInFlight: 2 });
+    loop.start();
+    clock.advance(16.7);
+    for (let frame = 1; frame <= 20; frame += 1) {
+      loop.setSettings(orbit(defaultSettings, frame));
+      renderer.framesInFlight = 2;
+      clock.advance(16.7);
+      clock.advance(16.7);
+      renderer.framesInFlight = 0;
+      clock.advance(16.7);
+    }
+    const movingScales = loop.log.filter((entry) => entry.moving).map((entry) => entry.scale);
+    expect(Math.min(...movingScales)).toBeLessThan(0.6);
+  });
+
+  it('measures the frame delta across blocked ticks when no timing is available', () => {
+    const clock = new FakeClock();
+    const renderer = new FakeRenderer(10, false);
+    const loop = new RenderLoop(renderer, clock, defaultSettings, { maxFramesInFlight: 2 });
+    loop.start();
+    clock.advance(16.7);
+    loop.setSettings(orbit(defaultSettings, 1));
+    renderer.framesInFlight = 2;
+    clock.advance(16.7);
+    clock.advance(16.7);
+    renderer.framesInFlight = 0;
+    clock.advance(16.7);
+    const last = loop.log[loop.log.length - 1];
+    expect(last?.frameMs).toBeCloseTo(50.1, 1);
+  });
+
   it('idles after the configured number of frames', () => {
     const clock = new FakeClock();
     const renderer = new FakeRenderer(5, true);

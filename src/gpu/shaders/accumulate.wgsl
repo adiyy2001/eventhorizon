@@ -24,9 +24,11 @@ fn accumulate(@builtin(global_invocation_id) id: vec3u) {
   let texel = vec2u(id.x, id.y);
   let fresh = textureLoad(current, texel, 0);
   let previous = textureLoad(history, texel, 0);
-  let average = mix(previous, fresh, accumulation.weight);
+  let restart = accumulation.weight >= 1.0;
+  let average = select(mix(previous, fresh, accumulation.weight), fresh, restart);
   textureStore(blended, texel, average);
   textureStore(resolved, texel, vec4f(clamp(average.rgb, vec3f(0.0), vec3f(RESOLVED_MAX)), 1.0));
-  let overlayAverage = mix(textureLoad(overlayHistory, texel, 0), textureLoad(overlayCurrent, texel, 0), accumulation.weight);
+  let overlayFresh = textureLoad(overlayCurrent, texel, 0);
+  let overlayAverage = select(mix(textureLoad(overlayHistory, texel, 0), overlayFresh, accumulation.weight), overlayFresh, restart);
   textureStore(overlayBlended, texel, overlayAverage);
 }
