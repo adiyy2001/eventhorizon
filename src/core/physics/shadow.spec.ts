@@ -4,6 +4,7 @@ import {
   defaultCriticalImpactSearch,
   findCriticalImpactParameter,
   shadowAngularRadius,
+  shadowTangentRadius,
 } from './shadow';
 import { defaultTraceOptions, traceRay } from './trace';
 
@@ -37,6 +38,35 @@ describe('shadow boundary in the local frame', () => {
       const radius = shadowAngularRadius(distance);
       expect(outcomeAtAngle(distance, 0.999 * radius)).toBe('captured');
       expect(outcomeAtAngle(distance, 1.001 * radius)).toBe('escaped');
+    },
+  );
+});
+
+describe('shadowTangentRadius', () => {
+  it('is the tangent of the angular radius', () => {
+    for (const distance of [10, 30, 50, 100]) {
+      expect(shadowTangentRadius(distance)).toBeCloseTo(
+        Math.tan(shadowAngularRadius(distance)),
+        12,
+      );
+    }
+  });
+
+  it.each([10, 30, 50, 100])(
+    'sits on the capture boundary found by bisection on the screen angle for D = %d',
+    (distance) => {
+      let captured = 0.5 * shadowAngularRadius(distance);
+      let escaped = 2 * shadowAngularRadius(distance);
+      for (let iteration = 0; iteration < 40; iteration += 1) {
+        const middle = 0.5 * (captured + escaped);
+        if (outcomeAtAngle(distance, middle) === 'captured') {
+          captured = middle;
+        } else {
+          escaped = middle;
+        }
+      }
+      const measured = Math.tan(0.5 * (captured + escaped));
+      expect(Math.abs(measured / shadowTangentRadius(distance) - 1)).toBeLessThan(1e-4);
     },
   );
 });

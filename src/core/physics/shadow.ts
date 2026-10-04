@@ -26,6 +26,10 @@ export function shadowAngularRadius(distance: number): number {
   );
 }
 
+export function shadowTangentRadius(distance: number): number {
+  return Math.tan(shadowAngularRadius(distance));
+}
+
 export function defaultCriticalImpactSearch(distance: number): CriticalImpactSearch {
   return { distance, tolerance: 1e-9, lower: 4, upper: 7, traceOptions: null };
 }
