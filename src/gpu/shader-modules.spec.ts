@@ -1,10 +1,12 @@
 import {
-  blitShader,
+  compiledShaders,
   composeShader,
   declaredNames,
   duplicateDeclarations,
   imageShader,
   parityShader,
+  presentShader,
+  bloomShader,
   shaderSources,
   tracerModules,
 } from './shader-modules';
@@ -26,19 +28,21 @@ describe('composeShader', () => {
 });
 
 describe('composed shaders', () => {
-  it.each([
-    ['image', imageShader],
-    ['parity', parityShader],
-    ['blit', blitShader],
-  ])('%s declares no name twice', (_, source) => {
+  it.each(Object.entries(compiledShaders))('%s declares no name twice', (_, source) => {
     expect(duplicateDeclarations(source)).toEqual([]);
   });
 
   it('exposes one compute entry point per kernel', () => {
     expect(imageShader).toContain('fn renderImage(');
     expect(parityShader).toContain('fn traceParity(');
-    expect(blitShader).toContain('fn vertexMain(');
-    expect(blitShader).toContain('fn fragmentMain(');
+    expect(presentShader).toContain('fn vertexMain(');
+    expect(presentShader).toContain('fn fragmentMain(');
+    expect(bloomShader).toContain('fn downsampleFirst(');
+    expect(bloomShader).toContain('fn downsample(');
+    expect(bloomShader).toContain('fn upsample(');
+    expect(compiledShaders.bake).toContain('fn bakeNebula(');
+    expect(compiledShaders.accumulate).toContain('fn accumulate(');
+    expect(compiledShaders.colorparity).toContain('fn colorParity(');
   });
 
   it('shares the tracer code between the image and the parity kernel', () => {
@@ -46,6 +50,18 @@ describe('composed shaders', () => {
       expect(source).toContain('fn traceRay(');
       expect(source).toContain('fn rk4Step(');
       expect(source).toContain('fn staticObserverRay(');
+    }
+  });
+
+  it('keeps the colour modules out of the tracer parity kernel', () => {
+    expect(parityShader).not.toContain('fn starRadiance(');
+    expect(parityShader).not.toContain('temperatureLut');
+  });
+
+  it('shares the sky code between the image kernel and the colour parity kernel', () => {
+    for (const source of [imageShader, compiledShaders.colorparity]) {
+      expect(source).toContain('fn starRadiance(');
+      expect(source).toContain('fn blackbodyRadiance(');
     }
   });
 

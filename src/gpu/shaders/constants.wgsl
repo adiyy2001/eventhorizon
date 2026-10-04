@@ -39,7 +39,7 @@ struct TraceParams {
   maxCrossings: u32,
   flags: u32,
   rayCount: u32,
-  padding: u32,
+  peakTemperature: f32,
 }
 
 struct Ray {

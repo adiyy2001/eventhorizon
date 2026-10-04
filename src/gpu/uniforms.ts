@@ -6,6 +6,7 @@ import {
   viewTraceOptions,
   type ViewDescription,
 } from '../core/render/view';
+import { type PostSettings } from '../core/render/post';
 import { type FieldDefinition, layoutStruct, type StructLayout, typeLayout } from './wgsl-layout';
 
 export const traceParamsDefinition: readonly FieldDefinition[] = [
@@ -32,7 +33,7 @@ export const traceParamsDefinition: readonly FieldDefinition[] = [
   { name: 'maxCrossings', type: 'u32' },
   { name: 'flags', type: 'u32' },
   { name: 'rayCount', type: 'u32' },
-  { name: 'padding', type: 'u32' },
+  { name: 'peakTemperature', type: 'f32' },
 ];
 
 export const traceParamsLayout: StructLayout = layoutStruct(traceParamsDefinition);
@@ -110,15 +111,14 @@ export function traceParamValues(input: TraceParamsInput): Record<string, number
     maxCrossings: options.maxCrossings,
     flags: flagsForView(view, true),
     rayCount: input.rayCount,
-    padding: 0,
+    peakTemperature: view.peakTemperature,
   };
 }
 
-export function packTraceParams(input: TraceParamsInput): ArrayBuffer {
-  const values = traceParamValues(input);
-  const buffer = new ArrayBuffer(traceParamsLayout.size);
+export function packStruct(layout: StructLayout, values: Record<string, number>): ArrayBuffer {
+  const buffer = new ArrayBuffer(layout.size);
   const view = new DataView(buffer);
-  for (const field of traceParamsLayout.fields) {
+  for (const field of layout.fields) {
     const components = typeLayout(field.type).components;
     for (let component = 0; component < components; component += 1) {
       const key = components === 1 ? field.name : `${field.name}.${'xyzw'[component] ?? 'x'}`;
@@ -135,4 +135,65 @@ export function packTraceParams(input: TraceParamsInput): ArrayBuffer {
     }
   }
   return buffer;
+}
+
+export function packTraceParams(input: TraceParamsInput): ArrayBuffer {
+  return packStruct(traceParamsLayout, traceParamValues(input));
+}
+
+export const accumulateParamsDefinition: readonly FieldDefinition[] = [
+  { name: 'width', type: 'u32' },
+  { name: 'height', type: 'u32' },
+  { name: 'weight', type: 'f32' },
+  { name: 'padding', type: 'u32' },
+];
+
+export const accumulateParamsLayout = layoutStruct(accumulateParamsDefinition);
+
+export function packAccumulateParams(width: number, height: number, weight: number): ArrayBuffer {
+  return packStruct(accumulateParamsLayout, { width, height, weight, padding: 0 });
+}
+
+export const presentParamsDefinition: readonly FieldDefinition[] = [
+  { name: 'exposure', type: 'f32' },
+  { name: 'bloomStrength', type: 'f32' },
+  { name: 'ditherAmplitude', type: 'f32' },
+  { name: 'padding', type: 'f32' },
+];
+
+export const presentParamsLayout = layoutStruct(presentParamsDefinition);
+
+export function packPresentParams(post: PostSettings): ArrayBuffer {
+  return packStruct(presentParamsLayout, {
+    exposure: post.exposure,
+    bloomStrength: post.bloomStrength,
+    ditherAmplitude: post.ditherAmplitude,
+    padding: 0,
+  });
+}
+
+export const bakeParamsDefinition: readonly FieldDefinition[] = [
+  { name: 'size', type: 'u32' },
+  { name: 'padding0', type: 'u32' },
+  { name: 'padding1', type: 'u32' },
+  { name: 'padding2', type: 'u32' },
+];
+
+export const bakeParamsLayout = layoutStruct(bakeParamsDefinition);
+
+export function packBakeParams(size: number): ArrayBuffer {
+  return packStruct(bakeParamsLayout, { size, padding0: 0, padding1: 0, padding2: 0 });
+}
+
+export const colorParityParamsDefinition: readonly FieldDefinition[] = [
+  { name: 'mode', type: 'u32' },
+  { name: 'count', type: 'u32' },
+  { name: 'padding0', type: 'u32' },
+  { name: 'padding1', type: 'u32' },
+];
+
+export const colorParityParamsLayout = layoutStruct(colorParityParamsDefinition);
+
+export function packColorParityParams(mode: number, count: number): ArrayBuffer {
+  return packStruct(colorParityParamsLayout, { mode, count, padding0: 0, padding1: 0 });
 }

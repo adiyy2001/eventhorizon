@@ -1,4 +1,4 @@
-import { defaultView } from '../core/render/view';
+import { defaultView, viewTraceOptions } from '../core/render/view';
 import constantsSource from './shaders/constants.wgsl';
 import {
   flagsForView,
@@ -55,7 +55,7 @@ describe('TraceParams layout', () => {
       maxCrossings: 112,
       flags: 116,
       rayCount: 120,
-      padding: 124,
+      peakTemperature: 124,
     };
     for (const field of traceParamsLayout.fields) {
       expect(field.offset, field.name).toBe(expected[field.name]);
@@ -92,7 +92,7 @@ describe('packTraceParams', () => {
       values['cameraPosition.y'] ?? Number.NaN,
       5,
     );
-    expect(view.getFloat32(offsetOf('observerDistance'), true)).toBe(30);
+    expect(view.getFloat32(offsetOf('observerDistance'), true)).toBe(defaultView.distance);
     expect(view.getFloat32(offsetOf('cameraUp') + 8, true)).toBeCloseTo(
       values['cameraUp.z'] ?? Number.NaN,
       5,
@@ -113,9 +113,11 @@ describe('packTraceParams', () => {
     expect(view.getUint32(offsetOf('maxSteps'), true)).toBe(4096);
     expect(view.getUint32(offsetOf('rayCount'), true)).toBe(7);
     expect(view.getFloat32(offsetOf('diskInner'), true)).toBe(6);
-    expect(view.getFloat32(offsetOf('diskOuter'), true)).toBe(20);
-    expect(view.getFloat32(offsetOf('escapeRadius'), true)).toBe(100);
-    expect(view.getUint32(offsetOf('padding'), true)).toBe(0);
+    expect(view.getFloat32(offsetOf('diskOuter'), true)).toBe(defaultView.diskOuterRadius);
+    expect(view.getFloat32(offsetOf('escapeRadius'), true)).toBe(
+      viewTraceOptions(defaultView).escapeRadius,
+    );
+    expect(view.getFloat32(offsetOf('peakTemperature'), true)).toBe(defaultView.peakTemperature);
   });
 });
 

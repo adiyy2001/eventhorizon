@@ -3,6 +3,7 @@ import { type ViewDescription } from '../../core/render/view';
 import { compileShader } from '../shader-compile';
 import { imageShader } from '../shader-modules';
 import { workgroupCount } from '../rows';
+import { type SkyResources } from '../sky-resources';
 import { packTraceParams } from '../uniforms';
 
 export const traceWorkgroupEdge = 8;
@@ -13,11 +14,13 @@ export class TracePass {
   readonly outcomes: GPUBuffer;
   private readonly paramsBuffer: GPUBuffer;
   private readonly bindGroup: GPUBindGroup;
+  private readonly skyBindGroup: GPUBindGroup;
 
   private constructor(
     private readonly device: GPUDevice,
     private readonly pipeline: GPUComputePipeline,
     readonly size: ViewportSize,
+    sky: SkyResources,
   ) {
     this.radiance = device.createTexture({
       label: 'radiance',
@@ -46,16 +49,21 @@ export class TracePass {
         { binding: 2, resource: { buffer: this.outcomes } },
       ],
     });
+    this.skyBindGroup = sky.bindGroup(pipeline, 1);
   }
 
-  static async create(device: GPUDevice, size: ViewportSize): Promise<TracePass> {
+  static async create(
+    device: GPUDevice,
+    size: ViewportSize,
+    sky: SkyResources,
+  ): Promise<TracePass> {
     const { module } = await compileShader(device, 'image', imageShader);
     const pipeline = device.createComputePipeline({
       label: 'image',
       layout: 'auto',
       compute: { module, entryPoint: 'renderImage' },
     });
-    return new TracePass(device, pipeline, size);
+    return new TracePass(device, pipeline, size, sky);
   }
 
   encode(
@@ -68,6 +76,7 @@ export class TracePass {
     const pass = encoder.beginComputePass({ label: 'trace' });
     pass.setPipeline(this.pipeline);
     pass.setBindGroup(0, this.bindGroup);
+    pass.setBindGroup(1, this.skyBindGroup);
     pass.dispatchWorkgroups(
       workgroupCount(this.size.width, traceWorkgroupEdge),
       workgroupCount(this.size.height, traceWorkgroupEdge),

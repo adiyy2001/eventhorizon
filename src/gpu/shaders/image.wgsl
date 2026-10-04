@@ -2,35 +2,24 @@
 @group(0) @binding(1) var radiance: texture_storage_2d<rgba32float, write>;
 @group(0) @binding(2) var<storage, read_write> outcomes: array<u32>;
 
-const CHECKER_CELLS: f32 = 8.0;
-const CHECKER_BRIGHT: f32 = 0.3;
-const CHECKER_DARK: f32 = 0.1;
-
-fn checkerShade(direction: vec3f) -> f32 {
-  let azimuthCell = floor(CHECKER_CELLS * atan2(direction.z, direction.x) / TAU);
-  let elevationCell = floor(CHECKER_CELLS * asin(clamp(direction.y, -1.0, 1.0)) / PI);
-  if (((i32(azimuthCell) + i32(elevationCell)) & 1) == 0) {
-    return CHECKER_BRIGHT;
-  }
-  return CHECKER_DARK;
-}
-
-fn diskShade(result: TraceResult) -> f32 {
+fn diskRadiance(result: TraceResult) -> vec3f {
   let redshift = redshiftFactor(result.hitRadius, result.hitLambda, params);
-  let shape = diskTemperatureRatio(result.hitRadius, params.diskInner);
-  let observed = redshift * shape;
-  let squared = observed * observed;
-  return squared * squared;
+  let emitted = params.peakTemperature * diskTemperatureRatio(result.hitRadius, params.diskInner);
+  return blackbodyRadiance(emitted * redshift);
 }
 
-fn placeholderShade(result: TraceResult) -> f32 {
+fn skyRadiance(direction: vec3f) -> vec3f {
+  return nebulaSample(direction) + starRadiance(direction);
+}
+
+fn shadeResult(result: TraceResult) -> vec3f {
   if (result.outcome == OUTCOME_DISK) {
-    return diskShade(result);
+    return diskRadiance(result);
   }
   if (result.outcome == OUTCOME_ESCAPED) {
-    return checkerShade(result.direction);
+    return skyRadiance(result.direction);
   }
-  return 0.0;
+  return vec3f(0.0);
 }
 
 @compute @workgroup_size(8, 8)
@@ -41,7 +30,7 @@ fn renderImage(@builtin(global_invocation_id) id: vec3u) {
   let pixel = vec2f(f32(id.x) + 0.5 + params.jitterX, f32(id.y) + 0.5 + params.jitterY);
   let direction = pixelDirection(params, pixel);
   let result = traceRay(staticObserverRay(params.cameraPosition, direction), params);
-  let shade = placeholderShade(result);
-  textureStore(radiance, vec2u(id.x, id.y), vec4f(shade, shade, shade, 1.0));
+  let color = shadeResult(result);
+  textureStore(radiance, vec2u(id.x, id.y), vec4f(color, 1.0));
   outcomes[id.y * params.width + id.x] = result.outcome;
 }

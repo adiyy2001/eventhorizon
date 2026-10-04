@@ -1,5 +1,6 @@
 import { defaultView } from '../core/render/view';
 import { type DeviceResult } from '../gpu/device';
+import { type SkyResources } from '../gpu/sky-resources';
 import { traceResultBytes } from '../gpu/trace-result';
 import {
   type AutomationDependencies,
@@ -29,8 +30,9 @@ function dependencies(
   device: FakeDevice,
   overrides: Partial<AutomationDependencies> = {},
 ): AutomationDependencies {
+  const renderFrames = vi.fn(() => Promise.resolve());
   const renderer: RendererHandle = {
-    render: vi.fn(),
+    renderFrames,
     readOutcomes: () => Promise.resolve(new Uint32Array([0, 1, 2, 2])),
     readRadiance: () =>
       Promise.resolve(new Float32Array([0, 0, 0, 1, 0.5, 0, 0, 1, 2, 0, 0, 1, 4, 0, 0, 1])),
@@ -51,6 +53,9 @@ function dependencies(
         milliseconds: 3,
         messages: [],
       }),
+    runColorParity: () =>
+      Promise.resolve({ outputs: new Float32Array([1, 2, 3, 4]), messages: [] }),
+    createSky: () => Promise.resolve({ sky: {} as SkyResources, destroy: vi.fn() }),
     createRenderer: () => Promise.resolve(renderer),
     encodePng: () => Promise.resolve('cG5n'),
     ...overrides,
@@ -67,7 +72,15 @@ describe('automation hook', () => {
     );
     const api = createAutomationApi(dependencies(device, { compile }));
     const response = await api.compileShaders();
-    expect(Object.keys(response.messages).sort()).toEqual(['blit', 'image', 'parity']);
+    expect(Object.keys(response.messages).sort()).toEqual([
+      'accumulate',
+      'bake',
+      'bloom',
+      'colorparity',
+      'image',
+      'parity',
+      'present',
+    ]);
     expect(response.messages['image']).toHaveLength(1);
     expect(response.adapter).toEqual(adapter);
     expect(device.destroy).toHaveBeenCalledOnce();
@@ -87,14 +100,61 @@ describe('automation hook', () => {
     expect(response.milliseconds).toBe(3);
   });
 
-  it('renders a view and returns outcomes, shade and the encoded image', async () => {
+  it('renders a view and returns outcomes, radiance and the encoded image', async () => {
     const device = new FakeDevice();
     const api = createAutomationApi(dependencies(device));
     const response = await api.renderView({ view: defaultView, size: { width: 2, height: 2 } });
     expect(response.outcomes).toEqual([0, 1, 2, 2]);
-    expect(response.shade).toEqual([0, 0.5, 2, 4]);
+    expect(response.radiance).toEqual([0, 0, 0, 0.5, 0, 0, 2, 0, 0, 4, 0, 0]);
+    expect(response.frames).toBe(1);
     expect(response.pngBase64).toBe('cG5n');
     expect(device.destroy).toHaveBeenCalledOnce();
+  });
+
+  it('passes the frame count and post settings to the renderer', async () => {
+    const device = new FakeDevice();
+    const deps = dependencies(device);
+    const renderer = await deps.createRenderer({} as GPUDevice, { width: 2, height: 2 });
+    const api = createAutomationApi({ ...deps, createRenderer: () => Promise.resolve(renderer) });
+    const post = { exposure: 1, bloomStrength: 0.1, ditherAmplitude: 0 };
+    const response = await api.renderView({
+      view: defaultView,
+      size: { width: 2, height: 2 },
+      frames: 8,
+      post,
+    });
+    expect(response.frames).toBe(8);
+    expect(renderer.renderFrames).toHaveBeenCalledWith(defaultView, 8, post);
+  });
+
+  it('runs a colour parity mode and returns the outputs', async () => {
+    const device = new FakeDevice();
+    const runColorParity = vi.fn(() =>
+      Promise.resolve({ outputs: new Float32Array([1, 2, 3, 4]), messages: [] }),
+    );
+    const api = createAutomationApi(dependencies(device, { runColorParity }));
+    const response = await api.runColorParity({ mode: 'lut', inputs: [6500, 0, 0, 0] });
+    expect(response.outputs).toEqual([1, 2, 3, 4]);
+    expect(runColorParity).toHaveBeenCalledOnce();
+    expect(device.destroy).toHaveBeenCalledOnce();
+  });
+
+  it('reinterprets integer inputs as raw 32 bit words', async () => {
+    const device = new FakeDevice();
+    const runColorParity = vi.fn(
+      (_device: GPUDevice, _sky: SkyResources, _mode: string, inputs: Float32Array) =>
+        Promise.resolve({
+          outputs: new Float32Array(inputs.buffer.slice(0)),
+          messages: [],
+        }),
+    );
+    const api = createAutomationApi(dependencies(device, { runColorParity }));
+    const response = await api.runColorParity({
+      mode: 'hash',
+      inputs: [3735928559, 1, 2, 3],
+      inputsAreUint32: true,
+    });
+    expect(new Uint32Array(Float32Array.from(response.outputs).buffer)[0]).toBe(3735928559);
   });
 
   it('turns an uncaptured GPU error into a failure', async () => {
