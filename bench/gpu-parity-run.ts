@@ -224,6 +224,24 @@ export async function renderOnGpu(
   );
 }
 
+export async function renderSettingsOnGpu(
+  page: Page,
+  settings: unknown,
+  size: { width: number; height: number },
+  frames = 1,
+): Promise<RenderResponse> {
+  return page.evaluate(
+    async (payload) => {
+      const automation = window.eventhorizonAutomation;
+      if (automation === undefined) {
+        throw new Error('automation hook is missing');
+      }
+      return automation.renderView(payload);
+    },
+    { settings, size, frames },
+  );
+}
+
 export async function runImageComparison(
   page: Page,
   view: ViewDescription = defaultView,

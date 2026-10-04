@@ -1,7 +1,8 @@
 import { acquireDevice } from './device';
 
 interface FakeAdapterOptions {
-  requestDevice: () => Promise<GPUDevice>;
+  requestDevice: (descriptor?: GPUDeviceDescriptor) => Promise<GPUDevice>;
+  features?: readonly string[];
 }
 
 const adapterInfo = {
@@ -16,7 +17,11 @@ function fakeGpu(requestAdapter: () => Promise<GPUAdapter | null>): GPU {
 }
 
 function fakeAdapter(options: FakeAdapterOptions): GPUAdapter {
-  return { info: adapterInfo, requestDevice: options.requestDevice } as unknown as GPUAdapter;
+  return {
+    info: adapterInfo,
+    features: new Set(options.features ?? []),
+    requestDevice: options.requestDevice,
+  } as unknown as GPUAdapter;
 }
 
 describe('acquireDevice', () => {
@@ -57,7 +62,28 @@ describe('acquireDevice', () => {
     const device = { label: 'fake device' } as unknown as GPUDevice;
     const adapter = fakeAdapter({ requestDevice: () => Promise.resolve(device) });
     const result = await acquireDevice(fakeGpu(() => Promise.resolve(adapter)));
-    expect(result).toEqual({ status: 'ready', device, adapter: adapterInfo });
+    expect(result).toEqual({
+      status: 'ready',
+      device,
+      adapter: adapterInfo,
+      timestampQuery: false,
+    });
+  });
+
+  it('asks for timestamp queries only when the adapter offers them', async () => {
+    const device = { label: 'fake device' } as unknown as GPUDevice;
+    const requested: (GPUDeviceDescriptor | undefined)[] = [];
+    const requestDevice = (descriptor?: GPUDeviceDescriptor): Promise<GPUDevice> => {
+      requested.push(descriptor);
+      return Promise.resolve(device);
+    };
+    const withQueries = fakeAdapter({ requestDevice, features: ['timestamp-query'] });
+    const first = await acquireDevice(fakeGpu(() => Promise.resolve(withQueries)));
+    expect(first).toMatchObject({ status: 'ready', timestampQuery: true });
+    const without = fakeAdapter({ requestDevice });
+    const second = await acquireDevice(fakeGpu(() => Promise.resolve(without)));
+    expect(second).toMatchObject({ status: 'ready', timestampQuery: false });
+    expect(requested).toEqual([{ requiredFeatures: ['timestamp-query'] }, {}]);
   });
 
   it('falls back to navigator.gpu when no argument is given', async () => {

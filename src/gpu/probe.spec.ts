@@ -5,7 +5,12 @@ import { expectedSmokeValues } from './smoke';
 const adapter = { vendor: 'acme', architecture: 'gen-9', device: 'dev-1', description: 'Acme' };
 
 function readyDevice(destroy: () => void): DeviceResult {
-  return { status: 'ready', device: { destroy } as unknown as GPUDevice, adapter };
+  return {
+    status: 'ready',
+    device: { destroy } as unknown as GPUDevice,
+    adapter,
+    timestampQuery: false,
+  };
 }
 
 describe('probeGpu', () => {

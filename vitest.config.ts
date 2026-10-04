@@ -5,6 +5,7 @@ export const gpuDeviceBoundFiles = [
   'src/gpu/shader-compile.ts',
   'src/gpu/readback.ts',
   'src/gpu/renderer.ts',
+  'src/gpu/gpu-timer.ts',
   'src/gpu/sky-resources.ts',
   'src/gpu/passes/accumulate-pass.ts',
   'src/gpu/passes/bake-pass.ts',

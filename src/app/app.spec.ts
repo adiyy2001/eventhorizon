@@ -15,7 +15,13 @@ async function render(result: GpuProbeResult | 'pending'): Promise<HTMLElement> 
       { provide: GPU_PROBE, useValue: probe },
       {
         provide: RENDER_SESSION_FACTORY,
-        useValue: () => Promise.resolve({ destroy: () => undefined }),
+        useValue: () =>
+          Promise.resolve({
+            setSettings: () => undefined,
+            exportImage: () => Promise.reject(new Error('unused')),
+            resolutionLog: () => [],
+            destroy: () => undefined,
+          }),
       },
     ],
   });

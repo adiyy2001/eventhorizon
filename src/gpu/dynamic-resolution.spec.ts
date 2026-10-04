@@ -4,6 +4,7 @@ import {
   defaultResolutionConfig,
   initialResolutionState,
   quantizeScale,
+  scaledSize,
   type ResolutionState,
 } from './dynamic-resolution';
 
@@ -185,5 +186,18 @@ describe('rest and motion', () => {
     expect(scales[10]).toBe(1);
     expect(Math.min(...scales.slice(20, 100))).toBeLessThan(0.6);
     expect(scales[159]).toBe(1);
+  });
+});
+
+describe('scaledSize', () => {
+  it('scales both edges and rounds to whole pixels', () => {
+    expect(scaledSize({ width: 512, height: 256 }, 0.5)).toEqual({ width: 256, height: 128 });
+    expect(scaledSize({ width: 100, height: 100 }, 0.35)).toEqual({ width: 35, height: 35 });
+  });
+
+  it('never exceeds the full size and keeps a minimum edge', () => {
+    expect(scaledSize({ width: 64, height: 64 }, 3)).toEqual({ width: 64, height: 64 });
+    expect(scaledSize({ width: 64, height: 64 }, 0)).toEqual({ width: 8, height: 8 });
+    expect(scaledSize({ width: 4, height: 4 }, 0.1)).toEqual({ width: 4, height: 4 });
   });
 });

@@ -1,3 +1,16 @@
+export interface ScaledSize {
+  width: number;
+  height: number;
+}
+
+export function scaledSize(full: ScaledSize, scale: number, minimumEdge = 8): ScaledSize {
+  const clamped = Math.min(1, Math.max(0, scale));
+  return {
+    width: Math.min(full.width, Math.max(minimumEdge, Math.round(full.width * clamped))),
+    height: Math.min(full.height, Math.max(minimumEdge, Math.round(full.height * clamped))),
+  };
+}
+
 export interface ResolutionConfig {
   targetMs: number;
   minScale: number;
@@ -31,6 +44,7 @@ export interface ResolutionState {
 export interface ResolutionSample {
   frameMs: number;
   gpuMs: number | null;
+  gpuScale?: number;
   moving: boolean;
 }
 
@@ -79,9 +93,10 @@ export function advanceResolution(
     return { ...state, scale: config.maxScale, calmFrames: 0, probing: false };
   }
   const measuredMs = sample.gpuMs ?? sample.frameMs;
+  const measuredScale = sample.gpuMs === null ? state.scale : (sample.gpuScale ?? state.scale);
   const fullCostMs = smoothed(
     state.fullCostMs,
-    measuredMs / (state.scale * state.scale),
+    measuredMs / (measuredScale * measuredScale),
     config.smoothing,
   );
   const overBudget = measuredMs > config.targetMs * (1 + config.tolerance);
