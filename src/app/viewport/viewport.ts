@@ -8,11 +8,19 @@ import {
   type ElementRef,
   inject,
   input,
+  output,
   signal,
   untracked,
   viewChild,
 } from '@angular/core';
 import { defaultSettings, type RenderSettings } from '../../core/render/settings';
+import { canvasDescription } from '../state/descriptions';
+import {
+  type GestureDelta,
+  gestureModeAt,
+  PointerGestures,
+  type PointerSample,
+} from '../state/pointer-gestures';
 import { rgbaToPngBase64 } from '../png';
 import { downloadPng } from './download';
 import { OverlayLegend } from './overlay-legend';
@@ -38,13 +46,16 @@ export class Viewport {
   private readonly exporting = signal<ExportState>('idle');
   private session: RenderSession | null = null;
   private destroyed = false;
+  private readonly gestures = new PointerGestures();
 
   readonly settings = input<RenderSettings>(defaultSettings);
+  readonly gesture = output<GestureDelta>();
 
   protected readonly size = viewportSize;
   protected readonly state = this.current.asReadonly();
   protected readonly exportState = this.exporting.asReadonly();
   protected readonly exportEdge = exportEdge;
+  protected readonly description = computed(() => canvasDescription(this.settings()));
   protected readonly inclinationDegrees = computed(() =>
     Math.round((this.settings().view.inclination * 180) / Math.PI),
   );
@@ -61,6 +72,34 @@ export class Viewport {
       const settings = this.settings();
       untracked(() => this.session?.setSettings(settings));
     });
+  }
+
+  protected onPointerDown(event: PointerEvent): void {
+    const canvas = this.canvas().nativeElement;
+    const sample = this.sampleOf(event);
+    this.gestures.down(
+      event.pointerId,
+      sample,
+      gestureModeAt(sample.fractionX, this.settings().split),
+    );
+    canvas.setPointerCapture(event.pointerId);
+  }
+
+  protected onPointerMove(event: PointerEvent): void {
+    const delta = this.gestures.move(event.pointerId, this.sampleOf(event));
+    if (delta !== null) {
+      this.gesture.emit(delta);
+    }
+  }
+
+  protected onPointerEnd(event: PointerEvent): void {
+    this.gestures.up(event.pointerId);
+  }
+
+  protected onWheel(event: WheelEvent): void {
+    event.preventDefault();
+    const lineHeight = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : 1;
+    this.gesture.emit(this.gestures.wheel(event.deltaY * lineHeight));
   }
 
   protected async saveImage(): Promise<void> {
@@ -95,5 +134,14 @@ export class Viewport {
     } catch {
       this.current.set('failed');
     }
+  }
+
+  private sampleOf(event: PointerEvent): PointerSample {
+    const rect = this.canvas().nativeElement.getBoundingClientRect();
+    return {
+      x: event.clientX,
+      y: event.clientY,
+      fractionX: rect.width > 0 ? (event.clientX - rect.left) / rect.width : 0.5,
+    };
   }
 }

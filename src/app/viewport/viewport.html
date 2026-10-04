@@ -4,7 +4,12 @@
     [attr.width]="size"
     [attr.height]="size"
     role="img"
-    aria-label="Schwarzschild black hole with an accretion disk, rendered by ray tracing"
+    [attr.aria-label]="description()"
+    (pointerdown)="onPointerDown($event)"
+    (pointermove)="onPointerMove($event)"
+    (pointerup)="onPointerEnd($event)"
+    (pointercancel)="onPointerEnd($event)"
+    (wheel)="onWheel($event)"
     data-testid="viewport-canvas"
     [attr.data-state]="state()"
   ></canvas>

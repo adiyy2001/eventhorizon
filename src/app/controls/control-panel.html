@@ -1,0 +1,66 @@
+<form class="panel" (submit)="$event.preventDefault()" aria-label="Render settings">
+  @for (group of groups; track group.id) {
+    <fieldset [attr.data-testid]="'group-' + group.id">
+      <legend>{{ group.title }}</legend>
+      @for (spec of group.sliders; track spec.id) {
+        <app-range-field
+          [fieldId]="spec.id"
+          [label]="spec.label"
+          [min]="spec.min"
+          [max]="spec.max"
+          [step]="spec.step"
+          [unit]="spec.unit"
+          [decimals]="spec.decimals"
+          [value]="sliderValue(spec)"
+          (valueChange)="apply(spec.write($event))"
+          (committed)="announce($event)"
+        />
+      }
+      @for (spec of group.switches; track spec.id) {
+        <app-toggle-field
+          [fieldId]="spec.id"
+          [label]="spec.label"
+          [hint]="spec.hint"
+          [checked]="switchValue(spec)"
+          (checkedChange)="apply(spec.write($event))"
+          (committed)="announce($event)"
+        />
+      }
+    </fieldset>
+  }
+
+  <fieldset data-testid="group-compare">
+    <legend>Compare</legend>
+    <app-toggle-field
+      [fieldId]="splitSwitch.id"
+      [label]="splitSwitch.label"
+      [hint]="splitSwitch.hint"
+      [checked]="switchValue(splitSwitch)"
+      (checkedChange)="apply(splitSwitch.write($event))"
+      (committed)="announce($event)"
+    />
+    @if (store.split().enabled) {
+      <app-range-field
+        [fieldId]="splitSlider.id"
+        [label]="splitSlider.label"
+        [min]="splitSlider.min"
+        [max]="splitSlider.max"
+        [step]="splitSlider.step"
+        [unit]="splitSlider.unit"
+        [decimals]="splitSlider.decimals"
+        [value]="sliderValue(splitSlider)"
+        (valueChange)="apply(splitSlider.write($event))"
+        (committed)="announce($event)"
+      />
+    }
+  </fieldset>
+
+  <div class="buttons">
+    <button type="button" data-testid="reset" [disabled]="store.isDefault()" (click)="reset()">
+      Reset settings
+    </button>
+    <button type="button" data-testid="open-help" (click)="helpRequested.emit()">
+      Keyboard help
+    </button>
+  </div>
+</form>

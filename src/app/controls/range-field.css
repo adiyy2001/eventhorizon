@@ -1,0 +1,23 @@
+.field {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.25rem 1rem;
+  align-items: baseline;
+}
+
+label {
+  color: var(--text);
+}
+
+output {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+input {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-height: 2rem;
+  margin: 0;
+  accent-color: var(--accent);
+}

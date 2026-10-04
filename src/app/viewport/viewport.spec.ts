@@ -154,4 +154,88 @@ describe('Viewport', () => {
     await Promise.resolve();
     expect(session.destroy).toHaveBeenCalledOnce();
   });
+
+  describe('pointer input', () => {
+    function pointer(type: string, init: PointerEventInit): PointerEvent {
+      return new PointerEvent(type, { bubbles: true, cancelable: true, ...init });
+    }
+
+    async function withCanvas() {
+      const fixture = await create(() => Promise.resolve(fakeSession()));
+      const canvas = (fixture.nativeElement as HTMLElement).querySelector('canvas');
+      if (canvas === null) {
+        throw new Error('no canvas');
+      }
+      canvas.setPointerCapture = vi.fn();
+      vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue({
+        left: 0,
+        top: 0,
+        width: 400,
+        height: 400,
+        right: 400,
+        bottom: 400,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      });
+      const gestures: unknown[] = [];
+      fixture.componentInstance.gesture.subscribe((delta) => gestures.push(delta));
+      return { fixture, canvas, gestures };
+    }
+
+    it('emits an orbit for a drag', async () => {
+      const { canvas, gestures } = await withCanvas();
+      canvas.dispatchEvent(pointer('pointerdown', { pointerId: 1, clientX: 100, clientY: 100 }));
+      canvas.dispatchEvent(pointer('pointermove', { pointerId: 1, clientX: 120, clientY: 100 }));
+      canvas.dispatchEvent(pointer('pointerup', { pointerId: 1, clientX: 120, clientY: 100 }));
+      canvas.dispatchEvent(pointer('pointermove', { pointerId: 1, clientX: 140, clientY: 100 }));
+      expect(gestures).toHaveLength(1);
+      expect(gestures[0]).toMatchObject({ kind: 'orbit' });
+    });
+
+    it('drags the divider when the split is on and the pointer starts on it', async () => {
+      const { fixture, canvas, gestures } = await withCanvas();
+      fixture.componentRef.setInput(
+        'settings',
+        mergeSettings(defaultSettings, { split: { enabled: true, position: 0.5 } }),
+      );
+      fixture.detectChanges();
+      canvas.dispatchEvent(pointer('pointerdown', { pointerId: 2, clientX: 200, clientY: 50 }));
+      canvas.dispatchEvent(pointer('pointermove', { pointerId: 2, clientX: 300, clientY: 60 }));
+      expect(gestures).toEqual([{ kind: 'split', position: 0.75 }]);
+    });
+
+    it('stops tracking a cancelled pointer', async () => {
+      const { canvas, gestures } = await withCanvas();
+      canvas.dispatchEvent(pointer('pointerdown', { pointerId: 3, clientX: 10, clientY: 10 }));
+      canvas.dispatchEvent(pointer('pointercancel', { pointerId: 3 }));
+      canvas.dispatchEvent(pointer('pointermove', { pointerId: 3, clientX: 50, clientY: 50 }));
+      expect(gestures).toEqual([]);
+    });
+
+    it('zooms with the wheel and keeps the page from scrolling', async () => {
+      const { canvas, gestures } = await withCanvas();
+      const event = new WheelEvent('wheel', { deltaY: 100, cancelable: true, bubbles: true });
+      canvas.dispatchEvent(event);
+      expect(event.defaultPrevented).toBe(true);
+      expect(gestures[0]).toMatchObject({ kind: 'zoom' });
+      canvas.dispatchEvent(
+        new WheelEvent('wheel', { deltaY: 3, deltaMode: WheelEvent.DOM_DELTA_LINE, bubbles: true }),
+      );
+      const [first, second] = gestures as { factor: number }[];
+      expect(first?.factor).toBeCloseTo(Math.exp(0.1), 12);
+      expect(second?.factor).toBeCloseTo(Math.exp(0.048), 12);
+    });
+
+    it('describes the current settings for assistive technology', async () => {
+      const { fixture, canvas } = await withCanvas();
+      expect(canvas.getAttribute('aria-label')).toContain('Inclination 75 degrees');
+      fixture.componentRef.setInput(
+        'settings',
+        mergeSettings(defaultSettings, { view: { doppler: false } }),
+      );
+      fixture.detectChanges();
+      expect(canvas.getAttribute('aria-label')).toContain('Doppler beaming off');
+    });
+  });
 });

@@ -1,47 +1,96 @@
-<main class="shell">
-  <h1>Event horizon</h1>
-  <p class="lede">A real-time ray tracer for light bent around a Schwarzschild black hole.</p>
+<div class="layout">
+  <header class="masthead">
+    <h1>Event horizon</h1>
+    <p class="lede">A real-time ray tracer for light bent around a Schwarzschild black hole.</p>
+  </header>
 
-  <section class="status" aria-labelledby="gpu-heading">
-    <h2 id="gpu-heading">Graphics check</h2>
-    <p
-      class="status-line"
-      role="status"
-      data-testid="gpu-status"
-      [attr.data-state]="state().status"
-    >
-      @switch (state().status) {
-        @case ('checking') {
-          Checking WebGPU support.
-        }
-        @case ('ready') {
-          WebGPU is ready.
-        }
-        @default {
-          {{ unsupportedMessage() }}
-        }
-      }
-    </p>
-
-    @if (state(); as current) {
-      @if (current.status === 'ready') {
-        <dl class="facts">
-          <dt>Adapter</dt>
-          <dd data-testid="adapter-architecture">
-            {{ current.adapter.architecture || 'unknown' }}
-          </dd>
-          <dt>Vendor</dt>
-          <dd>{{ current.adapter.vendor || 'unknown' }}</dd>
-          <dt>Test kernel</dt>
-          <dd data-testid="smoke-result">
-            {{ current.smoke.correct }} of {{ current.smoke.total }} values correct
-          </dd>
-        </dl>
-      }
+  <main class="stage">
+    @if (state().status === 'ready') {
+      <app-viewport [settings]="store.settings()" (gesture)="onGesture($event)" />
     }
-  </section>
+
+    <section class="status" aria-labelledby="gpu-heading">
+      <h2 id="gpu-heading">Graphics check</h2>
+      <p
+        class="status-line"
+        role="status"
+        data-testid="gpu-status"
+        [attr.data-state]="state().status"
+      >
+        @switch (state().status) {
+          @case ('checking') {
+            Checking WebGPU support.
+          }
+          @case ('ready') {
+            WebGPU is ready.
+          }
+          @default {
+            {{ unsupportedMessage() }}
+          }
+        }
+      </p>
+
+      @if (state(); as current) {
+        @if (current.status === 'ready') {
+          <dl class="facts">
+            <dt>Adapter</dt>
+            <dd data-testid="adapter-architecture">
+              {{ current.adapter.architecture || 'unknown' }}
+            </dd>
+            <dt>Vendor</dt>
+            <dd>{{ current.adapter.vendor || 'unknown' }}</dd>
+            <dt>Test kernel</dt>
+            <dd data-testid="smoke-result">
+              {{ current.smoke.correct }} of {{ current.smoke.total }} values correct
+            </dd>
+          </dl>
+        }
+      }
+    </section>
+  </main>
 
   @if (state().status === 'ready') {
-    <app-viewport />
+    <aside class="sidebar" [class.sheet-open]="sheetOpen()" aria-label="Settings and physics">
+      <button
+        type="button"
+        class="sheet-toggle"
+        data-testid="sheet-toggle"
+        aria-controls="sidebar-body"
+        [attr.aria-expanded]="sheetOpen()"
+        (click)="toggleSheet()"
+      >
+        {{ sheetOpen() ? 'Hide settings' : 'Show settings' }}
+      </button>
+      <div id="sidebar-body" class="sidebar-body">
+        <div class="switcher" role="group" aria-label="Panel">
+          <button
+            type="button"
+            data-testid="show-controls"
+            [attr.aria-pressed]="sidebarView() === 'controls'"
+            (click)="showView('controls')"
+          >
+            Controls
+          </button>
+          <button
+            type="button"
+            data-testid="show-physics"
+            [attr.aria-pressed]="sidebarView() === 'physics'"
+            (click)="showView('physics')"
+          >
+            Physics
+          </button>
+        </div>
+        @if (sidebarView() === 'controls') {
+          <app-keyboard-help [open]="helpOpen()" (closed)="closeHelp()" />
+          <app-control-panel (helpRequested)="openHelp()" />
+        } @else {
+          <app-physics-panel />
+        }
+      </div>
+    </aside>
   }
-</main>
+
+  <div class="visually-hidden" role="status" aria-live="polite" data-testid="announcer">
+    {{ store.announcement() }}
+  </div>
+</div>

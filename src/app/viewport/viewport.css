@@ -1,5 +1,7 @@
 .viewport {
-  margin: 2rem 0 0;
+  width: min(100%, calc(100dvh - 14rem));
+  min-width: 16rem;
+  margin: 0 auto;
 }
 
 canvas {
@@ -10,6 +12,12 @@ canvas {
   border: 1px solid var(--border);
   border-radius: 0.75rem;
   background: #000;
+  cursor: grab;
+  touch-action: none;
+}
+
+canvas:active {
+  cursor: grabbing;
 }
 
 figcaption {

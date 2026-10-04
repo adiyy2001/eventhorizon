@@ -7,6 +7,9 @@
   --text-muted: #a3abc0;
   --ok: #7fd9a0;
   --warn: #f2b36a;
+  --accent: #8ab4ff;
+  --accent-surface: #1c2a4a;
+  --link: #9dc0ff;
 }
 
 html,
@@ -27,4 +30,15 @@ body {
 :focus-visible {
   outline: 3px solid #8ab4ff;
   outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -1,0 +1,15 @@
+<div class="toggle">
+  <input
+    type="checkbox"
+    role="switch"
+    [id]="fieldId()"
+    [attr.data-testid]="fieldId()"
+    [checked]="checked()"
+    [attr.aria-describedby]="hint() === '' ? null : fieldId() + '-hint'"
+    (change)="onChange($event)"
+  />
+  <label [for]="fieldId()">{{ label() }}</label>
+  @if (hint() !== '') {
+    <p class="hint" [id]="fieldId() + '-hint'">{{ hint() }}</p>
+  }
+</div>

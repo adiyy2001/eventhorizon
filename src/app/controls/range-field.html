@@ -1,0 +1,18 @@
+<div class="field">
+  <label [for]="fieldId()">{{ label() }}</label>
+  <output [attr.for]="fieldId()" [attr.data-testid]="fieldId() + '-value'">{{
+    valueText()
+  }}</output>
+  <input
+    type="range"
+    [id]="fieldId()"
+    [attr.data-testid]="fieldId()"
+    [min]="min()"
+    [max]="max()"
+    [step]="step()"
+    [value]="value()"
+    [attr.aria-valuetext]="valueText()"
+    (input)="onInput($event)"
+    (change)="onChange($event)"
+  />
+</div>
