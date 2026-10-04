@@ -38,3 +38,14 @@ The Binet form is implemented on the CPU as an independent check, together with 
 - The shader works with `vec3f` positions and velocities and needs no trigonometry per step.
 - `h` is conserved by construction up to rounding, which makes it the cheap health check in the tests. The null condition is the real error monitor.
 - Near the critical impact parameter a ray winds around the photon sphere and the final direction depends sharply on b. The CPU and GPU parity tests exclude a stated margin around b_c, since float32 cannot be expected to agree with float64 there.
+
+## Amendment from the CPU reference milestone
+
+Constants after measurement (`pnpm validate:steps`, `pnpm validate:physics`, `docs/physics.md` section 12):
+
+- Step rule: `dt = clamp(κ·r / (1 + w·h²/r²), dt_min, dt_max)` with κ = 0.03, w = 0.5, dt_min = 1e-4, dt_max = 4. For straight rays only `κ·r` applies. The second term limits the angle a ray sweeps per step, which is what matters near the photon sphere.
+- Capture margin ε = 1e-3, plus an exact early exit for `r < 3` while moving inwards. Escape radius `max(100, 2·D)`, with the remaining bending `(3/8)·r_s·h³/R⁴` documented and tested. Step limit 20000, flagged and counted as captured.
+- Measured with these values: the capture boundary comes out within 5.2e-8 of 3√3 at D = 30 (target in the brief 1e-4), the RK4 deflection differs from the Binet form by at most 5.2e-7 radians for b from 5.3 to 500, and the mean is about 108 steps per ray for a 80 degree view at D = 30.
+- `h` is not conserved exactly. RK4 does not preserve quadratic invariants, so the tests state a drift bound instead of the 1e-12 the plan assumed: 1e-8 relative for `h` and 1e-6 for the null condition with the production step (measured 4.4e-10 and 6.1e-8), and 1e-12 and 1e-10 with a step ten times smaller.
+- Three computations of the deflection agree to 5e-12: the Binet form, a quadrature of the exact integral, and the vector form with Dormand-Prince.
+- The vector-form state is `x, v` as six scalars, and `rk4Step` works on it in place with scalar locals. The reference integrator uses tuples and allocates, since it is not on the hot path.

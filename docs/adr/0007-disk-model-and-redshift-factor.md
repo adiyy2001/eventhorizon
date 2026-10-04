@@ -37,3 +37,10 @@ What the other switches mean:
 
 - Both switches map to one multiplication each, with the tracer kernel unchanged.
 - Without the finite-distance factor the image would be too dim by `sqrt(1 - r_s/D)` at D = 20 (about 5 percent in frequency and 19 percent in intensity).
+
+## Amendment from the CPU reference milestone
+
+- `redshiftParts(r, λ, D)` returns `gravitational`, `observer`, `kinematic` and `total`. `combineRedshift` drops `gravitational` and `observer` together when the gravitational switch is off, and drops `kinematic` when the Doppler switch is off.
+- The photon angular momentum about the disk axis is constant along the whole ray, because the force is central and `x × x'` is conserved (`docs/physics.md` section 3). The tracer reports `λ` from the start of the crossing step, and a test checks it against the value at the camera.
+- The local orbital speed relative to a static observer is `1/sqrt(r - 2)`, which gives `γ = sqrt((r - 2)/(r - 3))` and exactly one half at the ISCO.
+- Physical sign test: on an 80 degree view the pixels whose first crossing lies between r = 9 and r = 13 and whose emitter moves towards the camera have mean `Ω·λ` above 0.01, and the receding side below -0.01.
