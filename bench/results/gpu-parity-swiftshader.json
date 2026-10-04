@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-04T04:31:46.466Z",
+  "generatedAt": "2026-10-04T04:39:34.108Z",
   "node": "v24.21.0",
   "platform": "linux 6.6.87.2-microsoft-standard-WSL2 x64",
   "cpu": "12th Gen Intel(R) Core(TM) i7-12700H",
@@ -51,8 +51,8 @@
     "lowestImpactFactor": 0.5,
     "highestImpactParameter": 40
   },
-  "gpuMilliseconds": 100.7999999821186,
-  "cpuMilliseconds": 1311.955939,
+  "gpuMilliseconds": 93.90000000596046,
+  "cpuMilliseconds": 1046.1903250000003,
   "shaderMessages": {
     "parity": []
   },

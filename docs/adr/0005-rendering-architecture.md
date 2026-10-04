@@ -41,3 +41,9 @@ The WGSL sources are plain `.wgsl` files imported as text through the Angular es
 - A second kernel, `traceParity`, runs the same `traceRay` function over a buffer of rays and writes a 48 byte `TraceResult` per ray. It shares every WGSL module with the image kernel except the entry file, which is what makes the parity result a statement about the shipped tracer.
 - The present pass loads the `rgba32float` radiance texture with `textureLoad` and an explicit `unfilterable-float` bind group layout, so it does not need the `float32-filterable` feature.
 - WGSL modules are plain files composed in a fixed order by `shader-modules.ts`. A unit test fails when two modules declare the same name, and the struct layouts in WGSL are parsed and compared with the TypeScript layout used for packing.
+
+## Amendment from the color milestone
+
+- The nebula cube is 512² per face with no mip chain, and stars are evaluated per ray in the tracer instead of being baked (ADR 12). The temperature LUT and the cube are bound as group 1 of the trace pipeline.
+- The accumulation pair holds `rgba32float` history, and a resolve step writes `rgba16float` for bloom and present. Bloom has five levels. The present pass adds the top bloom level, scaled by the bloom strength, to the resolved image before tone mapping.
+- A color parity kernel runs the shipped WGSL functions on supplied inputs so the e2e tests can compare them with the CPU twins.

@@ -184,7 +184,7 @@ Liouville's theorem makes $I_\nu/\nu^3$ constant along a light ray (Rybicki and 
 
 $$I_\nu^\text{obs}(\nu) = g^3 B_{\nu/g}(T) = B_\nu(gT),$$
 
-which is again a Planck spectrum, at the temperature $gT$. Its bolometric integral scales as $(gT)^4$, so the displayed radiance is proportional to $g^4 T^4$ and the chromaticity comes from the colour of a blackbody at $gT$. This is the brief's "observed temperature $gT$, intensity scaled by $g^4$". The visible-band luminance grows more slowly than $g^4$ for hot gas, which the colour pipeline (a later milestone) accounts for through the lookup table.
+which is again a Planck spectrum, at the temperature $gT$. Its bolometric integral scales as $(gT)^4$, so the displayed radiance is proportional to $g^4 T^4$ and the chromaticity comes from the colour of a blackbody at $gT$. This is the brief's "observed temperature $gT$, intensity scaled by $g^4$". The visible-band luminance grows more slowly than $g^4$ for hot gas, which section 14 returns to.
 
 Code: `observedTemperature`, `observedIntensityScale` in `disk.ts`. Test: `disk.spec.ts`.
 
@@ -249,7 +249,7 @@ Measured on the SwiftShader adapter (`pnpm bench:parity`, `bench/results/gpu-par
 | float32 twin against float64 | 4096 of 4096 | 1.7e-4 | 1.1e-4 | 1.7e-5 |
 | GPU against float32 twin | 4096 of 4096 | 7.1e-5 | 7.0e-5 | 7.6e-6 |
 
-The tolerances are 1e-3 for each. The twin explains the GPU error: both sit near the same distance from the float64 answer, so the error is the cost of float32 and not a bug in the port. The 128 by 128 image at the default view has the same outcome in all 16384 pixels, and the placeholder disk shade differs from the CPU by 2.2e-6 on average (largest 2.7e-3, on pixels next to the inner edge where the temperature tends to zero).
+The tolerances are 1e-3 for each. The twin explains the GPU error: both sit near the same distance from the float64 answer, so the error is the cost of float32 and not a bug in the port. The 128 by 128 image at the default view has the same outcome in all 16384 pixels, and the disk radiance differs from the CPU by 8.1e-5 on average (largest 2.0e-3, on pixels next to the inner edge where the temperature tends to zero).
 
 ## 13. Disk crossings and higher-order images
 
@@ -259,16 +259,70 @@ The disk is opaque. A ray that crosses the plane outside the annulus continues, 
 
 Tests: `trace.spec.ts` (location error, annulus bounds, multi-crossing rays, late hits that disappear when higher orders are off).
 
+## 14. From temperature to display color
+
+The disk emits a blackbody spectrum at the temperature the observer sees, $T_\text{obs} = gT$ (section 11). Turning that into a pixel takes four steps.
+
+**Spectrum.** Planck's law in wavelength form,
+
+$$B_\lambda(T) = \frac{2hc^2}{\lambda^5}\,\frac{1}{e^{c_2/\lambda T} - 1},\qquad c_2 = \frac{hc}{k}.$$
+
+$c_2$ is computed from the CODATA 2022 constants, which are exact, and is not typed in as a rounded number. Tests: `planck.spec.ts` (the constant against the exact SI value, the spectral peak within 1.5 nm of the Wien displacement law, monotonic growth with temperature, the $T^4$ scaling of the bolometric flux).
+
+**Colour matching.** The tristimulus values are
+
+$$X = \int B_\lambda\,\bar x(\lambda)\,d\lambda,\quad Y = \int B_\lambda\,\bar y(\lambda)\,d\lambda,\quad Z = \int B_\lambda\,\bar z(\lambda)\,d\lambda,$$
+
+summed at 1 nm steps from 360 to 830 nm. The matching functions come from the multi-lobe piecewise Gaussian fit of Wyman, Sloan and Shirley (2013), because the official CIE table is licensed CC BY-SA (ADR 3). Each function is a sum of lobes $a\,\exp(-\tfrac12 (s(\lambda - \mu))^2)$ with a different slope $s$ on each side of the center $\mu$. Against the CIE 1931 table the largest absolute difference in any function is 0.022 where $\bar y$ peaks at 1. The chromaticity $(x, y)$ of a blackbody at 2000, 3000, 4000, 5000, 6500 and 10000 K agrees with the Planckian locus within 3e-3, and at 1500 K within 6e-3 (`color/planck.spec.ts`). The fit approximates the measured observer, and an error of this size is invisible in the rendered image.
+
+**Linear sRGB.** The CSS Color 4 matrix takes XYZ to linear sRGB with the D65 white point,
+
+$$\begin{pmatrix}R\\G\\B\end{pmatrix} = \begin{pmatrix}3.2409699 & -1.5373832 & -0.4986108\\ -0.9692436 & 1.8759675 & 0.0415551\\ 0.0556301 & -0.2039770 & 1.0569715\end{pmatrix}\begin{pmatrix}X\\Y\\Z\end{pmatrix}.$$
+
+Cool blackbodies fall outside the sRGB gamut (negative blue). The color is scaled to unit luminance, the negative channels are clipped to zero and the result is rescaled to unit luminance again (`clipToGamutAtUnitLuminance`), so a clipped color keeps its brightness and only loses saturation.
+
+**Lookup table.** Integrating at every pixel is too slow, so a 1024 entry table holds the unit-luminance color at temperatures spaced logarithmically from 1000 K to 100000 K. Lookup interpolates linearly in $\ln T$. On the GPU the table is an `rgba16float` texture sampled with a linear sampler (the CPU packs it with a round-half-even float16 encoder that is tested on every finite bit pattern). The GPU values agree with the CPU function within 4.3e-4 relative. Temperatures outside the range clamp, which matters only for the glowing edge of the disk where $T \to 0$ and the radiance below goes to zero anyway.
+
+**Radiance scale.** The picture is scaled bolometrically: radiance is the table color times $(T_\text{obs}/6500\,\text{K})^4$, so a 6500 K surface has luminance 1 and $gT$ enters through its fourth power, which is the g⁴ of the brief. A camera that integrates only the visible band would see a flatter dependence for hot gas, because most of the energy of a 30000 K blackbody is in the ultraviolet. The choice and its consequence are in ADR 12.
+
+**Tone mapping.** Scene radiance is linear and unbounded. Display encoding multiplies by $2^{\text{EV}}$, applies the ACES filmic fit of Stephen Hill (input matrix, the rational curve $\dfrac{v(v + 0.0245786) - 0.000090537}{v(0.983729\,v + 0.4329510) + 0.238081}$, output matrix, clamp to $[0, 1]$) and the sRGB transfer function,
+
+$$E = \begin{cases}12.92\,L & L \le 0.0031308\\ 1.055\,L^{1/2.4} - 0.055 & \text{otherwise.}\end{cases}$$
+
+The fit compresses hot, very bright regions toward white. A disk peaking at 9000 K with exposure 0 is therefore nearly white across its width, and the default peak temperature of 5500 K was chosen so the gradient and the beamed side remain visible (ADR 12). Test: `tonemap.spec.ts`, and the GPU kernel against the CPU on 200 random inputs, largest difference 2.9e-7.
+
+**Accumulation and bloom.** Each frame is traced with a sub-pixel offset from the R2 sequence, $(\{0.5 + n\,\alpha_1\} - 0.5,\ \{0.5 + n\,\alpha_2\} - 0.5)$ with $\alpha_1 = 0.75488$ and $\alpha_2 = 0.56984$, and blended into the history with weight $1/(n+1)$, which is the running mean. Bloom is a 13-tap downsample chain with a luminance-weighted first level and a tent upsample, added to the resolved image at a small strength before tone mapping. Bloom is an artistic effect, so the radiance returned by the capture path is taken before it.
+
+## 15. The background
+
+The sky has two parts, both procedural and both written once in TypeScript and once in WGSL.
+
+**Hash.** A 32-bit PCG output function, chained over three integer coordinates and a seed. On the CPU `Math.imul` gives the same wraparound multiplication as `u32` in WGSL, and the GPU output is bit-exact against the CPU on 500 random inputs. A float in $[0, 1)$ takes the top 24 bits, $(h \gg 8)/2^{24}$, which float32 represents exactly.
+
+**Stars.** A star is a Gaussian spot in the direction of the escaped ray, of angular width $\sigma = 7\times10^{-4}$ rad, with the radiance of a blackbody at its temperature. Cells are a $96\times96$ grid on each cube face (about 14300 stars in total). A cell holds a star with probability $0.5\,(1 + u^2 + v^2)^{-3/2}$, which cancels the cube projection's solid-angle distortion, so the density on the sphere is uniform (checked by counting stars in caps). Peak brightness follows a Pareto law, $P(>s) = (s_0/s)^{1.25}$ (peak $= s_0\,(1-u)^{-0.8}$ for a uniform $u$, i.e. flux exponent $-0.8$) with $s_0 = 0.06$ and a cap of 6. Temperature is log-uniform between 2600 K and 18000 K. The test against a brute-force sum over all stars confirms that the 3 by 3 cell search misses nothing, including across cube edges.
+
+**Why per ray.** Gravitational lensing maps one sky direction to several image positions and stretches each. Evaluating the star profile at the final direction of every ray reproduces both: a point-like star near the photon ring turns into an arc after accumulation, and a star behind the hole appears as a second image. Baked into a cubemap, stars would blur when magnified.
+
+**Nebula.** Radiance is the sum of a diffuse band (a Gaussian in the angle from a fixed galactic plane) and clouds from three fractional Brownian motion fields: one warps the coordinates, one gives the density through a smoothstep, one mixes a warm and a cool tint. Value noise on an integer lattice with smooth interpolation, five octaves, lacunarity 2.02 and gain 0.5. The result is baked once into a $512^2$ cube. The GPU bake matches the CPU function at texel centers within 1.6e-2 relative on the smallest values (float16 storage) and the face orientation is verified by that same comparison, since a wrong axis convention would put the pattern on the wrong face.
+
+Tests: `hash.spec.ts`, `noise.spec.ts`, `cube-faces.spec.ts`, `nebula.spec.ts`, `stars.spec.ts` on the CPU, and `e2e/color-pipeline.spec.ts` for the GPU against the CPU.
+
 ## References
 
 - Bardeen, J. M. (1973). Timelike and null geodesics in the Kerr metric. In *Black Holes* (Les Houches 1972), DeWitt and DeWitt (eds.), Gordon and Breach.
 - Bardeen, J. M., Press, W. H. and Teukolsky, S. A. (1972). Rotating black holes: locally nonrotating frames, energy extraction, and scalar synchrotron radiation. *Astrophysical Journal* 178, 347.
 - Darwin, C. (1959). The gravity field of a particle. *Proceedings of the Royal Society A* 249, 180.
 - Dormand, J. R. and Prince, P. J. (1980). A family of embedded Runge-Kutta formulae. *Journal of Computational and Applied Mathematics* 6, 19.
+- Hill, S. ACES fit in `ACES.hlsl`, BakingLab (MIT), commit 0f66f50.
 - James, O., von Tunzelmann, E., Franklin, P. and Thorne, K. S. (2015). Gravitational lensing by spinning black holes in astrophysics, and in the movie Interstellar. *Classical and Quantum Gravity* 32, 065001.
+- Jarzynski, M. and Olano, M. (2020). Hash functions for GPU rendering. *Journal of Computer Graphics Techniques* 9(3), 21.
+- Jimenez, J. (2014). Next generation post processing in Call of Duty: Advanced Warfare. SIGGRAPH 2014 Advances in Real-Time Rendering course.
 - Keeton, C. R. and Petters, A. O. (2005). Formalism for testing theories of gravity using lensing by compact objects. I. Static, spherically symmetric black holes. *Physical Review D* 72, 104006.
 - Luminet, J.-P. (1979). Image of a spherical black hole with thin accretion disk. *Astronomy and Astrophysics* 75, 228.
 - Misner, C. W., Thorne, K. S. and Wheeler, J. A. (1973). *Gravitation*. W. H. Freeman.
 - Page, D. N. and Thorne, K. S. (1974). Disk-accretion onto a black hole. *Astrophysical Journal* 191, 499.
+- Roberts, M. (2018). The unreasonable effectiveness of quasirandom sequences. extremelearning.com.au.
 - Rybicki, G. B. and Lightman, A. P. (1979). *Radiative Processes in Astrophysics*. Wiley.
 - Shakura, N. I. and Sunyaev, R. A. (1973). Black holes in binary systems. Observational appearance. *Astronomy and Astrophysics* 24, 337.
+- W3C (2022). CSS Color Module Level 4, section on sRGB and the XYZ conversion matrices.
+- Wyman, C., Sloan, P.-P. and Shirley, P. (2013). Simple analytic approximations to the CIE XYZ color matching functions. *Journal of Computer Graphics Techniques* 2(2), 1.

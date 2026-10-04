@@ -22,3 +22,7 @@ Use the ACES fit by Stephen Hill (input matrix, rational RRT and ODT fit, output
 
 - Very hot (blue) regions can shift hue in the fit. The visual review in the color milestone checks the beamed side of the disk specifically, and the result is described honestly in the README limitations.
 - The CPU and GPU tone mappers must agree. A test compares them on a fixed table of inputs.
+
+## Amendment from the color milestone
+
+The upstream file was read again at BakingLab commit `0f66f50398a372ea27ba0e4d95379d32c83d2e8a`. Both matrices and the fit coefficients match what the code uses, and the commit is recorded in `CREDITS.md`. The CPU and GPU tone mappers agree within 2.9e-7 absolute on 200 random inputs (`e2e/color-pipeline.spec.ts`). The default exposure is 0 stops with a peak disk temperature of 5500 K, see ADR 12.
