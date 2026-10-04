@@ -26,3 +26,7 @@ The renderer exposes one capture path: render the final image into an `rgba8unor
 
 - The capture path is the same code the user triggers with the export button, so it is tested by every visual test.
 - The automation hook ships in the production build, since the end-to-end tests run against it. It is read-only, documented, and does nothing without the query parameter.
+
+## Amendment from the GPU tracer milestone
+
+The automation hook exists as `window.eventhorizonAutomation`, installed from `main.ts` only when the URL has `?automation`, through a lazy chunk (4 kB) that is not loaded otherwise. It offers `compileShaders`, `runParity` and `renderView`. Each call acquires its own device, listens for uncaptured GPU errors and fails if one arrived, so a validation error cannot hide behind a zero-filled readback. `renderView` returns the outcome map, the red channel of the radiance texture and a PNG made by the browser from the same bytes the capture path reads back. Fixed resolution, no dynamic scaling and no accumulation apply for now because none of them exist yet; M5 adds the accumulated-frame count to the hook.

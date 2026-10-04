@@ -49,3 +49,13 @@ Constants after measurement (`pnpm validate:steps`, `pnpm validate:physics`, `do
 - `h` is not conserved exactly. RK4 does not preserve quadratic invariants, so the tests state a drift bound instead of the 1e-12 the plan assumed: 1e-8 relative for `h` and 1e-6 for the null condition with the production step (measured 4.4e-10 and 6.1e-8), and 1e-12 and 1e-10 with a step ten times smaller.
 - Three computations of the deflection agree to 5e-12: the Binet form, a quadrature of the exact integral, and the vector form with Dormand-Prince.
 - The vector-form state is `x, v` as six scalars, and `rk4Step` works on it in place with scalar locals. The reference integrator uses tuples and allocates, since it is not on the hot path.
+
+## Amendment from the GPU tracer milestone
+
+- The WGSL tracer keeps the step rule row unchanged (κ = 0.03, w = 0.5, dt_min = 1e-4, dt_max = 4). Float32 agrees with float64 on all 4096 parity rays, so there is no reason to trade accuracy for a cheaper row yet. Frame time decides that later, on measured hardware.
+- Step budget on the GPU is 4096 per ray, set in `viewMaxSteps` and shared by the CPU view code. The float64 reference needs at most 496 steps on the parity set. A ray that reaches the budget is reported captured with a flag, and the parity test requires zero flagged rays.
+- Escape radius for the parity set is 120, which is `max(100, 2·D)` for the farthest observer (D = 60). The view code uses `max(100, 2·D)` for its own D.
+- The observer setup uses the identity radial speed = cos α, which follows from the null condition and avoids a cancellation in float32.
+- Measured error of the GPU tracer against float64 on 4096 rays (SwiftShader): final direction at most 1.6e-4 rad, first hit radius at most 1.4e-4 relative, hit λ at most 1.8e-5 absolute. A `Math.fround` twin of the tracer on the CPU shows the same error, so it is precision and not a porting mistake. Details and the table are in `docs/physics.md`.
+- Rays with |b - b_c| < 0.02 and rays that cross the plane within 0.002 of a disk edge are left out of the parity set. Both are cases where the answer depends on the last digits.
+

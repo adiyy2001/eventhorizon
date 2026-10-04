@@ -34,3 +34,10 @@ The WGSL sources are plain `.wgsl` files imported as text through the Angular es
 - Memory at 1080p: the trace target and two history textures at 16 bytes per pixel, about 100 MB, plus the cubemap (6 x 1024² x 8 bytes, about 67 MB with mips). Both are acceptable on integrated GPUs and checked in the benchmark milestone.
 - The tracer has no dependency on a read-write storage texture, `shader-f16` or subgroups, so any WebGPU adapter that passes the default limits can run it.
 - Frames for tests and exports are read back from GPU buffers (see ADR 11), which keeps them independent of the browser compositor.
+
+## Amendment from the GPU tracer milestone
+
+- The trace kernel also writes one `u32` outcome per pixel into a storage buffer. The overlay and test code can read which pixels were captured, escaped or hit the disk without decoding colors, and the image comparison against the CPU uses it.
+- A second kernel, `traceParity`, runs the same `traceRay` function over a buffer of rays and writes a 48 byte `TraceResult` per ray. It shares every WGSL module with the image kernel except the entry file, which is what makes the parity result a statement about the shipped tracer.
+- The present pass loads the `rgba32float` radiance texture with `textureLoad` and an explicit `unfilterable-float` bind group layout, so it does not need the `float32-filterable` feature.
+- WGSL modules are plain files composed in a fixed order by `shader-modules.ts`. A unit test fails when two modules declare the same name, and the struct layouts in WGSL are parsed and compared with the TypeScript layout used for packing.

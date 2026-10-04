@@ -208,7 +208,7 @@ The term $h^2/r^2$ is the squared angular speed of the ray, so the swept angle p
 | 0.01 | 0.5 | 9.2e-10 | 6.3e-9 | 323 |
 | 0.003 | 0.5 | 2.2e-10 | 5.0e-11 | 1075 |
 
-The chosen row keeps the error of the shadow edge three orders of magnitude below the brief's 1e-4 target and costs about 108 steps per ray. The GPU milestone may pick a cheaper row for float32 and records it.
+The chosen row keeps the error of the shadow edge three orders of magnitude below the brief's 1e-4 target and costs about 108 steps per ray. The GPU port kept this row: it agrees with the float64 reference on every parity ray (see Single precision on the GPU), so no cheaper row was needed.
 
 ### Convergence and reference
 
@@ -228,6 +228,28 @@ RK4 conserves linear invariants exactly and quadratic ones only up to its trunca
 ### Corrections applied to the vector-form deflection
 
 The deflection test starts and ends rays at the same large radius. The angle between the initial and final velocity misses the bending outside that radius, so the code adds $\tfrac38 r_s h^3/R^4$ for the start radius and for the radius where the integrator stopped.
+
+### Single precision on the GPU
+
+The WGSL tracer (`src/gpu/shaders`) runs the same algorithm in float32 with the same constants: step rule, capture margin, early capture below $r = 3$, escape radius, Hermite crossing. Three differences are worth knowing.
+
+- The observer setup uses the radial speed $\cos\alpha$ directly. From section 6, the tangential speed is $\sin\alpha/\sqrt{1 - r_s/D}$ and $|x'|^2 = 1 + r_s h^2/D^3$, so the radial speed squared is $1 - \sin^2\alpha = \cos^2\alpha$. The float64 code evaluates the longer form and the two agree to rounding. In float32 the short form avoids subtracting two nearly equal numbers.
+- The plane crossing uses 24 safeguarded Newton iterations and stops when the fraction changes by less than 1e-6.
+- The tracer stops after 4096 steps and reports the ray as captured with a flag. The reference needs at most 496 steps on the parity set.
+
+A float32 twin of the tracer on the CPU (`trace-float32.ts`, rounding every operation with `Math.fround`) separates algorithm error from precision error: it needs no GPU, and it follows the shader operation by operation.
+
+The parity set (`parity-rays.ts`, seed 20261004) has 4096 rays from observers at $D = 10, 30, 60$ and inclinations from 5 to 88 degrees, with impact parameters from $0.5\,b_c$ to 40. It leaves out rays with $|b - b_c| < 0.02$, since float32 cannot be expected to agree with float64 where the outcome depends on the last digits of $b$, and rays with a plane crossing within 0.002 of the disk edges, where the hit test itself flips. The set holds 1064 captured, 1271 escaped and 1761 disk rays, 246 of them with two or more plane crossings and 104 that hit on a later crossing.
+
+Measured on the SwiftShader adapter (`pnpm bench:parity`, `bench/results/gpu-parity-swiftshader.json`):
+
+| Comparison | Outcomes equal | Direction, max (rad) | Hit radius, max relative | $\lambda$, max absolute |
+| --- | --- | --- | --- | --- |
+| GPU against float64 | 4096 of 4096 | 1.6e-4 | 1.4e-4 | 1.8e-5 |
+| float32 twin against float64 | 4096 of 4096 | 1.7e-4 | 1.1e-4 | 1.7e-5 |
+| GPU against float32 twin | 4096 of 4096 | 7.1e-5 | 7.0e-5 | 7.6e-6 |
+
+The tolerances are 1e-3 for each. The twin explains the GPU error: both sit near the same distance from the float64 answer, so the error is the cost of float32 and not a bug in the port. The 128 by 128 image at the default view has the same outcome in all 16384 pixels, and the placeholder disk shade differs from the CPU by 2.2e-6 on average (largest 2.7e-3, on pixels next to the inner edge where the temperature tends to zero).
 
 ## 13. Disk crossings and higher-order images
 
