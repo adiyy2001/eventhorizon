@@ -47,9 +47,11 @@ export interface ImageComparison {
   mismatchedPixels: number;
   mismatchesOutsideBand: number;
   outcomeCounts: Record<string, number>;
-  diskShadeMeanRelativeError: number;
-  diskShadeMaxRelativeError: number;
-  escapedShadeMismatches: number;
+  diskRadianceMeanRelativeError: number;
+  diskRadianceMaxRelativeError: number;
+  skyPixels: number;
+  skyAggregateRelativeError: number;
+  skyMaxAbsoluteError: number;
   disagreementBand: { criticalMargin: number; diskEdgeMargin: number };
 }
 
@@ -128,9 +130,17 @@ export async function runGpuParity(page: Page): Promise<ParityRunResult> {
   };
 }
 
+function luminanceAt(values: readonly number[] | Float32Array, index: number): number {
+  return (
+    0.2126 * (values[index * 3] ?? 0) +
+    0.7152 * (values[index * 3 + 1] ?? 0) +
+    0.0722 * (values[index * 3 + 2] ?? 0)
+  );
+}
+
 export function compareImages(
   reference: ReferenceImage,
-  gpu: { outcomes: readonly number[]; shade: readonly number[] },
+  gpu: { outcomes: readonly number[]; radiance: readonly number[] },
   view: ViewDescription,
   criticalBand = imageBandCriticalMargin,
   diskEdgeBand = imageBandDiskEdgeMargin,
@@ -138,10 +148,13 @@ export function compareImages(
   const pixelCount = reference.size.width * reference.size.height;
   let agreeing = 0;
   let outsideBand = 0;
-  let diskShadeMaxRelative = 0;
-  let diskShadeTotal = 0;
-  let diskShadePixels = 0;
-  let escapedShadeMismatches = 0;
+  let diskMaxRelative = 0;
+  let diskTotalRelative = 0;
+  let diskPixels = 0;
+  let skyPixels = 0;
+  let skyReferenceTotal = 0;
+  let skyDifferenceTotal = 0;
+  let skyMaxAbsolute = 0;
   const outcomeCounts: Record<string, number> = { captured: 0, escaped: 0, disk: 0 };
   const names = Object.keys(OUTCOME_CODES);
   for (let index = 0; index < pixelCount; index += 1) {
@@ -151,18 +164,20 @@ export function compareImages(
     outcomeCounts[name] = (outcomeCounts[name] ?? 0) + 1;
     if (expected === actual) {
       agreeing += 1;
-      const expectedShade = reference.shade[index] ?? 0;
-      const actualShade = gpu.shade[index] ?? 0;
+      const expectedLuminance = luminanceAt(reference.radiance, index);
+      const actualLuminance = luminanceAt(gpu.radiance, index);
       if (expected === OUTCOME_CODES.disk) {
-        const relative = Math.abs(actualShade - expectedShade) / Math.max(expectedShade, 1e-6);
-        diskShadeMaxRelative = Math.max(diskShadeMaxRelative, relative);
-        diskShadeTotal += relative;
-        diskShadePixels += 1;
-      } else if (
-        expected === OUTCOME_CODES.escaped &&
-        Math.abs(actualShade - expectedShade) > 1e-3
-      ) {
-        escapedShadeMismatches += 1;
+        const relative =
+          Math.abs(actualLuminance - expectedLuminance) / Math.max(expectedLuminance, 1e-6);
+        diskMaxRelative = Math.max(diskMaxRelative, relative);
+        diskTotalRelative += relative;
+        diskPixels += 1;
+      } else if (expected === OUTCOME_CODES.escaped) {
+        const difference = Math.abs(actualLuminance - expectedLuminance);
+        skyPixels += 1;
+        skyReferenceTotal += expectedLuminance;
+        skyDifferenceTotal += difference;
+        skyMaxAbsolute = Math.max(skyMaxAbsolute, difference);
       }
       continue;
     }
@@ -183,9 +198,11 @@ export function compareImages(
     mismatchedPixels: pixelCount - agreeing,
     mismatchesOutsideBand: outsideBand,
     outcomeCounts,
-    diskShadeMeanRelativeError: diskShadePixels === 0 ? 0 : diskShadeTotal / diskShadePixels,
-    diskShadeMaxRelativeError: diskShadeMaxRelative,
-    escapedShadeMismatches,
+    diskRadianceMeanRelativeError: diskPixels === 0 ? 0 : diskTotalRelative / diskPixels,
+    diskRadianceMaxRelativeError: diskMaxRelative,
+    skyPixels,
+    skyAggregateRelativeError: skyReferenceTotal === 0 ? 0 : skyDifferenceTotal / skyReferenceTotal,
+    skyMaxAbsoluteError: skyMaxAbsolute,
     disagreementBand: { criticalMargin: criticalBand, diskEdgeMargin: diskEdgeBand },
   };
 }

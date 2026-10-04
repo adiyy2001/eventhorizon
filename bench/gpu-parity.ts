@@ -8,6 +8,7 @@ import {
   runImageComparison,
   runShaderCompilation,
 } from './gpu-parity-run';
+import { runColorParityOnGpu } from './color-parity-run';
 import { startStaticServer } from './static-server';
 import { type ParityReport } from '../src/core/validation/parity';
 
@@ -31,6 +32,7 @@ try {
   const compilation = await runShaderCompilation(page);
   const parity = await runGpuParity(page);
   const image = await runImageComparison(page);
+  const color = await runColorParityOnGpu(page);
 
   console.log(`adapter: ${parity.adapter.vendor} ${parity.adapter.architecture}`);
   console.log(
@@ -50,12 +52,22 @@ try {
     `image ${String(image.comparison.size.width)}x${String(image.comparison.size.height)}: ${String(image.comparison.agreeingPixels)}/${String(image.comparison.pixelCount)} outcomes agree, ${String(image.comparison.mismatchesOutsideBand)} mismatches outside the band`,
   );
 
+  for (const report of color.reports) {
+    console.log(
+      `colour ${report.mode.padEnd(8)} ${String(report.samples).padStart(4)} samples, max abs ${report.maxAbsoluteError.toExponential(2)}, max rel ${report.maxRelativeError.toExponential(2)}, ${report.pass ? 'pass' : 'FAIL'}`,
+    );
+  }
+  console.log(
+    `disk radiance relative error mean ${image.comparison.diskRadianceMeanRelativeError.toExponential(2)}, max ${image.comparison.diskRadianceMaxRelativeError.toExponential(2)}; sky aggregate ${image.comparison.skyAggregateRelativeError.toExponential(2)}, max abs ${image.comparison.skyMaxAbsoluteError.toExponential(2)} over ${String(image.comparison.skyPixels)} pixels`,
+  );
+
   const environment = describeEnvironment(browser, parity.adapter);
   const imageOk =
     image.comparison.agreeingPixels / image.comparison.pixelCount >= 0.995 &&
     image.comparison.mismatchesOutsideBand === 0;
   const compileOk = Object.values(compilation.messages).every((messages) => messages.length === 0);
-  failed = !parity.gpuAgainstFloat64.pass || !imageOk || !compileOk;
+  const colorOk = color.reports.every((report) => report.pass);
+  failed = !parity.gpuAgainstFloat64.pass || !imageOk || !compileOk || !colorOk;
 
   const directory = join('bench', 'results');
   mkdirSync(directory, { recursive: true });
@@ -75,6 +87,7 @@ try {
         float32TwinAgainstFloat64,
         gpuAgainstFloat32Twin,
         image: image.comparison,
+        colorParity: color.reports,
       },
       null,
       2,

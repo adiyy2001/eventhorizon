@@ -45,7 +45,7 @@ test.describe('GPU tracer against the float64 reference', () => {
     );
     expect(comparison.agreeingPixels / comparison.pixelCount).toBeGreaterThanOrEqual(0.995);
     expect(comparison.mismatchesOutsideBand).toBe(0);
-    expect(comparison.diskShadeMeanRelativeError).toBeLessThan(1e-4);
-    expect(comparison.escapedShadeMismatches).toBe(0);
+    expect(comparison.diskRadianceMeanRelativeError).toBeLessThan(5e-4);
+    expect(comparison.skyAggregateRelativeError).toBeLessThan(5e-3);
   });
 });

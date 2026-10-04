@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-04T04:02:19.092Z",
+  "generatedAt": "2026-10-04T04:31:46.466Z",
   "node": "v24.21.0",
   "platform": "linux 6.6.87.2-microsoft-standard-WSL2 x64",
   "cpu": "12th Gen Intel(R) Core(TM) i7-12700H",
@@ -23,7 +23,11 @@
   "shaderCompileMessages": {
     "image": [],
     "parity": [],
-    "blit": []
+    "bake": [],
+    "accumulate": [],
+    "bloom": [],
+    "present": [],
+    "colorparity": []
   },
   "rayCount": 4096,
   "spec": {
@@ -47,8 +51,8 @@
     "lowestImpactFactor": 0.5,
     "highestImpactParameter": 40
   },
-  "gpuMilliseconds": 98,
-  "cpuMilliseconds": 794.8105989999999,
+  "gpuMilliseconds": 100.7999999821186,
+  "cpuMilliseconds": 1311.955939,
   "shaderMessages": {
     "parity": []
   },
@@ -193,16 +197,68 @@
     "mismatchedPixels": 0,
     "mismatchesOutsideBand": 0,
     "outcomeCounts": {
-      "captured": 2634,
-      "escaped": 2088,
-      "disk": 11662
+      "captured": 938,
+      "escaped": 10608,
+      "disk": 4838
     },
-    "diskShadeMeanRelativeError": 0.0000021937899990350514,
-    "diskShadeMaxRelativeError": 0.0026618871927360723,
-    "escapedShadeMismatches": 0,
+    "diskRadianceMeanRelativeError": 0.00008133064493664004,
+    "diskRadianceMaxRelativeError": 0.002010128861627412,
+    "skyPixels": 10608,
+    "skyAggregateRelativeError": 0.0015593885063854708,
+    "skyMaxAbsoluteError": 0.0006076660072430969,
     "disagreementBand": {
       "criticalMargin": 0.05,
       "diskEdgeMargin": 0.005
     }
-  }
+  },
+  "colorParity": [
+    {
+      "mode": "lut",
+      "samples": 66,
+      "maxAbsoluteError": 673.9428389640525,
+      "maxRelativeError": 0.00043073429758813805,
+      "violations": 0,
+      "pass": true
+    },
+    {
+      "mode": "tonemap",
+      "samples": 200,
+      "maxAbsoluteError": 2.902282330297101e-7,
+      "maxRelativeError": 0.000001734648146064174,
+      "violations": 0,
+      "pass": true
+    },
+    {
+      "mode": "stars",
+      "samples": 300,
+      "maxAbsoluteError": 0.0006696858991865895,
+      "maxRelativeError": 0.0006055550262658593,
+      "violations": 0,
+      "pass": true
+    },
+    {
+      "mode": "nebula",
+      "samples": 300,
+      "maxAbsoluteError": 0.000002637175620337495,
+      "maxRelativeError": 0.0008781822740360242,
+      "violations": 0,
+      "pass": true
+    },
+    {
+      "mode": "cubemap",
+      "samples": 300,
+      "maxAbsoluteError": 0.0000538296933197957,
+      "maxRelativeError": 0.01586432921165094,
+      "violations": 0,
+      "pass": true
+    },
+    {
+      "mode": "hash",
+      "samples": 500,
+      "maxAbsoluteError": 0,
+      "maxRelativeError": 0,
+      "violations": 0,
+      "pass": true
+    }
+  ]
 }
