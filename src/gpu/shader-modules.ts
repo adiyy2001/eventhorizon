@@ -12,6 +12,7 @@ import imageSource from './shaders/image.wgsl';
 import nebulaSource from './shaders/nebula.wgsl';
 import noiseSource from './shaders/noise.wgsl';
 import observerSource from './shaders/observer.wgsl';
+import overlaySource from './shaders/overlay.wgsl';
 import paritySource from './shaders/parity.wgsl';
 import presentSource from './shaders/present.wgsl';
 import skySource from './shaders/sky.wgsl';
@@ -34,6 +35,7 @@ export const shaderSources = {
   nebula: nebulaSource,
   noise: noiseSource,
   observer: observerSource,
+  overlay: overlaySource,
   parity: paritySource,
   present: presentSource,
   sky: skySource,
@@ -49,6 +51,7 @@ export const tracerModules: readonly ShaderModuleName[] = [
   'geodesic',
   'observer',
   'disk',
+  'overlay',
   'trace',
 ];
 
@@ -90,9 +93,9 @@ export const colorParityShader = composeShader([
 export function declaredNames(source: string): string[] {
   const names: string[] = [];
   for (const match of source.matchAll(
-    /^\s*(?:fn|struct|const|override)\s+(\w+)|^\s*@[^\n]*\bvar(?:<[^>]*>)?\s+(\w+)/gm,
+    /^\s*(?:fn|struct|const|override)\s+(\w+)|^\s*@[^\n]*\bvar(?:<[^>]*>)?\s+(\w+)|^var(?:<[^>]*>)?\s+(\w+)/gm,
   )) {
-    const name = match[1] ?? match[2];
+    const name = match[1] ?? match[2] ?? match[3];
     if (name !== undefined) {
       names.push(name);
     }

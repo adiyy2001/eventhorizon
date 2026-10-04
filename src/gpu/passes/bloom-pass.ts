@@ -5,6 +5,7 @@ import { bloomShader } from '../shader-modules';
 export const bloomFormat: GPUTextureFormat = 'rgba16float';
 export const maxBloomLevels = 5;
 const smallestLevelEdge = 4;
+const regionBytes = 16;
 
 export function bloomLevelSizes(size: ViewportSize): ViewportSize[] {
   const sizes: ViewportSize[] = [];
@@ -26,6 +27,8 @@ export class BloomPass {
   private readonly downsample: GPURenderPipeline;
   private readonly upsample: GPURenderPipeline;
   private readonly sourceBindGroups: GPUBindGroup[];
+  private readonly firstRegionBuffer: GPUBuffer;
+  private readonly fullRegionBuffer: GPUBuffer;
 
   private constructor(
     private readonly device: GPUDevice,
@@ -55,6 +58,7 @@ export class BloomPass {
       entries: [
         { binding: 0, visibility: GPUShaderStage.FRAGMENT, texture: { sampleType: 'float' } },
         { binding: 1, visibility: GPUShaderStage.FRAGMENT, sampler: { type: 'filtering' } },
+        { binding: 2, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } },
       ],
     });
     const layout = device.createPipelineLayout({ bindGroupLayouts: [this.layout] });
@@ -74,15 +78,30 @@ export class BloomPass {
     this.firstDownsample = pipelineFor('downsampleFirst');
     this.downsample = pipelineFor('downsample');
     this.upsample = pipelineFor('upsample', { color: additive, alpha: additive });
-    const bindGroupFor = (texture: GPUTexture): GPUBindGroup =>
+    const makeRegionBuffer = (label: string): GPUBuffer => {
+      const buffer = device.createBuffer({
+        label,
+        size: regionBytes,
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+      });
+      device.queue.writeBuffer(buffer, 0, new Float32Array([1, 1, 0, 0]));
+      return buffer;
+    };
+    this.firstRegionBuffer = makeRegionBuffer('bloom first region');
+    this.fullRegionBuffer = makeRegionBuffer('bloom full region');
+    const bindGroupFor = (texture: GPUTexture, region: GPUBuffer): GPUBindGroup =>
       device.createBindGroup({
         layout: this.layout,
         entries: [
           { binding: 0, resource: texture.createView() },
           { binding: 1, resource: this.sampler },
+          { binding: 2, resource: { buffer: region } },
         ],
       });
-    this.sourceBindGroups = [resolved, ...this.levels].map(bindGroupFor);
+    this.sourceBindGroups = [
+      bindGroupFor(resolved, this.firstRegionBuffer),
+      ...this.levels.map((level) => bindGroupFor(level, this.fullRegionBuffer)),
+    ];
   }
 
   static async create(
@@ -125,7 +144,12 @@ export class BloomPass {
     pass.end();
   }
 
-  encode(encoder: GPUCommandEncoder): void {
+  encode(encoder: GPUCommandEncoder, validU = 1, validV = 1): void {
+    this.device.queue.writeBuffer(
+      this.firstRegionBuffer,
+      0,
+      new Float32Array([validU, validV, 0, 0]),
+    );
     this.levels.forEach((level, index) => {
       const bindGroup = this.sourceBindGroups[index];
       if (bindGroup === undefined) {
@@ -152,5 +176,7 @@ export class BloomPass {
     for (const level of this.levels) {
       level.destroy();
     }
+    this.firstRegionBuffer.destroy();
+    this.fullRegionBuffer.destroy();
   }
 }

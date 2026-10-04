@@ -1,9 +1,12 @@
 @group(0) @binding(0) var source: texture_2d<f32>;
 @group(0) @binding(1) var bloomSampler: sampler;
+@group(0) @binding(2) var<uniform> region: vec4f;
 
 fn tap(uv: vec2f, offset: vec2f) -> vec3f {
   let texel = 1.0 / vec2f(textureDimensions(source));
-  return textureSampleLevel(source, bloomSampler, uv + offset * texel, 0.0).rgb;
+  let valid = region.xy;
+  let position = clamp(uv * valid + offset * texel, 0.5 * texel, valid - 0.5 * texel);
+  return textureSampleLevel(source, bloomSampler, position, 0.0).rgb;
 }
 
 fn karisWeight(color: vec3f) -> f32 {

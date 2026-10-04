@@ -39,6 +39,10 @@ fn traceRay(initial: Ray, params: TraceParams) -> TraceResult {
     ray = rk4Step(ray, span, lensing);
     steps = steps + 1u;
 
+    if (overlayEnabled(params, OVERLAY_PHOTON_SPHERE)) {
+      markPhotonSphere(previous, ray, params);
+    }
+
     if (!lensing && segmentEntersSphere(previous, ray, captureRadius)) {
       return finishTrace(result, ray, OUTCOME_CAPTURED, steps, planeCrossings, 0u);
     }
@@ -46,6 +50,9 @@ fn traceRay(initial: Ray, params: TraceParams) -> TraceResult {
     if (hasDisk && planeCrossings < crossingLimit && crossesPlane(previous.position.y, ray.position.y)) {
       planeCrossings = planeCrossings + 1u;
       let crossing = planeCrossing(previous, ray, span);
+      if (overlayEnabled(params, OVERLAY_ISCO)) {
+        markIsco(crossing, ray.velocity, params);
+      }
       if (isInsideAnnulus(crossing.radius, params)) {
         result.hitRadius = crossing.radius;
         result.hitLambda = crossing.lambda;

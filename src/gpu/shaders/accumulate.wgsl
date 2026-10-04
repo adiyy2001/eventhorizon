@@ -12,6 +12,9 @@ struct AccumulateParams {
 @group(0) @binding(2) var history: texture_2d<f32>;
 @group(0) @binding(3) var blended: texture_storage_2d<rgba32float, write>;
 @group(0) @binding(4) var resolved: texture_storage_2d<rgba16float, write>;
+@group(0) @binding(5) var overlayCurrent: texture_2d<f32>;
+@group(0) @binding(6) var overlayHistory: texture_2d<f32>;
+@group(0) @binding(7) var overlayBlended: texture_storage_2d<rgba16float, write>;
 
 @compute @workgroup_size(8, 8)
 fn accumulate(@builtin(global_invocation_id) id: vec3u) {
@@ -24,4 +27,6 @@ fn accumulate(@builtin(global_invocation_id) id: vec3u) {
   let average = mix(previous, fresh, accumulation.weight);
   textureStore(blended, texel, average);
   textureStore(resolved, texel, vec4f(clamp(average.rgb, vec3f(0.0), vec3f(RESOLVED_MAX)), 1.0));
+  let overlayAverage = mix(textureLoad(overlayHistory, texel, 0), textureLoad(overlayCurrent, texel, 0), accumulation.weight);
+  textureStore(overlayBlended, texel, overlayAverage);
 }

@@ -1,7 +1,15 @@
 import { defaultView, viewTraceOptions } from '../core/render/view';
 import constantsSource from './shaders/constants.wgsl';
+import presentSource from './shaders/present.wgsl';
+import { shadowTangentRadius } from '../core/physics/shadow';
 import {
   flagsForView,
+  overlayBits,
+  overlayFlagsFor,
+  packPresentParams,
+  presentParamsDefinition,
+  presentParamsLayout,
+  splitColumnFor,
   packTraceParams,
   traceFlags,
   traceParamsDefinition,
@@ -56,12 +64,16 @@ describe('TraceParams layout', () => {
       flags: 116,
       rayCount: 120,
       peakTemperature: 124,
+      flagsRight: 128,
+      splitColumn: 132,
+      overlayFlags: 136,
+      padding: 140,
     };
     for (const field of traceParamsLayout.fields) {
       expect(field.offset, field.name).toBe(expected[field.name]);
     }
     expect(traceParamsLayout.fields).toHaveLength(Object.keys(expected).length);
-    expect(traceParamsLayout.size).toBe(128);
+    expect(traceParamsLayout.size).toBe(144);
   });
 
   it('keeps the flag bits identical in TypeScript and WGSL', () => {
@@ -72,6 +84,12 @@ describe('TraceParams layout', () => {
     expect(constants['FLAG_GRAVITATIONAL']).toBe(traceFlags.gravitational);
     expect(constants['FLAG_DOPPLER']).toBe(traceFlags.doppler);
   });
+
+  it('keeps the overlay bits identical in TypeScript and WGSL', () => {
+    const constants = parseU32Constants(constantsSource);
+    expect(constants['OVERLAY_PHOTON_SPHERE']).toBe(overlayBits.photonSphere);
+    expect(constants['OVERLAY_ISCO']).toBe(overlayBits.isco);
+  });
 });
 
 describe('packTraceParams', () => {
@@ -79,7 +97,7 @@ describe('packTraceParams', () => {
   const view = new DataView(buffer);
 
   it('writes a buffer of exactly the struct size', () => {
-    expect(buffer.byteLength).toBe(128);
+    expect(buffer.byteLength).toBe(144);
   });
 
   it('writes the camera basis as float32', () => {
@@ -138,5 +156,111 @@ describe('flagsForView', () => {
     ).toBe(0);
     expect(flagsForView({ ...defaultView, doppler: false }, true)).toBe(15);
     expect(flagsForView({ ...defaultView, gravitationalRedshift: false }, true)).toBe(23);
+  });
+});
+
+describe('split and overlay parameters', () => {
+  const read = (buffer: ArrayBuffer, name: string, kind: 'f' | 'u'): number => {
+    const dataView = new DataView(buffer);
+    return kind === 'f'
+      ? dataView.getFloat32(offsetOf(name), true)
+      : dataView.getUint32(offsetOf(name), true);
+  };
+
+  it('uses the same switches on both sides when the split is off', () => {
+    const buffer = packTraceParams({
+      ...input,
+      view: { ...defaultView, doppler: false },
+      split: { enabled: false, position: 0.5 },
+    });
+    expect(read(buffer, 'flags', 'u')).toBe(15 | 4 | 0);
+    expect(read(buffer, 'flagsRight', 'u')).toBe(read(buffer, 'flags', 'u'));
+    expect(read(buffer, 'splitColumn', 'f')).toBe(input.size.width + 1);
+  });
+
+  it('gives the right side of an active split the full model', () => {
+    const buffer = packTraceParams({
+      ...input,
+      view: { ...defaultView, lensing: false, doppler: false },
+      split: { enabled: true, position: 0.25 },
+    });
+    expect(read(buffer, 'flags', 'u') & traceFlags.lensing).toBe(0);
+    expect(read(buffer, 'flagsRight', 'u')).toBe(31);
+    expect(read(buffer, 'splitColumn', 'f')).toBe(50);
+  });
+
+  it('packs the overlay bits', () => {
+    expect(overlayFlagsFor(undefined)).toBe(0);
+    expect(overlayFlagsFor({ photonSphere: true, isco: false, shadowEdge: true })).toBe(1);
+    expect(overlayFlagsFor({ photonSphere: false, isco: true, shadowEdge: false })).toBe(2);
+    const buffer = packTraceParams({
+      ...input,
+      overlays: { photonSphere: true, isco: true, shadowEdge: false },
+    });
+    expect(read(buffer, 'overlayFlags', 'u')).toBe(3);
+  });
+
+  it('computes the split column in pixels', () => {
+    expect(splitColumnFor({ enabled: true, position: 0.4 }, 100)).toBe(40);
+    expect(splitColumnFor({ enabled: false, position: 0.4 }, 100)).toBe(101);
+    expect(splitColumnFor(undefined, 100)).toBe(101);
+  });
+});
+
+describe('present parameters', () => {
+  const post = { exposure: 1.5, bloomStrength: 0.2, ditherAmplitude: 1 };
+  const base = {
+    post,
+    view: defaultView,
+    shadowEdge: true,
+    split: { enabled: true, position: 0.3 },
+    internal: { width: 100, height: 50 },
+    target: { width: 200, height: 100 },
+  };
+
+  it('matches the struct declared in the WGSL source', () => {
+    expect(parseStructDefinition(presentSource, 'PresentParams')).toEqual(presentParamsDefinition);
+    expect(presentParamsLayout.size).toBe(48);
+  });
+
+  it('packs exposure, split, valid region and camera extents', () => {
+    const buffer = packPresentParams(base);
+    const data = new DataView(buffer);
+    const at = (name: string): number => {
+      const field = presentParamsLayout.fields.find((candidate) => candidate.name === name);
+      return data.getFloat32(field?.offset ?? 0, true);
+    };
+    expect(at('exposure')).toBe(1.5);
+    expect(at('bloomStrength')).toBeCloseTo(0.2, 6);
+    expect(at('splitPosition')).toBeCloseTo(0.3, 6);
+    expect(at('validU')).toBe(0.5);
+    expect(at('validV')).toBe(0.5);
+    expect(at('targetWidth')).toBe(200);
+    expect(at('targetHeight')).toBe(100);
+    expect(at('halfHeight')).toBeCloseTo(Math.tan(0.5 * defaultView.verticalFieldOfView), 6);
+    expect(at('halfWidth')).toBeCloseTo(2 * at('halfHeight'), 6);
+  });
+
+  it('hides the divider and the shadow edge when they are off', () => {
+    const buffer = packPresentParams({
+      ...base,
+      shadowEdge: false,
+      split: { enabled: false, position: 0.3 },
+    });
+    const data = new DataView(buffer);
+    const offset = (name: string): number =>
+      presentParamsLayout.fields.find((candidate) => candidate.name === name)?.offset ?? 0;
+    expect(data.getFloat32(offset('splitPosition'), true)).toBe(-1);
+    expect(data.getFloat32(offset('shadowTangent'), true)).toBe(0);
+  });
+
+  it('sets the shadow tangent from the exact apparent radius', () => {
+    const buffer = packPresentParams(base);
+    const data = new DataView(buffer);
+    const field = presentParamsLayout.fields.find(
+      (candidate) => candidate.name === 'shadowTangent',
+    );
+    const expected = shadowTangentRadius(defaultView.distance);
+    expect(data.getFloat32(field?.offset ?? 0, true)).toBeCloseTo(expected, 6);
   });
 });

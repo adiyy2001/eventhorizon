@@ -23,7 +23,14 @@ describe('composeShader', () => {
   });
 
   it('puts the shared tracer modules in a fixed order', () => {
-    expect(tracerModules).toEqual(['constants', 'geodesic', 'observer', 'disk', 'trace']);
+    expect(tracerModules).toEqual([
+      'constants',
+      'geodesic',
+      'observer',
+      'disk',
+      'overlay',
+      'trace',
+    ]);
   });
 });
 

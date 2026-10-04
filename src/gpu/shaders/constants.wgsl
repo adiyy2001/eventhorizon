@@ -13,6 +13,9 @@ const FLAG_DISK: u32 = 4u;
 const FLAG_GRAVITATIONAL: u32 = 8u;
 const FLAG_DOPPLER: u32 = 16u;
 
+const OVERLAY_PHOTON_SPHERE: u32 = 1u;
+const OVERLAY_ISCO: u32 = 2u;
+
 const RESULT_STEP_LIMIT: u32 = 1u;
 
 struct TraceParams {
@@ -40,6 +43,10 @@ struct TraceParams {
   flags: u32,
   rayCount: u32,
   peakTemperature: f32,
+  flagsRight: u32,
+  splitColumn: f32,
+  overlayFlags: u32,
+  padding: u32,
 }
 
 struct Ray {

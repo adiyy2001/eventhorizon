@@ -7,6 +7,8 @@ import {
   type ViewDescription,
 } from '../core/render/view';
 import { type PostSettings } from '../core/render/post';
+import { fullModelView, type OverlaySettings, type SplitSettings } from '../core/render/settings';
+import { shadowTangentRadius } from '../core/physics/shadow';
 import { type FieldDefinition, layoutStruct, type StructLayout, typeLayout } from './wgsl-layout';
 
 export const traceParamsDefinition: readonly FieldDefinition[] = [
@@ -34,6 +36,10 @@ export const traceParamsDefinition: readonly FieldDefinition[] = [
   { name: 'flags', type: 'u32' },
   { name: 'rayCount', type: 'u32' },
   { name: 'peakTemperature', type: 'f32' },
+  { name: 'flagsRight', type: 'u32' },
+  { name: 'splitColumn', type: 'f32' },
+  { name: 'overlayFlags', type: 'u32' },
+  { name: 'padding', type: 'u32' },
 ];
 
 export const traceParamsLayout: StructLayout = layoutStruct(traceParamsDefinition);
@@ -46,11 +52,33 @@ export const traceFlags = {
   doppler: 16,
 } as const;
 
+export const overlayBits = {
+  photonSphere: 1,
+  isco: 2,
+} as const;
+
 export interface TraceParamsInput {
   view: ViewDescription;
   size: ViewportSize;
   jitter: { x: number; y: number };
   rayCount: number;
+  overlays?: OverlaySettings;
+  split?: SplitSettings;
+}
+
+export function overlayFlagsFor(overlays: OverlaySettings | undefined): number {
+  let flags = 0;
+  if (overlays?.photonSphere === true) {
+    flags |= overlayBits.photonSphere;
+  }
+  if (overlays?.isco === true) {
+    flags |= overlayBits.isco;
+  }
+  return flags;
+}
+
+export function splitColumnFor(split: SplitSettings | undefined, width: number): number {
+  return split?.enabled === true ? split.position * width : width + 1;
 }
 
 export function flagsForView(view: ViewDescription, withDisk: boolean): number {
@@ -79,6 +107,8 @@ export function traceParamValues(input: TraceParamsInput): Record<string, number
   const options = viewTraceOptions(view);
   const disk = viewDisk(view);
   const extents = viewHalfExtents(view, size);
+  const flags = flagsForView(view, true);
+  const splitting = input.split?.enabled === true;
   return {
     'cameraPosition.x': basis.position.x,
     'cameraPosition.y': basis.position.y,
@@ -109,9 +139,13 @@ export function traceParamValues(input: TraceParamsInput): Record<string, number
     stepMax: options.step.maxStep,
     maxSteps: options.maxSteps,
     maxCrossings: options.maxCrossings,
-    flags: flagsForView(view, true),
+    flags,
     rayCount: input.rayCount,
     peakTemperature: view.peakTemperature,
+    flagsRight: splitting ? flagsForView(fullModelView(view), true) : flags,
+    splitColumn: splitColumnFor(input.split, size.width),
+    overlayFlags: overlayFlagsFor(input.overlays),
+    padding: 0,
   };
 }
 
@@ -158,16 +192,42 @@ export const presentParamsDefinition: readonly FieldDefinition[] = [
   { name: 'exposure', type: 'f32' },
   { name: 'bloomStrength', type: 'f32' },
   { name: 'ditherAmplitude', type: 'f32' },
+  { name: 'splitPosition', type: 'f32' },
+  { name: 'validU', type: 'f32' },
+  { name: 'validV', type: 'f32' },
+  { name: 'halfWidth', type: 'f32' },
+  { name: 'halfHeight', type: 'f32' },
+  { name: 'shadowTangent', type: 'f32' },
+  { name: 'targetWidth', type: 'f32' },
+  { name: 'targetHeight', type: 'f32' },
   { name: 'padding', type: 'f32' },
 ];
 
 export const presentParamsLayout = layoutStruct(presentParamsDefinition);
 
-export function packPresentParams(post: PostSettings): ArrayBuffer {
+export interface PresentInput {
+  post: PostSettings;
+  view: ViewDescription;
+  shadowEdge: boolean;
+  split: SplitSettings;
+  internal: ViewportSize;
+  target: ViewportSize;
+}
+
+export function packPresentParams(input: PresentInput): ArrayBuffer {
+  const extents = viewHalfExtents(input.view, input.target);
   return packStruct(presentParamsLayout, {
-    exposure: post.exposure,
-    bloomStrength: post.bloomStrength,
-    ditherAmplitude: post.ditherAmplitude,
+    exposure: input.post.exposure,
+    bloomStrength: input.post.bloomStrength,
+    ditherAmplitude: input.post.ditherAmplitude,
+    splitPosition: input.split.enabled ? input.split.position : -1,
+    validU: input.internal.width / input.target.width,
+    validV: input.internal.height / input.target.height,
+    halfWidth: extents.halfWidth,
+    halfHeight: extents.halfHeight,
+    shadowTangent: input.shadowEdge ? shadowTangentRadius(input.view.distance) : 0,
+    targetWidth: input.target.width,
+    targetHeight: input.target.height,
     padding: 0,
   });
 }

@@ -1,7 +1,6 @@
-import { type PostSettings } from '../../core/render/post';
 import { compileShader } from '../shader-compile';
 import { presentShader } from '../shader-modules';
-import { packPresentParams, presentParamsLayout } from '../uniforms';
+import { packPresentParams, type PresentInput, presentParamsLayout } from '../uniforms';
 
 export class PresentPass {
   private readonly layout: GPUBindGroupLayout;
@@ -17,6 +16,7 @@ export class PresentPass {
         { binding: 1, visibility: GPUShaderStage.FRAGMENT, texture: { sampleType: 'float' } },
         { binding: 2, visibility: GPUShaderStage.FRAGMENT, texture: { sampleType: 'float' } },
         { binding: 3, visibility: GPUShaderStage.FRAGMENT, sampler: { type: 'filtering' } },
+        { binding: 4, visibility: GPUShaderStage.FRAGMENT, texture: { sampleType: 'float' } },
       ],
     });
     this.paramsBuffer = device.createBuffer({
@@ -58,15 +58,17 @@ export class PresentPass {
     encoder: GPUCommandEncoder,
     hdr: GPUTexture,
     bloom: GPUTexture,
-    post: PostSettings,
+    overlay: GPUTexture,
+    input: PresentInput,
     target: GPUTextureView,
     targetFormat: GPUTextureFormat,
+    timestampWrites?: GPURenderPassTimestampWrites,
   ): void {
     const pipeline = this.pipelines.get(targetFormat);
     if (pipeline === undefined) {
       throw new Error(`present pipeline for ${targetFormat} was not prepared`);
     }
-    this.device.queue.writeBuffer(this.paramsBuffer, 0, packPresentParams(post));
+    this.device.queue.writeBuffer(this.paramsBuffer, 0, packPresentParams(input));
     const bindGroup = this.device.createBindGroup({
       layout: this.layout,
       entries: [
@@ -74,13 +76,15 @@ export class PresentPass {
         { binding: 1, resource: hdr.createView() },
         { binding: 2, resource: bloom.createView() },
         { binding: 3, resource: this.sampler },
+        { binding: 4, resource: overlay.createView() },
       ],
     });
-    const pass = encoder.beginRenderPass({
-      colorAttachments: [
-        { view: target, clearValue: { r: 0, g: 0, b: 0, a: 1 }, loadOp: 'clear', storeOp: 'store' },
-      ],
-    });
+    const colorAttachments: GPURenderPassColorAttachment[] = [
+      { view: target, clearValue: { r: 0, g: 0, b: 0, a: 1 }, loadOp: 'clear', storeOp: 'store' },
+    ];
+    const pass = encoder.beginRenderPass(
+      timestampWrites === undefined ? { colorAttachments } : { colorAttachments, timestampWrites },
+    );
     pass.setPipeline(pipeline);
     pass.setBindGroup(0, bindGroup);
     pass.draw(3);
