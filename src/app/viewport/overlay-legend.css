@@ -1,0 +1,44 @@
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.swatch {
+  display: inline-block;
+  width: 2rem;
+  border-top: 3px solid currentColor;
+}
+
+[data-overlay='photon-sphere'] .swatch {
+  border-top-style: dotted;
+  color: #59d9ff;
+}
+
+[data-overlay='isco'] .swatch {
+  border-top-style: dashed;
+  color: #ff8cd9;
+}
+
+[data-overlay='shadow-edge'] .swatch {
+  border-top-style: solid;
+  color: #a6ff80;
+}
+
+.swatch-split {
+  width: 0;
+  height: 1rem;
+  border-top: 0;
+  border-left: 3px solid #fff;
+}

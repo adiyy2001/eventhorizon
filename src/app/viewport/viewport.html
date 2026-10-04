@@ -14,11 +14,36 @@
         Rendering the first frame.
       }
       @case ('rendered') {
-        Disk seen at 75 degrees from the axis, observer at 30 M.
+        Disk seen at {{ inclinationDegrees() }} degrees from the axis, observer at
+        {{ settings().view.distance }} M.
       }
       @case ('failed') {
         The first frame could not be rendered.
       }
     }
   </figcaption>
+  <app-overlay-legend [overlays]="settings().overlays" [split]="settings().split" />
+  <div class="actions">
+    <button
+      type="button"
+      data-testid="save-image"
+      [disabled]="state() !== 'rendered' || exportState() === 'working'"
+      (click)="saveImage()"
+    >
+      Save image ({{ exportEdge }} px)
+    </button>
+    <p class="export-status" role="status" data-testid="export-status">
+      @switch (exportState()) {
+        @case ('working') {
+          Rendering the image.
+        }
+        @case ('done') {
+          Image saved.
+        }
+        @case ('failed') {
+          The image could not be saved.
+        }
+      }
+    </p>
+  </div>
 </figure>

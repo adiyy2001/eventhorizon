@@ -1,0 +1,16 @@
+@if (items().length > 0 || split().enabled) {
+  <ul class="legend" aria-label="Overlay key" data-testid="overlay-legend">
+    @for (item of items(); track item.id) {
+      <li [attr.data-overlay]="item.id" [attr.data-style]="item.style">
+        <span class="swatch" aria-hidden="true"></span>
+        <span>{{ item.label }} ({{ item.style }} line)</span>
+      </li>
+    }
+    @if (split().enabled) {
+      <li data-overlay="split">
+        <span class="swatch swatch-split" aria-hidden="true"></span>
+        <span>Left of the divider: selected effects. Right: the full model.</span>
+      </li>
+    }
+  </ul>
+}
