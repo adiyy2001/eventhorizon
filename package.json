@@ -25,7 +25,8 @@
     "validate:physics": "tsx bench/physics-validation.ts",
     "validate:steps": "tsx bench/step-rule-sweep.ts",
     "bench:parity": "tsx bench/gpu-parity.ts",
-    "render:view": "tsx scripts/render-view.ts"
+    "render:view": "tsx scripts/render-view.ts",
+    "capture:baselines": "tsx scripts/capture-baselines.ts"
   },
   "dependencies": {
     "@angular/common": "22.2.1",
