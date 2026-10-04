@@ -26,8 +26,14 @@ describe('view helpers', () => {
 
   it('puts the camera at the configured distance and inclination', () => {
     const basis = viewBasis(defaultView);
-    expect(Math.hypot(basis.position.x, basis.position.y, basis.position.z)).toBeCloseTo(30, 12);
-    expect(basis.position.y / 30).toBeCloseTo(Math.cos(defaultView.inclination), 12);
+    expect(Math.hypot(basis.position.x, basis.position.y, basis.position.z)).toBeCloseTo(
+      defaultView.distance,
+      12,
+    );
+    expect(basis.position.y / defaultView.distance).toBeCloseTo(
+      Math.cos(defaultView.inclination),
+      12,
+    );
   });
 
   it('scales the horizontal half extent by the aspect ratio', () => {

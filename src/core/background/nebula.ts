@@ -4,8 +4,8 @@ import { fbm3 } from './noise';
 
 export const NEBULA_BAND_NORMAL: Vec3 = normalize(vec3(0.3, 0.9, 0.3));
 export const NEBULA_BAND_WIDTH = 0.22;
-export const NEBULA_CLOUD_GAIN = 0.06;
-export const NEBULA_GLOW_GAIN = 0.012;
+export const NEBULA_CLOUD_GAIN = 0.15;
+export const NEBULA_GLOW_GAIN = 0.03;
 const WARM_TINT: Rgb = [1.0, 0.38, 0.3];
 const COOL_TINT: Rgb = [0.3, 0.5, 1.0];
 const GLOW_TINT: Rgb = [1.0, 0.92, 0.8];

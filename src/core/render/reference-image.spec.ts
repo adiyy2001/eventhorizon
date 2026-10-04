@@ -8,7 +8,7 @@ describe('renderReferenceImage', () => {
 
   it('allocates one value per pixel', () => {
     expect(image.outcomes).toHaveLength(1024);
-    expect(image.shade).toHaveLength(1024);
+    expect(image.radiance).toHaveLength(3072);
     expect(image.hitRadius).toHaveLength(1024);
     expect(image.impactParameters).toHaveLength(1024);
   });
@@ -16,7 +16,7 @@ describe('renderReferenceImage', () => {
   it('shows a shadow in the middle and the sky or the disk elsewhere', () => {
     const center = 16 * 32 + 16;
     expect(image.outcomes[center]).toBe(OUTCOME_CODES.captured);
-    expect(image.shade[center]).toBe(0);
+    expect(image.radiance.slice(center * 3, center * 3 + 3)).toEqual(new Float32Array(3));
     const counts = [0, 0, 0];
     image.outcomes.forEach((code) => {
       counts[code] = (counts[code] ?? 0) + 1;
@@ -24,12 +24,12 @@ describe('renderReferenceImage', () => {
     expect(counts.every((count) => count > 0)).toBe(true);
   });
 
-  it('records the hit radius and a positive shade for every disk pixel', () => {
+  it('records the hit radius and a non-negative radiance for every disk pixel', () => {
     image.outcomes.forEach((code, index) => {
       if (code === OUTCOME_CODES.disk) {
         expect(image.hitRadius[index]).toBeGreaterThanOrEqual(6);
         expect(image.hitRadius[index]).toBeLessThanOrEqual(20);
-        expect(image.shade[index]).toBeGreaterThanOrEqual(0);
+        expect(image.radiance[index * 3]).toBeGreaterThanOrEqual(0);
       }
     });
   });

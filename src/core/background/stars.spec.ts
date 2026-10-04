@@ -58,12 +58,12 @@ function secondComponent(direction: Vec3): number {
 }
 
 describe('star field', () => {
-  it('places a few thousand stars with a skewed brightness distribution', () => {
+  it('places thousands of stars with a skewed brightness distribution', () => {
     expect(stars.length).toBeGreaterThan(4000);
-    expect(stars.length).toBeLessThan(10000);
-    const bright = stars.filter((star) => star.peak > 0.2).length;
-    const dim = stars.filter((star) => star.peak < 0.05).length;
-    expect(dim).toBeGreaterThan(5 * bright);
+    expect(stars.length).toBeLessThan(16000);
+    const bright = stars.filter((star) => star.peak > 0.6).length;
+    const dim = stars.filter((star) => star.peak < 0.12).length;
+    expect(dim).toBeGreaterThan(2 * bright);
     for (const star of stars) {
       expect(star.peak).toBeGreaterThanOrEqual(STAR_PEAK_MIN);
       expect(star.peak).toBeLessThanOrEqual(STAR_PEAK_MAX);

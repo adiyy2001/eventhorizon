@@ -1,15 +1,16 @@
+import { buildTemperatureLut } from '../color/temperature-lut';
 import { impactParameter } from '../physics/geodesic';
 import { pixelDirection, staticObserverRay, type ViewportSize } from '../physics/observer';
 import { traceRay } from '../physics/trace';
 import { OUTCOME_CODES } from '../validation/parity';
-import { checkerShade, diskShade } from './placeholder-shade';
-import { viewBasis, viewDisk, viewTraceOptions, type ViewDescription } from './view';
+import { diskRadiance, skyRadiance } from './shade';
+import { viewBasis, viewTraceOptions, type ViewDescription } from './view';
 
 export interface ReferenceImage {
   size: ViewportSize;
   outcomes: Uint8Array;
   hitRadius: Float32Array;
-  shade: Float32Array;
+  radiance: Float32Array;
   impactParameters: Float32Array;
 }
 
@@ -19,13 +20,12 @@ export function renderReferenceImage(view: ViewDescription, size: ViewportSize):
     size,
     outcomes: new Uint8Array(pixelCount),
     hitRadius: new Float32Array(pixelCount),
-    shade: new Float32Array(pixelCount),
+    radiance: new Float32Array(pixelCount * 3),
     impactParameters: new Float32Array(pixelCount),
   };
   const basis = viewBasis(view);
   const options = viewTraceOptions(view);
-  const disk = viewDisk(view);
-  const switches = { gravitational: view.gravitationalRedshift, doppler: view.doppler };
+  const lut = buildTemperatureLut();
 
   for (let row = 0; row < size.height; row += 1) {
     for (let column = 0; column < size.width; column += 1) {
@@ -43,16 +43,12 @@ export function renderReferenceImage(view: ViewDescription, size: ViewportSize):
       image.impactParameters[index] = impactParameter(start);
       if (result.diskHit !== null) {
         image.hitRadius[index] = result.diskHit.radius;
-        image.shade[index] = diskShade(
-          result.diskHit.radius,
-          result.diskHit.lambda,
-          view.distance,
-          disk.innerRadius,
-          switches,
+        image.radiance.set(
+          diskRadiance(result.diskHit.radius, result.diskHit.lambda, view, lut),
+          index * 3,
         );
       } else if (result.outcome === 'escaped') {
-        const { x, y, z } = result.finalDirection;
-        image.shade[index] = checkerShade(x, y, z);
+        image.radiance.set(skyRadiance(result.finalDirection, lut), index * 3);
       }
     }
   }

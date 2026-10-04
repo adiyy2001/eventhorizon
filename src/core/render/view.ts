@@ -14,6 +14,7 @@ export interface ViewDescription {
   azimuth: number;
   verticalFieldOfView: number;
   diskOuterRadius: number;
+  peakTemperature: number;
   lensing: boolean;
   higherOrderImages: boolean;
   gravitationalRedshift: boolean;
@@ -21,11 +22,12 @@ export interface ViewDescription {
 }
 
 export const defaultView: ViewDescription = {
-  distance: 30,
+  distance: 50,
   inclination: (75 * Math.PI) / 180,
   azimuth: 0,
   verticalFieldOfView: (35 * Math.PI) / 180,
-  diskOuterRadius: 20,
+  diskOuterRadius: 16,
+  peakTemperature: 5500,
   lensing: true,
   higherOrderImages: true,
   gravitationalRedshift: true,

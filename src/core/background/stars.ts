@@ -4,11 +4,11 @@ import { type Vec3, dot } from '../physics/vec3';
 import { FACE_COUNT, cubeFace, faceDirection } from './cube-faces';
 import { hash3, unitFloat } from './hash';
 
-export const STAR_CELLS_PER_EDGE = 64;
-export const STAR_PEAK_DENSITY = 0.45;
+export const STAR_CELLS_PER_EDGE = 96;
+export const STAR_PEAK_DENSITY = 0.5;
 export const STAR_SIGMA = 7e-4;
-export const STAR_PEAK_MIN = 0.02;
-export const STAR_PEAK_MAX = 3;
+export const STAR_PEAK_MIN = 0.06;
+export const STAR_PEAK_MAX = 6;
 export const STAR_FLUX_EXPONENT = -0.8;
 export const STAR_TEMPERATURE_MIN = 2600;
 export const STAR_TEMPERATURE_RATIO = 6.92;
