@@ -47,3 +47,11 @@ The WGSL sources are plain `.wgsl` files imported as text through the Angular es
 - The nebula cube is 512² per face with no mip chain, and stars are evaluated per ray in the tracer instead of being baked (ADR 12). The temperature LUT and the cube are bound as group 1 of the trace pipeline.
 - The accumulation pair holds `rgba32float` history, and a resolve step writes `rgba16float` for bloom and present. Bloom has five levels. The present pass adds the top bloom level, scaled by the bloom strength, to the resolved image before tone mapping.
 - A color parity kernel runs the shipped WGSL functions on supplied inputs so the e2e tests can compare them with the CPU twins.
+
+## Amendment from the interactive milestone
+
+- Dynamic resolution renders into the top-left sub-rectangle of full-size targets. No texture is recreated when the scale changes. The present pass scales its texture coordinates by the valid fraction, and the first bloom level samples the same sub-rectangle stretched to the full bloom size. Accumulation restarts when the internal size changes (ADR 13).
+- The accumulation weight is `1/(n+1)`, and the first frame after a reset writes the new sample without reading the history, so a reset is exact and does not depend on stale texels.
+- Overlay marks have their own `rgba16float` ping-pong pair that accumulates with the same weight. The shadow edge circle is drawn analytically in the present pass.
+- The render loop keeps at most two frames in flight and goes idle after 256 accumulated frames.
+

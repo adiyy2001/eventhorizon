@@ -307,6 +307,24 @@ The sky has two parts, both procedural and both written once in TypeScript and o
 
 Tests: `hash.spec.ts`, `noise.spec.ts`, `cube-faces.spec.ts`, `nebula.spec.ts`, `stars.spec.ts` on the CPU, and `e2e/color-pipeline.spec.ts` for the GPU against the CPU.
 
+## 16. Overlays
+
+Three overlays mark the radii that matter in the picture. They are drawn as thin lines, and each has its own line style so that color is never the only signal: the photon sphere is dotted, the ISCO is dashed, the shadow edge is solid.
+
+**Photon sphere, $r = 3M$.** A ray crosses the sphere when $|x|$ passes through 3. The tracer tests every step for an inward crossing of $r = 3$, interpolates the crossing point along the step, and marks the pixel if that point lies within about one pixel of one of three orthogonal great circles (the planes $x = 0$, $y = 0$, $z = 0$ of the black hole frame), with a dotted pattern along the circle. The band width is $0.9$ pixel of world size at the observer distance divided by the sine of the angle between the ray and the circle's axis, so the line keeps a constant screen width where the ray grazes the sphere. Only the inward crossing is tested. A ray that leaves again would otherwise draw every circle twice.
+
+**ISCO, $r = 6M$.** The ring lies in the disk plane. The tracer checks the plane crossings it already computes for the disk and marks the pixel when the crossing radius is within the same pixel-wide band of $r = 6$, with a dashed pattern along the angle. The ring is therefore visible through the disk, behind the hole and in the lensed secondary image, because it is found where light actually crosses the plane.
+
+**Shadow edge.** This one is analytic and is drawn in the present pass. For the static observer at distance $D$, the critical ray leaves the camera at the angle $\alpha_c$ from section 7. The pinhole camera places a ray at angle $\alpha$ at the tangent-plane radius $\tan\alpha$, so the circle has the radius
+
+$$\rho = \tan\alpha_c = \tan\arcsin\!\left(\frac{b_c}{D}\sqrt{1 - \frac{r_s}{D}}\right)$$
+
+in the same units as the vertical half extent $\tan(\mathrm{fov}/2)$ of the image plane. The present pass converts the distance of a pixel from the image center to that unit and draws a line where it equals $\rho$, antialiased over about one pixel. Using $\tan\alpha_c$ and not $\alpha_c$ keeps the circle exact at wide fields of view.
+
+The overlay masks are accumulated the same way as the radiance, in a separate texture pair, so the dotted and dashed lines are antialiased by the sub-pixel jitter. They are composited after tone mapping so exposure does not change them.
+
+Tests: `shadow-overlay.spec.ts` (the radius $\rho$ against the radius of the captured region in the CPU reference image, within 1 percent for $D = 30$ and $50$), `shadow.spec.ts` (the formula), and `e2e/interactive.spec.ts` (the drawn circle on the GPU against both $\rho$ and the captured area, within 1 percent).
+
 ## References
 
 - Bardeen, J. M. (1973). Timelike and null geodesics in the Kerr metric. In *Black Holes* (Les Houches 1972), DeWitt and DeWitt (eds.), Gordon and Breach.

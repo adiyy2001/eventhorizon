@@ -30,3 +30,8 @@ The renderer exposes one capture path: render the final image into an `rgba8unor
 ## Amendment from the GPU tracer milestone
 
 The automation hook exists as `window.eventhorizonAutomation`, installed from `main.ts` only when the URL has `?automation`, through a lazy chunk (4 kB) that is not loaded otherwise. It offers `compileShaders`, `runParity` and `renderView`. Each call acquires its own device, listens for uncaptured GPU errors and fails if one arrived, so a validation error cannot hide behind a zero-filled readback. `renderView` returns the outcome map, the red channel of the radiance texture and a PNG made by the browser from the same bytes the capture path reads back. Fixed resolution, no dynamic scaling and no accumulation apply for now because none of them exist yet; M5 adds the accumulated-frame count to the hook.
+
+## Amendment from the interactive milestone
+
+The hook now also offers `renderSequence` (render several settings in turn on one renderer and report the accumulated frame count after each step), `exportImage` (the export path at a chosen size) and `runMotion` (a scripted camera move through the real render loop, returning the resolution controller log). `renderView` and the sequence report the number of accumulated frames, and `renderView` accepts the full settings object (switches, overlays, split) next to the older `view` and `post` fields. The export button and `exportImage` share one still renderer. It clamps each edge to 64 to 2048 pixels, renders 1 to 256 frames (32 by default) at scale 1 and ignores dynamic resolution. Under `?automation` the live loop idles after 4 accumulated frames instead of 256, so a test page does not keep the GPU busy.
+
