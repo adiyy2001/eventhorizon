@@ -22,7 +22,8 @@
     "verify": "pnpm format:check && pnpm lint && pnpm check:style && pnpm typecheck && pnpm test:coverage && pnpm build && playwright test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "validate:physics": "tsx bench/physics-validation.ts"
+    "validate:physics": "tsx bench/physics-validation.ts",
+    "validate:steps": "tsx bench/step-rule-sweep.ts"
   },
   "dependencies": {
     "@angular/common": "22.2.1",

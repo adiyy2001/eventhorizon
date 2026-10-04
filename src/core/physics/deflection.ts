@@ -1,7 +1,6 @@
 import { CRITICAL_IMPACT_PARAMETER, SCHWARZSCHILD_RADIUS } from './constants';
 import { dormandPrinceTrace, defaultDormandPrinceOptions } from './dormand-prince';
 import { angularMomentumVector, radiusOf, type RayState, velocityOf } from './geodesic';
-import { defaultStepRule } from './integrator';
 import {
   cameraBasis,
   directionAtAngle,
@@ -191,6 +190,15 @@ function incomingRay(impactParameter: number, radius: number): RayState {
   return staticObserverRay(basis.position, directionAtAngle(basis, angle));
 }
 
+function vectorFormTraceOptions(options: VectorFormOptions): TraceOptions {
+  const base = options.traceOptions ?? defaultTraceOptions(options.radius, null);
+  return {
+    ...base,
+    step: { ...base.step, maxStep: options.radius },
+    escapeRadius: options.radius,
+  };
+}
+
 function rotationAboutAxis(from: Vec3, to: Vec3, axis: Vec3): number {
   const angle = Math.atan2(dot(cross(from, to), axis), dot(from, to));
   return angle < 0 ? angle + 2 * Math.PI : angle;
@@ -212,11 +220,7 @@ export function deflectionByVectorForm(
           escapeRadius: options.radius,
           initialStep: 1,
         }).state
-      : traceRay(start, {
-          ...(options.traceOptions ?? defaultTraceOptions(options.radius, null)),
-          step: { ...defaultStepRule, maxStep: options.radius },
-          escapeRadius: options.radius,
-        }).finalState;
+      : traceRay(start, vectorFormTraceOptions(options)).finalState;
   const measured = rotationAboutAxis(incoming, velocityOf(end), axis);
   return (
     measured +

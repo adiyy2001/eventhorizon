@@ -1,0 +1,72 @@
+{
+  "generatedAt": "2026-10-04T03:49:42.193Z",
+  "node": "v24.21.0",
+  "cpu": "12th Gen Intel(R) Core(TM) i7-12700H",
+  "view": {
+    "size": 64,
+    "inclinationDegrees": 80,
+    "distance": 30
+  },
+  "production": {
+    "kappa": 0.03,
+    "angularWeight": 0.5
+  },
+  "rows": [
+    {
+      "kappa": 0.1,
+      "angularWeight": 0.5,
+      "criticalImpactError": 0.0000070766415092293755,
+      "deflectionErrorAtB5p3": 0.00007061509375727582,
+      "deflectionErrorAtB30": 1.5671254188776018e-7,
+      "meanStepsPerRay": 33.04931640625
+    },
+    {
+      "kappa": 0.05,
+      "angularWeight": 1,
+      "criticalImpactError": 1.8671710222406546e-7,
+      "deflectionErrorAtB5p3": 0.0000019093946876935775,
+      "deflectionErrorAtB30": 6.785729561586962e-9,
+      "meanStepsPerRay": 78.87451171875
+    },
+    {
+      "kappa": 0.03,
+      "angularWeight": 0,
+      "criticalImpactError": 3.801993671004311e-7,
+      "deflectionErrorAtB5p3": 0.000003451043087299155,
+      "deflectionErrorAtB30": 2.092334194792045e-9,
+      "meanStepsPerRay": 83.7041015625
+    },
+    {
+      "kappa": 0.03,
+      "angularWeight": 0.5,
+      "criticalImpactError": 5.190815954847494e-8,
+      "deflectionErrorAtB5p3": 5.216929990226049e-7,
+      "deflectionErrorAtB30": 1.235165913993086e-9,
+      "meanStepsPerRay": 107.5322265625
+    },
+    {
+      "kappa": 0.03,
+      "angularWeight": 2,
+      "criticalImpactError": 1.0697135621740017e-8,
+      "deflectionErrorAtB5p3": 1.105872078355219e-7,
+      "deflectionErrorAtB30": 5.076395415137824e-10,
+      "meanStepsPerRay": 179.14453125
+    },
+    {
+      "kappa": 0.01,
+      "angularWeight": 0.5,
+      "criticalImpactError": 9.182485882774927e-10,
+      "deflectionErrorAtB5p3": 6.28121465950926e-9,
+      "deflectionErrorAtB30": 1.5426271371410394e-11,
+      "meanStepsPerRay": 322.5478515625
+    },
+    {
+      "kappa": 0.003,
+      "angularWeight": 0.5,
+      "criticalImpactError": 2.1975665731588379e-10,
+      "deflectionErrorAtB5p3": 4.995115432393504e-11,
+      "deflectionErrorAtB30": 3.5427216715788745e-13,
+      "meanStepsPerRay": 1075.04541015625
+    }
+  ]
+}
