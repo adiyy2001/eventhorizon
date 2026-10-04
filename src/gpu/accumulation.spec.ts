@@ -1,4 +1,12 @@
-import { historyWeight, jitterForFrame } from './accumulation';
+import {
+  accumulationKey,
+  convergedFrameCount,
+  historyWeight,
+  initialAccumulation,
+  isConverged,
+  jitterForFrame,
+  stepAccumulation,
+} from './accumulation';
 
 describe('jitter sequence', () => {
   it('starts at the pixel center', () => {
@@ -68,5 +76,58 @@ describe('history weight', () => {
       samples.reduce((sum, value) => sum + value, 0) / samples.length,
       12,
     );
+  });
+});
+
+describe('accumulation state', () => {
+  it('starts a fresh sequence on the first frame', () => {
+    const step = stepAccumulation(initialAccumulation, 123);
+    expect(step.reset).toBe(true);
+    expect(step.frameIndex).toBe(0);
+    expect(step.state).toEqual({ key: 123, frames: 1 });
+  });
+
+  it('counts frames while the key stays the same', () => {
+    let state = initialAccumulation;
+    const indices: number[] = [];
+    for (let frame = 0; frame < 5; frame += 1) {
+      const step = stepAccumulation(state, 9);
+      indices.push(step.frameIndex);
+      state = step.state;
+    }
+    expect(indices).toEqual([0, 1, 2, 3, 4]);
+    expect(state.frames).toBe(5);
+  });
+
+  it('resets as soon as the key changes', () => {
+    let state = stepAccumulation(initialAccumulation, 9).state;
+    state = stepAccumulation(state, 9).state;
+    const step = stepAccumulation(state, 10);
+    expect(step.reset).toBe(true);
+    expect(step.frameIndex).toBe(0);
+    expect(step.state.frames).toBe(1);
+  });
+
+  it('gives the first frame full weight and later frames the running mean weight', () => {
+    expect(historyWeight(stepAccumulation(initialAccumulation, 1).frameIndex)).toBe(1);
+    expect(historyWeight(3)).toBe(0.25);
+  });
+
+  it('reports convergence after the frame budget', () => {
+    expect(isConverged({ key: 1, frames: convergedFrameCount - 1 })).toBe(false);
+    expect(isConverged({ key: 1, frames: convergedFrameCount })).toBe(true);
+  });
+
+  it('builds a key from the scene hash and the render size', () => {
+    const base = accumulationKey(77, 256, 256);
+    expect(accumulationKey(77, 256, 256)).toBe(base);
+    expect(accumulationKey(78, 256, 256)).not.toBe(base);
+    expect(accumulationKey(77, 128, 256)).not.toBe(base);
+    expect(accumulationKey(77, 256, 128)).not.toBe(base);
+    expect(accumulationKey(77, 256, 256)).toBeGreaterThanOrEqual(0);
+  });
+
+  it('does not confuse a swapped width and height', () => {
+    expect(accumulationKey(5, 100, 200)).not.toBe(accumulationKey(5, 200, 100));
   });
 });
