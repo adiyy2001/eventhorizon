@@ -1,0 +1,119 @@
+{
+  "generatedAt": "2026-10-04T03:48:32.697Z",
+  "environment": {
+    "node": "v24.21.0",
+    "platform": "linux 6.6.87.2-microsoft-standard-WSL2 x64",
+    "cpu": "12th Gen Intel(R) Core(TM) i7-12700H",
+    "cores": 20
+  },
+  "view": {
+    "size": 128,
+    "inclinationDegrees": 80,
+    "distance": 30,
+    "outcomes": {
+      "captured": 2370,
+      "escaped": 2420,
+      "disk": 11594
+    },
+    "meanSteps": 107.7352294921875,
+    "maxSteps": 525
+  },
+  "timing": {
+    "raysPerSecond": 69735,
+    "elapsedMilliseconds": 235
+  },
+  "checks": [
+    {
+      "name": "critical impact parameter by bisection, D = 10",
+      "value": 3.7239828998281155e-8,
+      "limit": 0.000001,
+      "unit": "absolute error in b",
+      "pass": true
+    },
+    {
+      "name": "critical impact parameter by bisection, D = 30",
+      "value": 5.190815954847494e-8,
+      "limit": 0.000001,
+      "unit": "absolute error in b",
+      "pass": true
+    },
+    {
+      "name": "critical impact parameter by bisection, D = 100",
+      "value": 5.260665147943655e-8,
+      "limit": 0.000001,
+      "unit": "absolute error in b",
+      "pass": true
+    },
+    {
+      "name": "Binet form against vector form (Dormand-Prince), b from 5.3 to 500",
+      "value": 4.650946294759706e-12,
+      "limit": 1e-9,
+      "unit": "radians",
+      "pass": true
+    },
+    {
+      "name": "Binet form against quadrature of the exact integral",
+      "value": 5.053735208093713e-13,
+      "limit": 1e-8,
+      "unit": "radians",
+      "pass": true
+    },
+    {
+      "name": "production RK4 tracer against Binet form",
+      "value": 5.216929990226049e-7,
+      "limit": 0.000002,
+      "unit": "radians",
+      "pass": true
+    },
+    {
+      "name": "third order series against exact deflection, b = 100",
+      "value": 0.0000017758375094115153,
+      "limit": 0.000005,
+      "unit": "radians",
+      "pass": true
+    },
+    {
+      "name": "third order series against exact deflection, b = 500",
+      "value": 2.7445451172142254e-9,
+      "limit": 2e-8,
+      "unit": "radians",
+      "pass": true
+    },
+    {
+      "name": "leading term 4M/b relative error at b = 400",
+      "value": 0.0073756416248446765,
+      "limit": 0.014776686621307957,
+      "unit": "relative error, must be below the value at b = 200",
+      "pass": true
+    },
+    {
+      "name": "h relative drift over a 128 x 128 view at 80 degrees",
+      "value": 4.325335984285926e-10,
+      "limit": 1e-8,
+      "unit": "relative",
+      "pass": true
+    },
+    {
+      "name": "null condition drift over the same view",
+      "value": 6.06445995643412e-8,
+      "limit": 0.000001,
+      "unit": "absolute",
+      "pass": true
+    },
+    {
+      "name": "redshift at the ISCO for lambda = 0",
+      "value": 7.069900220812997e-13,
+      "limit": 1e-9,
+      "unit": "absolute error in g",
+      "pass": true
+    },
+    {
+      "name": "redshift at r = 8, lambda = 3, against the hand-computed value",
+      "value": 9.11160036309866e-13,
+      "limit": 1e-9,
+      "unit": "absolute error in g",
+      "pass": true
+    }
+  ],
+  "passed": true
+}
