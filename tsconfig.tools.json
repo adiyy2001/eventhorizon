@@ -7,6 +7,7 @@
     "allowImportingTsExtensions": true
   },
   "include": [
+    "src/wgsl.d.ts",
     "scripts/**/*.ts",
     "bench/**/*.ts",
     "e2e/**/*.ts",

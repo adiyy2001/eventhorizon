@@ -40,4 +40,8 @@
       }
     }
   </section>
+
+  @if (state().status === 'ready') {
+    <app-viewport />
+  }
 </main>

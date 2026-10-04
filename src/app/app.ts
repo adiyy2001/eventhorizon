@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { GpuStatus, unsupportedMessages } from './gpu-status';
+import { Viewport } from './viewport/viewport';
 
 @Component({
   selector: 'app-root',
+  imports: [Viewport],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.html',
   styleUrl: './app.css',

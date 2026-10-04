@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import type { GpuProbeResult } from '../gpu/probe';
 import { App } from './app';
 import { GPU_PROBE } from './gpu-status';
+import { RENDER_SESSION_FACTORY } from './viewport/render-session';
 
 async function render(result: GpuProbeResult | 'pending'): Promise<HTMLElement> {
   const probe =
@@ -10,7 +11,13 @@ async function render(result: GpuProbeResult | 'pending'): Promise<HTMLElement> 
       : () => Promise.resolve(result);
   TestBed.configureTestingModule({
     imports: [App],
-    providers: [{ provide: GPU_PROBE, useValue: probe }],
+    providers: [
+      { provide: GPU_PROBE, useValue: probe },
+      {
+        provide: RENDER_SESSION_FACTORY,
+        useValue: () => Promise.resolve({ destroy: () => undefined }),
+      },
+    ],
   });
   const fixture = TestBed.createComponent(App);
   await fixture.whenStable();
@@ -42,6 +49,18 @@ describe('App', () => {
     expect(root.querySelector('[data-testid="smoke-result"]')?.textContent).toContain(
       '1000 of 1000',
     );
+  });
+
+  it('shows the viewport only when WebGPU is ready', async () => {
+    const ready = await render({
+      status: 'ready',
+      adapter: { vendor: 'acme', architecture: 'gen-9', device: '', description: '' },
+      smoke: { total: 1000, correct: 1000 },
+    });
+    expect(ready.querySelector('app-viewport')).not.toBeNull();
+    TestBed.resetTestingModule();
+    const unsupported = await render({ status: 'unsupported', reason: 'no-api', detail: 'none' });
+    expect(unsupported.querySelector('app-viewport')).toBeNull();
   });
 
   it('shows a reason when WebGPU is unsupported', async () => {

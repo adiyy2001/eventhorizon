@@ -1,0 +1,25 @@
+<figure class="viewport">
+  <canvas
+    #canvas
+    [attr.width]="size"
+    [attr.height]="size"
+    role="img"
+    aria-label="Schwarzschild black hole with an accretion disk, rendered by ray tracing"
+    data-testid="viewport-canvas"
+    [attr.data-state]="state()"
+  ></canvas>
+  <figcaption>
+    @switch (state()) {
+      @case ('starting') {
+        Rendering the first frame.
+      }
+      @case ('rendered') {
+        Disk seen at 75 degrees from the axis, observer at 30 M. Grey levels are a placeholder
+        shading.
+      }
+      @case ('failed') {
+        The first frame could not be rendered.
+      }
+    }
+  </figcaption>
+</figure>
