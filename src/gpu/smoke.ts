@@ -1,3 +1,5 @@
+export { workgroupCount } from './rows';
+
 export const smokeElementCount = 1000;
 
 export const smokeWorkgroupSize = 64;
@@ -17,8 +19,4 @@ export function countMatchingValues(
     }
   }
   return matching;
-}
-
-export function workgroupCount(elements: number, workgroupSize: number): number {
-  return Math.ceil(elements / workgroupSize);
 }
