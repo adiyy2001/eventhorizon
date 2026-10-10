@@ -15,7 +15,7 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -30,11 +30,28 @@ jobs:
       - run: pnpm check:style
       - run: pnpm typecheck
       - run: pnpm test:coverage
-      - run: pnpm build
+      - run: pnpm validate:physics
+      - run: pnpm build:pages
       - run: pnpm exec playwright test
+      - run: pnpm bench:parity
+      - run: pnpm lighthouse
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: bench-results
+          path: bench/results
+          retention-days: 14
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: coverage
+          path: coverage
+          retention-days: 14
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report
-          path: playwright-report
+          path: |
+            playwright-report
+            test-results
           retention-days: 7
