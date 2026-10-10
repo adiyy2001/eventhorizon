@@ -1,5 +1,10 @@
 import { type PostSettings } from '../core/render/post';
-import { type RenderSettings, sanitizeSettings } from '../core/render/settings';
+import {
+  cpuSupportedSettings,
+  type RenderSettings,
+  sanitizeSettings,
+} from '../core/render/settings';
+import { poolSize } from '../core/render/tile-scheduler';
 import { type ViewDescription } from '../core/render/view';
 import { type RayRecord } from '../core/validation/parity';
 import { type ResolutionLogEntry } from '../gpu/dynamic-resolution';
@@ -14,6 +19,8 @@ import { compileShader, type ShaderMessage } from '../gpu/shader-compile';
 import { compiledShaders } from '../gpu/shader-modules';
 import { SkyResources } from '../gpu/sky-resources';
 import { recordsFromBuffer } from '../gpu/trace-result';
+import { browserClock, type CpuFrame, CpuRenderer } from './fallback/cpu-renderer';
+import { type WorkerPortFactory } from './fallback/worker-port';
 import { rgbaToPngBase64 } from './png';
 
 export interface ParityRequest {
@@ -100,6 +107,44 @@ export interface CompileResponse {
   messages: Record<string, ShaderMessage[]>;
 }
 
+export interface CpuViewRequest extends SettingsInput {
+  size: { width: number; height: number };
+}
+
+export interface CpuViewResponse {
+  width: number;
+  height: number;
+  workers: number;
+  firstImageMilliseconds: number;
+  fullImageMilliseconds: number;
+  pngBase64: string;
+}
+
+export interface CaptureOpenRequest {
+  size: { width: number; height: number };
+}
+
+export interface CaptureOpenResponse {
+  id: number;
+  adapter: AdapterSummary;
+}
+
+export interface CaptureFrameRequest extends SettingsInput {
+  id: number;
+  frames?: number;
+}
+
+export interface CaptureFrameResponse {
+  width: number;
+  height: number;
+  frames: number;
+  pngBase64: string;
+}
+
+export interface CaptureCloseRequest {
+  id: number;
+}
+
 export interface AutomationApi {
   compileShaders: () => Promise<CompileResponse>;
   runParity: (request: ParityRequest) => Promise<ParityResponse>;
@@ -108,6 +153,10 @@ export interface AutomationApi {
   exportImage: (request: ExportImageRequest) => Promise<ExportImageResponse>;
   runMotion: (request: MotionRequest) => Promise<MotionResponse>;
   runColorParity: (request: ColorParityRequest) => Promise<ColorParityResponse>;
+  renderCpuView: (request: CpuViewRequest) => Promise<CpuViewResponse>;
+  openCapture: (request: CaptureOpenRequest) => Promise<CaptureOpenResponse>;
+  captureFrame: (request: CaptureFrameRequest) => Promise<CaptureFrameResponse>;
+  closeCapture: (request: CaptureCloseRequest) => Promise<void>;
 }
 
 declare global {
@@ -149,6 +198,7 @@ export interface AutomationDependencies {
   runMotion: typeof runMotionPlan;
   makeCanvas: (size: { width: number; height: number }) => HTMLCanvasElement | null;
   encodePng: (rgba: Uint8Array, width: number, height: number) => Promise<string>;
+  workerPorts: WorkerPortFactory | null;
 }
 
 export const defaultDependencies: AutomationDependencies = {
@@ -175,6 +225,7 @@ export const defaultDependencies: AutomationDependencies = {
     return canvas;
   },
   encodePng: rgbaToPngBase64,
+  workerPorts: null,
 };
 
 export function resolveSettings(input: SettingsInput): RenderSettings {
@@ -235,9 +286,90 @@ async function readyDevice(dependencies: AutomationDependencies): Promise<Guarde
   };
 }
 
+interface CaptureSession {
+  device: GPUDevice;
+  renderer: RendererHandle;
+  size: { width: number; height: number };
+  assertNoErrors: () => void;
+}
+
+function renderOnWorkers(
+  dependencies: AutomationDependencies,
+  request: CpuViewRequest,
+): Promise<CpuViewResponse> {
+  const { workerPorts } = dependencies;
+  if (workerPorts === null) {
+    return Promise.reject(new Error('the software workers are not available in this page'));
+  }
+  const workers = poolSize(navigator.hardwareConcurrency);
+  return new Promise<CpuViewResponse>((resolve, reject) => {
+    let finalFrame: CpuFrame | null = null;
+    const renderer: CpuRenderer = new CpuRenderer({
+      ports: workerPorts,
+      workerCount: workers,
+      size: request.size,
+      clock: browserClock,
+      listener: {
+        frame: (frame) => {
+          if (frame.quality === 'final') {
+            finalFrame = frame;
+          }
+        },
+        progress: (progress) => {
+          const { firstImageMilliseconds, fullImageMilliseconds } = progress;
+          if (
+            finalFrame === null ||
+            !progress.complete ||
+            firstImageMilliseconds === null ||
+            fullImageMilliseconds === null
+          ) {
+            return;
+          }
+          const { pixels, size } = finalFrame;
+          renderer.destroy();
+          dependencies
+            .encodePng(
+              new Uint8Array(pixels.buffer, pixels.byteOffset, pixels.byteLength),
+              size.width,
+              size.height,
+            )
+            .then(
+              (pngBase64) => {
+                resolve({
+                  width: size.width,
+                  height: size.height,
+                  workers,
+                  firstImageMilliseconds,
+                  fullImageMilliseconds,
+                  pngBase64,
+                });
+              },
+              (error: unknown) => {
+                reject(error instanceof Error ? error : new Error(String(error)));
+              },
+            );
+        },
+        failure: (detail) => {
+          reject(new Error(detail));
+        },
+      },
+    });
+    renderer.setSettings(cpuSupportedSettings(resolveSettings(request)));
+  });
+}
+
 export function createAutomationApi(
   dependencies: AutomationDependencies = defaultDependencies,
 ): AutomationApi {
+  const captures = new Map<number, CaptureSession>();
+  let nextCapture = 1;
+  const captureSession = (id: number): CaptureSession => {
+    const session = captures.get(id);
+    if (session === undefined) {
+      throw new Error(`capture session ${String(id)} is not open`);
+    }
+    return session;
+  };
   return {
     compileShaders: async () => {
       const { device, adapter, assertNoErrors } = await readyDevice(dependencies);
@@ -348,6 +480,33 @@ export function createAutomationApi(
       device.destroy();
       return { adapter, outputs: Array.from(run.outputs), messages: run.messages };
     },
+    renderCpuView: (request) => renderOnWorkers(dependencies, request),
+    openCapture: async (request) => {
+      const { device, adapter, assertNoErrors } = await readyDevice(dependencies);
+      const renderer = await dependencies.createRenderer(device, request.size, null);
+      const id = nextCapture;
+      nextCapture += 1;
+      captures.set(id, { device, renderer, size: request.size, assertNoErrors });
+      return { id, adapter };
+    },
+    captureFrame: async (request) => {
+      const { renderer, size, assertNoErrors } = captureSession(request.id);
+      const settings = resolveSettings(request);
+      const frames = request.frames ?? 1;
+      await renderer.renderFrames(settings, frames);
+      const image = await renderer.capture(settings);
+      const pngBase64 = await dependencies.encodePng(image.rgba, image.width, image.height);
+      assertNoErrors();
+      return { width: size.width, height: size.height, frames, pngBase64 };
+    },
+    closeCapture: (request) =>
+      new Promise<void>((resolve) => {
+        const { renderer, device } = captureSession(request.id);
+        captures.delete(request.id);
+        renderer.destroy();
+        device.destroy();
+        resolve();
+      }),
   };
 }
 

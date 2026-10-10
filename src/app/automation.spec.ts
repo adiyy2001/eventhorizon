@@ -1,4 +1,10 @@
-import { defaultSettings, sanitizeSettings } from '../core/render/settings';
+import { renderCpuImage } from '../core/render/cpu-image';
+import {
+  cpuSupportedSettings,
+  defaultSettings,
+  mergeSettings,
+  sanitizeSettings,
+} from '../core/render/settings';
 import { defaultView } from '../core/render/view';
 import { type DeviceResult } from '../gpu/device';
 import { type SkyResources } from '../gpu/sky-resources';
@@ -9,6 +15,7 @@ import {
   installAutomation,
   type RendererHandle,
 } from './automation';
+import { LoopbackPool } from './fallback/testing/loopback';
 
 class FakeDevice {
   readonly destroy = vi.fn();
@@ -47,7 +54,9 @@ function dependencies(
     readOutcomes: () => Promise.resolve(new Uint32Array([0, 1, 2, 2])),
     readRadiance: () =>
       Promise.resolve(new Float32Array([0, 0, 0, 1, 0.5, 0, 0, 1, 2, 0, 0, 1, 4, 0, 0, 1])),
-    capture: () => Promise.resolve({ width: 2, height: 2, rgba: new Uint8Array(16) }),
+    capture: vi.fn<RendererHandle['capture']>(() =>
+      Promise.resolve({ width: 2, height: 2, rgba: new Uint8Array(16) }),
+    ),
     destroy: vi.fn(),
   };
   return {
@@ -73,6 +82,7 @@ function dependencies(
     runMotion: () => Promise.resolve([]),
     makeCanvas: () => null,
     encodePng: () => Promise.resolve('cG5n'),
+    workerPorts: null,
     ...overrides,
   };
 }
@@ -279,5 +289,155 @@ describe('automation hook', () => {
     const target = {} as Window;
     installAutomation(target, dependencies(new FakeDevice()));
     expect(target.eventhorizonAutomation).toBeDefined();
+  });
+});
+
+describe('automation hook software view', () => {
+  const size = { width: 24, height: 24 };
+
+  function withWorkers(
+    encodePng: AutomationDependencies['encodePng'] = () => Promise.resolve('cG5n'),
+  ) {
+    const pool = new LoopbackPool();
+    const answering = setInterval(() => {
+      pool.answerAll();
+    }, 0);
+    const api = createAutomationApi(
+      dependencies(new FakeDevice(), { workerPorts: pool.create, encodePng }),
+    );
+    return {
+      api,
+      pool,
+      stop: () => {
+        clearInterval(answering);
+      },
+    };
+  }
+
+  it('renders the final software image on the worker pool and encodes it', async () => {
+    const encodePng = vi.fn(() => Promise.resolve('aW1hZ2U='));
+    const { api, pool, stop } = withWorkers(encodePng);
+    const settings = mergeSettings(defaultSettings, { bloomStrength: 0 });
+    const response = await api.renderCpuView({ size, settings });
+    stop();
+    expect(response).toMatchObject({ width: 24, height: 24, pngBase64: 'aW1hZ2U=' });
+    expect(response.workers).toBe(pool.ports.length);
+    expect(response.workers).toBeGreaterThan(0);
+    expect(response.firstImageMilliseconds).toBeGreaterThanOrEqual(0);
+    expect(response.fullImageMilliseconds).toBeGreaterThanOrEqual(response.firstImageMilliseconds);
+    const calls = encodePng.mock.calls as unknown as [Uint8Array, number, number][];
+    const [pixels, width, height] = calls[0] ?? [];
+    expect([width, height]).toEqual([24, 24]);
+    expect([...(pixels ?? [])]).toEqual([...renderCpuImage(cpuSupportedSettings(settings), size)]);
+    expect(pool.ports.every((port) => port.terminated)).toBe(true);
+  });
+
+  it('leaves out the overlays only the graphics path can draw', async () => {
+    const { api, pool, stop } = withWorkers();
+    await api.renderCpuView({
+      size,
+      settings: { overlays: { photonSphere: true, isco: true, shadowEdge: true } },
+    });
+    stop();
+    const requests = pool.ports.flatMap((port) => port.posted);
+    expect(requests.length).toBeGreaterThan(0);
+    expect(requests.every((request) => !request.settings.overlays.isco)).toBe(true);
+    expect(requests.every((request) => request.settings.overlays.shadowEdge)).toBe(true);
+  });
+
+  it('refuses to render without worker ports', async () => {
+    const api = createAutomationApi(dependencies(new FakeDevice()));
+    await expect(api.renderCpuView({ size })).rejects.toThrow('software workers are not available');
+  });
+
+  it('reports a worker failure', async () => {
+    const pool = new LoopbackPool();
+    const api = createAutomationApi(dependencies(new FakeDevice(), { workerPorts: pool.create }));
+    const pending = api.renderCpuView({ size });
+    pool.ports[0]?.crash('worker died');
+    await expect(pending).rejects.toThrow('worker died');
+  });
+
+  it('reports an encoding failure', async () => {
+    const { api, stop } = withWorkers(() => Promise.reject(new Error('no canvas')));
+    await expect(api.renderCpuView({ size })).rejects.toThrow('no canvas');
+    stop();
+  });
+});
+
+describe('automation hook capture sessions', () => {
+  async function open() {
+    const device = new FakeDevice();
+    const deps = dependencies(device);
+    const renderer = await deps.createRenderer({} as GPUDevice, { width: 2, height: 2 }, null);
+    const createRenderer = vi.fn(() => Promise.resolve(renderer));
+    const api = createAutomationApi({ ...deps, createRenderer });
+    const opened = await api.openCapture({ size: { width: 2, height: 2 } });
+    return { api, device, renderer, createRenderer, opened };
+  }
+
+  it('keeps one device and renderer across frames', async () => {
+    const { api, device, renderer, createRenderer, opened } = await open();
+    expect(opened.adapter).toEqual(adapter);
+    expect(createRenderer).toHaveBeenCalledOnce();
+    const first = await api.captureFrame({ id: opened.id, view: { ...defaultView, azimuth: 0.1 } });
+    const second = await api.captureFrame({
+      id: opened.id,
+      view: { ...defaultView, azimuth: 0.2 },
+      frames: 3,
+    });
+    expect(first).toEqual({ width: 2, height: 2, frames: 1, pngBase64: 'cG5n' });
+    expect(second.frames).toBe(3);
+    expect(createRenderer).toHaveBeenCalledOnce();
+    expect(renderer.renderFrames).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(renderer.renderFrames).mock.calls.map(([, frames]) => frames)).toEqual([1, 3]);
+    expect(vi.mocked(renderer.renderFrames).mock.calls[1]?.[0].view.azimuth).toBeCloseTo(0.2);
+    expect(device.destroy).not.toHaveBeenCalled();
+  });
+
+  it('captures with the settings it rendered', async () => {
+    const { api, renderer, opened } = await open();
+    await api.captureFrame({ id: opened.id, settings: { exposure: 1.5 } });
+    const [settings] = vi.mocked(renderer.capture).mock.calls[0] ?? [];
+    expect(settings?.exposure).toBe(1.5);
+  });
+
+  it('numbers the sessions apart', async () => {
+    const { api, opened } = await open();
+    const another = await api.openCapture({ size: { width: 2, height: 2 } });
+    expect(another.id).not.toBe(opened.id);
+    await expect(api.captureFrame({ id: another.id })).resolves.toBeDefined();
+    await expect(api.captureFrame({ id: opened.id })).resolves.toBeDefined();
+  });
+
+  it('releases the renderer and the device when closed', async () => {
+    const { api, device, renderer, opened } = await open();
+    await api.closeCapture({ id: opened.id });
+    expect(renderer.destroy).toHaveBeenCalledOnce();
+    expect(device.destroy).toHaveBeenCalledOnce();
+    await expect(api.captureFrame({ id: opened.id })).rejects.toThrow('is not open');
+    await expect(api.closeCapture({ id: opened.id })).rejects.toThrow('is not open');
+  });
+
+  it('turns an uncaptured GPU error into a failure', async () => {
+    const { api, device, opened } = await open();
+    device.fail('invalid texture');
+    await expect(api.captureFrame({ id: opened.id })).rejects.toThrow('invalid texture');
+  });
+
+  it('refuses an unknown session', async () => {
+    const { api } = await open();
+    await expect(api.captureFrame({ id: 99 })).rejects.toThrow('capture session 99 is not open');
+  });
+
+  it('reports a missing WebGPU device when opening', async () => {
+    const api = createAutomationApi({
+      ...dependencies(new FakeDevice()),
+      acquire: () =>
+        Promise.resolve<DeviceResult>({ status: 'unsupported', reason: 'no-api', detail: 'none' }),
+    });
+    await expect(api.openCapture({ size: { width: 2, height: 2 } })).rejects.toThrow(
+      'WebGPU unavailable: none',
+    );
   });
 });
