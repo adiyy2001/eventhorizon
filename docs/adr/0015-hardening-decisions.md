@@ -14,6 +14,19 @@ The last milestone closes gaps: the default picture looked flat, the visual base
 
 **Frame times.** `pnpm bench:fps` runs the scripted camera motion at 1920 by 1080 with dynamic resolution on and off and writes median, 95th percentile and the resolution scale to `bench/results/frame-times-<adapter>.json` with the adapter and a `software` marker. The automation hook got a `dynamicResolution` switch for this, which pins the minimum scale to 1.
 
+**Performance pass, measured.** The frame time numbers come from the installed Chrome 154 on the Windows host of the development laptop, through `bench/windows/frame-times.mjs` (plain Node with `playwright-core`, pointed at the production build served from WSL). The laptop has two adapters. The default one is the Intel Iris Xe (`gen-12lp`), and `--force_high_performance_gpu` selects the NVIDIA GeForce RTX 3070 Ti Laptop GPU (`ampere`). Results are in `bench/results/frame-times-<architecture>.json`, 120 moving frames at 1920 by 1080:
+
+| Adapter | Dynamic resolution | GPU ms per frame (median) | Scale |
+| --- | --- | --- | --- |
+| RTX 3070 Ti Laptop | off | 12.1 | 1 |
+| RTX 3070 Ti Laptop | on | 12.1 | 1 |
+| Intel Iris Xe | off | 136.6 | 1 |
+| Intel Iris Xe | on | 17.7 | 0.35 |
+
+The discrete GPU holds 60 frames per second at full 1080p and the controller never lowers the scale. The integrated GPU needs the floor of the controller (0.35, about 672 by 378 internal pixels) to reach 62 frames per second at the median, and a still picture is refined at full resolution afterwards. The frame interval measured in the page (median 15 ms on the discrete GPU) also contains the scheduling of `requestAnimationFrame`, so the GPU time from the timestamp queries is the number to compare.
+
+The workgroup shape of the tracer was measured on the discrete GPU (`bench/results/workgroup-shape-ampere.json`): 4 by 4 took 23.9 ms, 8 by 8 took 12.2 ms and 16 by 16 took 12.4 ms. The shape stays 8 by 8. The step rule and the early exits stay as ADR 2 and its amendments set them, because the parity margins were tuned against them and a cheaper row would have to pass the same parity run again for a gain that the frame times above do not need.
+
 **Renderer lifetime.** A hook creates and destroys the renderer a given number of times on one device and reports whether the device was lost. The end-to-end test runs it 20 times.
 
 **Pages.** The build uses base href `/` and ships a `CNAME` file for `eventhorizon.adrianturbinski.pl` from `public/`. `pnpm build:pages` builds and then checks the artifact: the base href, every local reference, the video and its poster, and the host in `CNAME`. The workflow `pages.yml` uploads `dist/eventhorizon/browser` and deploys it. `ci.yml` runs the whole verification, the physics validation, the parity run and Lighthouse, and keeps the bench results as an artifact.

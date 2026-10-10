@@ -13,6 +13,7 @@ export default tseslint.config(
   {
     ignores: [
       'dist/**',
+      'bench/windows/**',
       '.angular/**',
       'coverage/**',
       'node_modules/**',

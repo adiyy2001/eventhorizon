@@ -1,0 +1,76 @@
+{
+  "generatedAt": "2026-10-10T20:54:34.669Z",
+  "node": "v24.15.0",
+  "platform": "win32 10.0.26200 x64",
+  "cpu": "12th Gen Intel(R) Core(TM) i7-12700H",
+  "cores": 20,
+  "memoryGigabytes": 32,
+  "chromium": "154.0.8037.98",
+  "chromiumFlags": [
+    "--enable-unsafe-webgpu",
+    "--ignore-gpu-blocklist"
+  ],
+  "adapter": {
+    "vendor": "intel",
+    "architecture": "gen-12lp",
+    "device": "",
+    "description": ""
+  },
+  "software": false,
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "plan": {
+    "restFrames": 3,
+    "moveFrames": 120,
+    "settleFrames": 3
+  },
+  "timestampQuery": true,
+  "dynamicResolutionOn": {
+    "movingFrames": 122,
+    "restFrames": 4,
+    "frameMilliseconds": {
+      "count": 122,
+      "median": 16,
+      "p95": 24.199999999999818,
+      "mean": 20.02622950819672
+    },
+    "framesPerSecondAtMedian": 62.5,
+    "gpuMilliseconds": {
+      "count": 122,
+      "median": 17.720358,
+      "p95": 18.791237,
+      "mean": 19.500216221311472
+    },
+    "scale": {
+      "count": 122,
+      "median": 0.35,
+      "p95": 0.35,
+      "mean": 0.35000000000000075
+    }
+  },
+  "dynamicResolutionOff": {
+    "movingFrames": 122,
+    "restFrames": 4,
+    "frameMilliseconds": {
+      "count": 122,
+      "median": 137.89999999999964,
+      "p95": 143,
+      "mean": 137.17786885245903
+    },
+    "framesPerSecondAtMedian": 7.25163161711387,
+    "gpuMilliseconds": {
+      "count": 122,
+      "median": 136.556542,
+      "p95": 139.498972,
+      "mean": 136.5586431557377
+    },
+    "scale": {
+      "count": 122,
+      "median": 1,
+      "p95": 1,
+      "mean": 1
+    }
+  }
+}

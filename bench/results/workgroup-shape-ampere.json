@@ -1,0 +1,46 @@
+{
+  "generatedAt": "2026-10-10T20:55:38.103Z",
+  "node": "v24.15.0",
+  "platform": "win32 10.0.26200 x64",
+  "cpu": "12th Gen Intel(R) Core(TM) i7-12700H",
+  "cores": 20,
+  "memoryGigabytes": 32,
+  "chromium": "154.0.8037.98",
+  "chromiumFlags": [
+    "--enable-unsafe-webgpu",
+    "--ignore-gpu-blocklist",
+    "--force_high_performance_gpu"
+  ],
+  "adapter": {
+    "vendor": "nvidia",
+    "architecture": "ampere",
+    "device": "",
+    "description": ""
+  },
+  "software": false,
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "measurement": "GPU time per frame at 1920 by 1080 and full resolution, trace pass plus the rest of the frame, timestamp queries, 60 moving frames per shape, square workgroups only",
+  "shapes": [
+    {
+      "workgroupEdge": 4,
+      "gpuMillisecondsMedian": 23.866368,
+      "gpuMillisecondsP95": 23.926784,
+      "frames": 62
+    },
+    {
+      "workgroupEdge": 8,
+      "gpuMillisecondsMedian": 12.196864,
+      "gpuMillisecondsP95": 12.3136,
+      "frames": 62
+    },
+    {
+      "workgroupEdge": 16,
+      "gpuMillisecondsMedian": 12.396544,
+      "gpuMillisecondsP95": 12.435456,
+      "frames": 62
+    }
+  ]
+}
