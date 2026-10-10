@@ -12,19 +12,19 @@ export async function compareEncodedImages(
 ): Promise<ImageDifference> {
   return page.evaluate(
     async ({ first, second }) => {
-      async function pixels(base64: string): Promise<Uint8ClampedArray> {
-        const bytes = Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
-        const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
-        const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
-        const context = canvas.getContext('2d');
-        if (context === null) {
-          throw new Error('no 2d context');
-        }
-        context.drawImage(bitmap, 0, 0);
-        return context.getImageData(0, 0, bitmap.width, bitmap.height).data;
-      }
-      const left = await pixels(first);
-      const right = await pixels(second);
+      const [left, right] = await Promise.all(
+        [first, second].map(async (base64) => {
+          const bytes = Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
+          const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+          const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+          const context = canvas.getContext('2d');
+          if (context === null) {
+            throw new Error('no 2d context');
+          }
+          context.drawImage(bitmap, 0, 0);
+          return context.getImageData(0, 0, bitmap.width, bitmap.height).data;
+        }),
+      );
       if (left.length !== right.length) {
         return { mean: Number.POSITIVE_INFINITY, max: Number.POSITIVE_INFINITY };
       }
