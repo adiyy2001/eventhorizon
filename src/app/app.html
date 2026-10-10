@@ -5,51 +5,62 @@
   </header>
 
   <main class="stage">
-    @if (state().status === 'ready') {
-      <app-viewport [settings]="store.settings()" (gesture)="onGesture($event)" />
+    @switch (backend()) {
+      @case ('gpu') {
+        <app-viewport
+          backend="gpu"
+          [settings]="store.settings()"
+          (gesture)="onGesture($event)"
+          (gpuFailed)="onGpuFailed($event)"
+        />
+      }
+      @case ('cpu') {
+        <app-viewport backend="cpu" [settings]="store.settings()" (gesture)="onGesture($event)" />
+      }
     }
 
-    <section class="status" aria-labelledby="gpu-heading">
-      <h2 id="gpu-heading">Graphics check</h2>
-      <p
-        class="status-line"
-        role="status"
-        data-testid="gpu-status"
-        [attr.data-state]="state().status"
-      >
-        @switch (state().status) {
-          @case ('checking') {
-            Checking WebGPU support.
+    @if (backend() === 'cpu') {
+      <app-fallback-banner [reason]="unsupportedMessage()" [detail]="unsupportedDetail()" />
+    } @else {
+      <section class="status" aria-labelledby="gpu-heading">
+        <h2 id="gpu-heading">Graphics check</h2>
+        <p
+          class="status-line"
+          role="status"
+          data-testid="gpu-status"
+          [attr.data-state]="state().status"
+        >
+          @switch (state().status) {
+            @case ('checking') {
+              Checking WebGPU support.
+            }
+            @case ('ready') {
+              WebGPU is ready.
+            }
           }
-          @case ('ready') {
-            WebGPU is ready.
-          }
-          @default {
-            {{ unsupportedMessage() }}
-          }
-        }
-      </p>
+        </p>
 
-      @if (state(); as current) {
-        @if (current.status === 'ready') {
-          <dl class="facts">
-            <dt>Adapter</dt>
-            <dd data-testid="adapter-architecture">
-              {{ current.adapter.architecture || 'unknown' }}
-            </dd>
-            <dt>Vendor</dt>
-            <dd>{{ current.adapter.vendor || 'unknown' }}</dd>
-            <dt>Test kernel</dt>
-            <dd data-testid="smoke-result">
-              {{ current.smoke.correct }} of {{ current.smoke.total }} values correct
-            </dd>
-          </dl>
+        @if (state(); as current) {
+          @if (current.status === 'ready') {
+            <dl class="facts">
+              <dt>Adapter</dt>
+              <dd data-testid="adapter-architecture">
+                {{ current.adapter.architecture || 'unknown' }}
+              </dd>
+              <dt>Vendor</dt>
+              <dd>{{ current.adapter.vendor || 'unknown' }}</dd>
+              <dt>Test kernel</dt>
+              <dd data-testid="smoke-result">
+                {{ current.smoke.correct }} of {{ current.smoke.total }} values correct
+              </dd>
+            </dl>
+          }
         }
-      }
-    </section>
+      </section>
+    }
   </main>
 
-  @if (state().status === 'ready') {
+  @if (backend() !== 'checking') {
     <aside class="sidebar" [class.sheet-open]="sheetOpen()" aria-label="Settings and physics">
       <button
         type="button"

@@ -1,10 +1,23 @@
+import { signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { defaultSettings } from '../core/render/settings';
 import type { GpuProbeResult } from '../gpu/probe';
 import { App } from './app';
+import { CPU_SESSION_FACTORY } from './fallback/cpu-session';
 import { GPU_PROBE } from './gpu-status';
 import { SettingsStore } from './state/settings.store';
-import { RENDER_SESSION_FACTORY } from './viewport/render-session';
+import { RENDER_SESSION_FACTORY, type RenderSession } from './viewport/render-session';
+
+function idleSession(): RenderSession {
+  return {
+    setSettings: () => undefined,
+    exportImage: () => Promise.reject(new Error('unused')),
+    resolutionLog: () => [],
+    progress: signal(null).asReadonly(),
+    failure: signal(null).asReadonly(),
+    destroy: () => undefined,
+  };
+}
 
 async function mount(result: GpuProbeResult | 'pending'): Promise<ComponentFixture<App>> {
   const probe =
@@ -15,16 +28,8 @@ async function mount(result: GpuProbeResult | 'pending'): Promise<ComponentFixtu
     imports: [App],
     providers: [
       { provide: GPU_PROBE, useValue: probe },
-      {
-        provide: RENDER_SESSION_FACTORY,
-        useValue: () =>
-          Promise.resolve({
-            setSettings: () => undefined,
-            exportImage: () => Promise.reject(new Error('unused')),
-            resolutionLog: () => [],
-            destroy: () => undefined,
-          }),
-      },
+      { provide: RENDER_SESSION_FACTORY, useValue: () => Promise.resolve(idleSession()) },
+      { provide: CPU_SESSION_FACTORY, useValue: () => Promise.resolve(idleSession()) },
     ],
   });
   const fixture = TestBed.createComponent(App);
@@ -35,6 +40,16 @@ async function mount(result: GpuProbeResult | 'pending'): Promise<ComponentFixtu
 
 async function render(result: GpuProbeResult | 'pending'): Promise<HTMLElement> {
   return (await mount(result)).nativeElement as HTMLElement;
+}
+
+const readyProbe: GpuProbeResult = {
+  status: 'ready',
+  adapter: { vendor: 'acme', architecture: 'gen-9', device: '', description: '' },
+  smoke: { total: 1000, correct: 1000 },
+};
+
+function canvasBackend(root: HTMLElement): string | null {
+  return root.querySelector('canvas')?.getAttribute('data-backend') ?? null;
 }
 
 function statusText(root: HTMLElement): string {
@@ -63,35 +78,142 @@ describe('App', () => {
     );
   });
 
-  it('shows the viewport only when WebGPU is ready', async () => {
-    const ready = await render({
-      status: 'ready',
-      adapter: { vendor: 'acme', architecture: 'gen-9', device: '', description: '' },
-      smoke: { total: 1000, correct: 1000 },
-    });
-    expect(ready.querySelector('app-viewport')).not.toBeNull();
-    TestBed.resetTestingModule();
-    const unsupported = await render({ status: 'unsupported', reason: 'no-api', detail: 'none' });
-    expect(unsupported.querySelector('app-viewport')).toBeNull();
+  it('shows the graphics viewport when WebGPU is ready', async () => {
+    const root = await render(readyProbe);
+    expect(root.querySelector('app-viewport')).not.toBeNull();
+    expect(canvasBackend(root)).toBe('gpu');
+    expect(root.querySelector('[data-testid="fallback-banner"]')).toBeNull();
+  });
+
+  it('shows no viewport while the check is running', async () => {
+    const root = await render('pending');
+    expect(root.querySelector('app-viewport')).toBeNull();
+    expect(root.querySelector('[data-testid="fallback-banner"]')).toBeNull();
   });
 
   it('shows a reason when WebGPU is unsupported', async () => {
     const root = await render({ status: 'unsupported', reason: 'no-api', detail: 'none' });
     expect(statusText(root)).toBe('This browser does not expose WebGPU.');
+    expect(root.querySelector('[data-testid="gpu-status"]')?.getAttribute('data-state')).toBe(
+      'unsupported',
+    );
     expect(root.querySelector('[data-testid="smoke-result"]')).toBeNull();
   });
 
-  it('falls back to the detail text for an unknown reason', async () => {
-    const root = await render({ status: 'unsupported', reason: 'kernel-failed', detail: 'boom' });
-    expect(statusText(root)).toBe('The test compute kernel failed to run.');
+  it('names each reason in words', async () => {
+    const reasons = {
+      'no-adapter': 'WebGPU is present but no graphics adapter is available.',
+      'device-failed': 'A graphics adapter was found but a device could not be created.',
+      'kernel-failed': 'The test compute kernel failed to run.',
+    } as const;
+    for (const [reason, message] of Object.entries(reasons)) {
+      TestBed.resetTestingModule();
+      const root = await render({
+        status: 'unsupported',
+        reason: reason as keyof typeof reasons,
+        detail: 'boom',
+      });
+      expect(statusText(root)).toBe(message);
+    }
   });
 });
 
-const readyProbe: GpuProbeResult = {
-  status: 'ready',
-  adapter: { vendor: 'acme', architecture: 'gen-9', device: '', description: '' },
-  smoke: { total: 1000, correct: 1000 },
-};
+describe('App without WebGPU', () => {
+  const unsupported: GpuProbeResult = { status: 'unsupported', reason: 'no-adapter', detail: '' };
+
+  it('draws in software and folds the graphics check into the banner', async () => {
+    const root = await render(unsupported);
+    expect(canvasBackend(root)).toBe('cpu');
+    expect(root.querySelector('[data-testid="fallback-banner"]')).not.toBeNull();
+    expect(root.querySelector('#gpu-heading')).toBeNull();
+    expect(root.querySelector('.status')).toBeNull();
+  });
+
+  it('shows the same controls and physics as the graphics version', async () => {
+    const fixture = await mount(unsupported);
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('app-control-panel')).not.toBeNull();
+    root.querySelector<HTMLButtonElement>('[data-testid="show-physics"]')?.click();
+    fixture.detectChanges();
+    expect(root.querySelector('app-physics-panel')).not.toBeNull();
+  });
+
+  it('reacts to the keyboard', async () => {
+    await mount(unsupported);
+    const store = TestBed.inject(SettingsStore);
+    const before = store.view().azimuth;
+    expect(key('ArrowRight').defaultPrevented).toBe(true);
+    expect(store.view().azimuth).toBeGreaterThan(before);
+  });
+
+  it('keeps the first reason and the browser detail in the banner and offers the preview video', async () => {
+    const root = await render({ ...unsupported, detail: 'requestAdapter returned null' });
+    expect(statusText(root)).toBe('WebGPU is present but no graphics adapter is available.');
+    expect(root.querySelector('[data-testid="fallback-detail"]')?.textContent).toContain(
+      'requestAdapter returned null',
+    );
+    const video = root.querySelector('[data-testid="preview-video"]');
+    expect(video?.getAttribute('poster')).toBe('media/preview-poster.jpg');
+    expect(video?.hasAttribute('autoplay')).toBe(false);
+  });
+});
+
+describe('App when the graphics path fails at run time', () => {
+  async function mountWithSession(session: RenderSession | Promise<RenderSession>) {
+    TestBed.configureTestingModule({
+      imports: [App],
+      providers: [
+        { provide: GPU_PROBE, useValue: () => Promise.resolve(readyProbe) },
+        { provide: RENDER_SESSION_FACTORY, useValue: () => Promise.resolve(session) },
+        { provide: CPU_SESSION_FACTORY, useValue: () => Promise.resolve(idleSession()) },
+      ],
+    });
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('moves to software rendering when the device is lost', async () => {
+    const failure = signal<string | null>(null);
+    const fixture = await mountWithSession({ ...idleSession(), failure: failure.asReadonly() });
+    const root = fixture.nativeElement as HTMLElement;
+    expect(canvasBackend(root)).toBe('gpu');
+    failure.set('GPU hung');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(canvasBackend(root)).toBe('cpu');
+    expect(statusText(root)).toBe('The graphics device was lost while rendering.');
+    expect(root.querySelector('[data-testid="fallback-banner"]')).not.toBeNull();
+  });
+
+  it('moves to software rendering when the renderer cannot start', async () => {
+    TestBed.configureTestingModule({
+      imports: [App],
+      providers: [
+        { provide: GPU_PROBE, useValue: () => Promise.resolve(readyProbe) },
+        {
+          provide: RENDER_SESSION_FACTORY,
+          useValue: () => Promise.reject(new Error('no pipeline')),
+        },
+        { provide: CPU_SESSION_FACTORY, useValue: () => Promise.resolve(idleSession()) },
+      ],
+    });
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(canvasBackend(root)).toBe('cpu');
+    expect(statusText(root)).toBe('The graphics renderer could not start.');
+  });
+});
 
 function key(name: string, init: KeyboardEventInit = {}, target: EventTarget = document.body) {
   const event = new KeyboardEvent('keydown', {

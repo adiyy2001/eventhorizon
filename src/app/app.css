@@ -57,10 +57,6 @@ h2 {
   color: var(--ok);
 }
 
-.status-line[data-state='unsupported'] {
-  color: var(--warn);
-}
-
 .facts {
   display: grid;
   grid-template-columns: max-content 1fr;

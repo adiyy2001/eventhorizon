@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ControlPanel } from './controls/control-panel';
-import { GpuStatus, unsupportedMessages } from './gpu-status';
+import { FallbackBanner } from './fallback/fallback-banner';
+import { type GpuFailure, GpuStatus, unsupportedMessages } from './gpu-status';
 import { KeyboardHelp } from './help/keyboard-help';
 import { PhysicsPanel } from './physics-panel/physics-panel';
 import { commandForKey } from './state/keyboard-map';
@@ -13,7 +14,7 @@ export type SidebarView = 'controls' | 'physics';
 
 @Component({
   selector: 'app-root',
-  imports: [ControlPanel, KeyboardHelp, PhysicsPanel, Viewport],
+  imports: [ControlPanel, FallbackBanner, KeyboardHelp, PhysicsPanel, Viewport],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -23,14 +24,17 @@ export class App {
   private readonly gpuStatus = inject(GpuStatus);
   protected readonly store = inject(SettingsStore);
   protected readonly state = this.gpuStatus.state;
+  protected readonly backend = this.gpuStatus.backend;
   protected readonly sidebarView = signal<SidebarView>('controls');
   protected readonly helpOpen = signal(false);
   protected readonly sheetOpen = signal(false);
   protected readonly unsupportedMessage = computed(() => {
     const state = this.state();
-    return state.status === 'unsupported'
-      ? (unsupportedMessages[state.reason] ?? state.detail)
-      : '';
+    return state.status === 'unsupported' ? unsupportedMessages[state.reason] : '';
+  });
+  protected readonly unsupportedDetail = computed(() => {
+    const state = this.state();
+    return state.status === 'unsupported' ? state.detail : '';
   });
 
   constructor() {
@@ -53,6 +57,10 @@ export class App {
 
   protected closeHelp(): void {
     this.helpOpen.set(false);
+  }
+
+  protected onGpuFailed(failure: GpuFailure): void {
+    this.gpuStatus.reportFailure(failure);
   }
 
   protected onGesture(delta: GestureDelta): void {
@@ -78,7 +86,7 @@ export class App {
       return;
     }
     const command = commandForKey(event);
-    if (command === null || this.state().status !== 'ready') {
+    if (command === null || this.backend() === 'checking') {
       return;
     }
     event.preventDefault();
