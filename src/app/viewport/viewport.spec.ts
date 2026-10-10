@@ -1,13 +1,16 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { defaultSettings, mergeSettings } from '../../core/render/settings';
+import { CPU_SESSION_FACTORY } from '../fallback/cpu-session';
+import { type GpuFailure } from '../gpu-status';
 import {
   RENDER_SESSION_FACTORY,
+  type RenderProgress,
   type RenderSession,
   type RenderSessionFactory,
   viewportSize,
 } from './render-session';
-import { Viewport } from './viewport';
+import { progressSentence, Viewport } from './viewport';
 
 function fakeSession(overrides: Partial<RenderSession> = {}): RenderSession {
   return {
@@ -240,5 +243,241 @@ describe('Viewport', () => {
       fixture.detectChanges();
       expect(canvas.getAttribute('aria-label')).toContain('Doppler beaming off');
     });
+  });
+});
+
+const refining: RenderProgress = {
+  generation: 3,
+  passesDone: 1,
+  passesTotal: 4,
+  fraction: 0.25,
+  complete: false,
+  firstImageMilliseconds: 120,
+  fullImageMilliseconds: null,
+};
+
+const finished: RenderProgress = {
+  generation: 3,
+  passesDone: 4,
+  passesTotal: 4,
+  fraction: 1,
+  complete: true,
+  firstImageMilliseconds: 118.4,
+  fullImageMilliseconds: 2412.6,
+};
+
+describe('progressSentence', () => {
+  it('is empty without a software render', () => {
+    expect(progressSentence(null)).toBe('');
+  });
+
+  it('counts the pass in progress', () => {
+    expect(progressSentence(refining)).toBe('Refining, pass 2 of 4.');
+    expect(progressSentence({ ...refining, passesDone: 0 })).toBe('Refining, pass 1 of 4.');
+    expect(progressSentence({ ...refining, passesDone: 3 })).toBe('Refining, pass 4 of 4.');
+  });
+
+  it('reports the measured times once the render is complete', () => {
+    expect(progressSentence(finished)).toBe(
+      'Full resolution after 2.4 s, first image after 0.1 s.',
+    );
+  });
+});
+
+describe('Viewport with the software backend', () => {
+  async function createSoftware(session: RenderSession, backend: 'cpu' | 'gpu' = 'cpu') {
+    const cpuFactory = vi.fn<RenderSessionFactory>(() => Promise.resolve(session));
+    const gpuFactory = vi.fn<RenderSessionFactory>(() => Promise.resolve(fakeSession()));
+    TestBed.configureTestingModule({
+      imports: [Viewport],
+      providers: [
+        { provide: CPU_SESSION_FACTORY, useValue: cpuFactory },
+        { provide: RENDER_SESSION_FACTORY, useValue: gpuFactory },
+      ],
+    });
+    const fixture = TestBed.createComponent(Viewport);
+    fixture.componentRef.setInput('backend', backend);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    return { fixture, cpuFactory, gpuFactory, root: fixture.nativeElement as HTMLElement };
+  }
+
+  it('starts the software session and not the graphics one', async () => {
+    const { cpuFactory, gpuFactory, root } = await createSoftware(fakeSession());
+    expect(cpuFactory).toHaveBeenCalledOnce();
+    expect(gpuFactory).not.toHaveBeenCalled();
+    expect(root.querySelector('canvas')?.getAttribute('data-backend')).toBe('cpu');
+    expect(canvasState(root)).toBe('rendered');
+  });
+
+  it('starts the graphics session for the graphics backend', async () => {
+    const { cpuFactory, gpuFactory } = await createSoftware(fakeSession(), 'gpu');
+    expect(gpuFactory).toHaveBeenCalledOnce();
+    expect(cpuFactory).not.toHaveBeenCalled();
+  });
+
+  it('shows the progress of a refining render with data attributes for tests', async () => {
+    const progress = signal<RenderProgress | null>(refining);
+    const { fixture, root } = await createSoftware(
+      fakeSession({ progress: progress.asReadonly() }),
+    );
+    const canvas = root.querySelector('canvas');
+    expect(canvas?.getAttribute('data-generation')).toBe('3');
+    expect(canvas?.getAttribute('data-passes-done')).toBe('1');
+    expect(canvas?.getAttribute('data-passes-total')).toBe('4');
+    expect(canvas?.getAttribute('data-complete')).toBe('false');
+    expect(canvas?.getAttribute('data-first-image-ms')).toBe('120');
+    expect(canvas?.hasAttribute('data-full-image-ms')).toBe(false);
+    expect(root.querySelector('[data-testid="render-progress-text"]')?.textContent).toContain(
+      'Refining, pass 2 of 4.',
+    );
+    expect(root.querySelector('progress')?.value).toBe(0.25);
+    progress.set(finished);
+    fixture.detectChanges();
+    expect(canvas?.getAttribute('data-complete')).toBe('true');
+    expect(canvas?.getAttribute('data-first-image-ms')).toBe('118');
+    expect(canvas?.getAttribute('data-full-image-ms')).toBe('2413');
+    expect(root.querySelector('[data-testid="render-progress-text"]')?.textContent).toContain(
+      'Full resolution after 2.4 s',
+    );
+  });
+
+  it('shows no progress line for a session that reports none', async () => {
+    const { root } = await createSoftware(fakeSession(), 'gpu');
+    expect(root.querySelector('[data-testid="render-progress"]')).toBeNull();
+    expect(root.querySelector('canvas')?.hasAttribute('data-generation')).toBe(false);
+  });
+
+  it('saves at the size of the software image', async () => {
+    const session = fakeSession();
+    const { root, fixture } = await createSoftware(session);
+    expect(root.querySelector('[data-testid="save-image"]')?.textContent).toContain(
+      `${String(viewportSize)} px`,
+    );
+    const click = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => undefined);
+    vi.stubGlobal(
+      'OffscreenCanvas',
+      class {
+        getContext() {
+          return { putImageData: () => undefined };
+        }
+        convertToBlob() {
+          return Promise.resolve(new Blob([new Uint8Array([1])]));
+        }
+      },
+    );
+    vi.stubGlobal('ImageData', vi.fn());
+    root.querySelector<HTMLButtonElement>('[data-testid="save-image"]')?.click();
+    await fixture.whenStable();
+    expect(session.exportImage).toHaveBeenCalledWith({
+      width: viewportSize,
+      height: viewportSize,
+    });
+    vi.unstubAllGlobals();
+    click.mockRestore();
+  });
+
+  it('leaves out the overlays the software renderer cannot draw', async () => {
+    const { fixture, root } = await createSoftware(fakeSession());
+    fixture.componentRef.setInput(
+      'settings',
+      mergeSettings(defaultSettings, {
+        overlays: { photonSphere: true, isco: true, shadowEdge: true },
+      }),
+    );
+    fixture.detectChanges();
+    const legend = root.querySelector('[data-testid="overlay-legend"]')?.textContent ?? '';
+    expect(legend).toContain('Shadow edge');
+    expect(legend).not.toContain('Photon sphere');
+    expect(legend).not.toContain('Innermost');
+    const label = root.querySelector('canvas')?.getAttribute('aria-label') ?? '';
+    expect(label).toContain('Overlays: shadow edge.');
+  });
+
+  it('says what stopped the software renderer', async () => {
+    const failure = signal<string | null>(null);
+    const gpuFailed = vi.fn();
+    const { fixture, root } = await createSoftware(fakeSession({ failure: failure.asReadonly() }));
+    fixture.componentInstance.gpuFailed.subscribe(gpuFailed);
+    failure.set('out of memory');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(canvasState(root)).toBe('failed');
+    expect(root.querySelector('figcaption')?.textContent).toContain(
+      'The software renderer stopped: out of memory.',
+    );
+    expect(gpuFailed).not.toHaveBeenCalled();
+  });
+
+  it('reports a software session that cannot start without asking for a fallback', async () => {
+    TestBed.configureTestingModule({
+      imports: [Viewport],
+      providers: [
+        { provide: CPU_SESSION_FACTORY, useValue: () => Promise.reject(new Error('no workers')) },
+      ],
+    });
+    const fixture = TestBed.createComponent(Viewport);
+    fixture.componentRef.setInput('backend', 'cpu');
+    const gpuFailed = vi.fn();
+    fixture.componentInstance.gpuFailed.subscribe(gpuFailed);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(canvasState(root)).toBe('failed');
+    expect(root.querySelector('figcaption')?.textContent).toContain('no workers');
+    expect(gpuFailed).not.toHaveBeenCalled();
+  });
+
+  it('shows the start message of the software renderer while it starts', () => {
+    TestBed.configureTestingModule({
+      imports: [Viewport],
+      providers: [{ provide: CPU_SESSION_FACTORY, useValue: () => new Promise(() => undefined) }],
+    });
+    const fixture = TestBed.createComponent(Viewport);
+    fixture.componentRef.setInput('backend', 'cpu');
+    fixture.detectChanges();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('figcaption')?.textContent,
+    ).toContain('Starting the software renderer.');
+  });
+});
+
+describe('Viewport when the graphics path fails', () => {
+  async function createGraphics(factory: RenderSessionFactory) {
+    TestBed.configureTestingModule({
+      imports: [Viewport],
+      providers: [{ provide: RENDER_SESSION_FACTORY, useValue: factory }],
+    });
+    const fixture = TestBed.createComponent(Viewport);
+    const failures: GpuFailure[] = [];
+    fixture.componentInstance.gpuFailed.subscribe((failure) => failures.push(failure));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    return { fixture, failures, root: fixture.nativeElement as HTMLElement };
+  }
+
+  it('asks for the fallback when the session cannot start', async () => {
+    const { failures, root } = await createGraphics(() => Promise.reject(new Error('no pipeline')));
+    expect(failures).toEqual([{ reason: 'render-failed', detail: 'no pipeline' }]);
+    expect(canvasState(root)).toBe('failed');
+    expect(root.querySelector('figcaption')?.textContent).toContain('could not be rendered');
+  });
+
+  it('asks for the fallback when the device is lost later', async () => {
+    const failure = signal<string | null>(null);
+    const { fixture, failures } = await createGraphics(() =>
+      Promise.resolve(fakeSession({ failure: failure.asReadonly() })),
+    );
+    expect(failures).toEqual([]);
+    failure.set('GPU hung');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(failures).toEqual([{ reason: 'device-lost', detail: 'GPU hung' }]);
   });
 });

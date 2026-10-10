@@ -1,4 +1,4 @@
-<figure class="viewport">
+<figure class="viewport" [attr.data-backend]="backend()">
   <canvas
     #canvas
     [attr.width]="size"
@@ -12,22 +12,43 @@
     (wheel)="onWheel($event)"
     data-testid="viewport-canvas"
     [attr.data-state]="state()"
+    [attr.data-backend]="backend()"
+    [attr.data-generation]="progress()?.generation ?? null"
+    [attr.data-passes-done]="progress()?.passesDone ?? null"
+    [attr.data-passes-total]="progress()?.passesTotal ?? null"
+    [attr.data-complete]="progress()?.complete ?? null"
+    [attr.data-first-image-ms]="firstImageMilliseconds()"
+    [attr.data-full-image-ms]="fullImageMilliseconds()"
   ></canvas>
   <figcaption>
     @switch (state()) {
       @case ('starting') {
-        Rendering the first frame.
+        @if (backend() === 'cpu') {
+          Starting the software renderer.
+        } @else {
+          Rendering the first frame.
+        }
       }
       @case ('rendered') {
         Disk seen at {{ inclinationDegrees() }} degrees from the axis, observer at
         {{ settings().view.distance }} M.
       }
       @case ('failed') {
-        The first frame could not be rendered.
+        @if (backend() === 'cpu') {
+          The software renderer stopped: {{ failureDetail() }}.
+        } @else {
+          The first frame could not be rendered.
+        }
       }
     }
   </figcaption>
-  <app-overlay-legend [overlays]="settings().overlays" [split]="settings().split" />
+  @if (progress(); as current) {
+    <p class="render-progress" data-testid="render-progress">
+      <progress [value]="current.fraction" max="1" aria-label="Software render progress"></progress>
+      <span data-testid="render-progress-text">{{ progressText() }}</span>
+    </p>
+  }
+  <app-overlay-legend [overlays]="shownSettings().overlays" [split]="settings().split" />
   <div class="actions">
     <button
       type="button"
@@ -35,7 +56,7 @@
       [disabled]="state() !== 'rendered' || exportState() === 'working'"
       (click)="saveImage()"
     >
-      Save image ({{ exportEdge }} px)
+      Save image ({{ saveEdge() }} px)
     </button>
     <p class="export-status" role="status" data-testid="export-status">
       @switch (exportState()) {

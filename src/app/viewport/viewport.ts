@@ -7,13 +7,20 @@ import {
   effect,
   type ElementRef,
   inject,
+  Injector,
   input,
   output,
   signal,
   untracked,
   viewChild,
 } from '@angular/core';
-import { defaultSettings, type RenderSettings } from '../../core/render/settings';
+import {
+  cpuSupportedSettings,
+  defaultSettings,
+  type RenderSettings,
+} from '../../core/render/settings';
+import { CPU_SESSION_FACTORY } from '../fallback/cpu-session';
+import { type GpuFailure } from '../gpu-status';
 import { canvasDescription } from '../state/descriptions';
 import {
   type GestureDelta,
@@ -24,13 +31,38 @@ import {
 import { rgbaToPngBase64 } from '../png';
 import { downloadPng } from './download';
 import { OverlayLegend } from './overlay-legend';
-import { RENDER_SESSION_FACTORY, type RenderSession, viewportSize } from './render-session';
+import {
+  RENDER_SESSION_FACTORY,
+  type RenderProgress,
+  type RenderSession,
+  viewportSize,
+} from './render-session';
 
+export type ViewportBackend = 'gpu' | 'cpu';
 export type ViewportState = 'starting' | 'rendered' | 'failed';
 export type ExportState = 'idle' | 'working' | 'done' | 'failed';
 
 export const exportEdge = 1024;
 export const exportFileName = 'eventhorizon.png';
+
+function roundedOrNull(value: number | null): number | null {
+  return value === null ? null : Math.round(value);
+}
+
+function seconds(milliseconds: number | null): string {
+  return ((milliseconds ?? 0) / 1000).toFixed(1);
+}
+
+export function progressSentence(progress: RenderProgress | null): string {
+  if (progress === null) {
+    return '';
+  }
+  if (progress.complete) {
+    return `Full resolution after ${seconds(progress.fullImageMilliseconds)} s, first image after ${seconds(progress.firstImageMilliseconds)} s.`;
+  }
+  const pass = Math.min(progress.passesDone + 1, progress.passesTotal);
+  return `Refining, pass ${String(pass)} of ${String(progress.passesTotal)}.`;
+}
 
 @Component({
   selector: 'app-viewport',
@@ -40,37 +72,65 @@ export const exportFileName = 'eventhorizon.png';
   styleUrl: './viewport.css',
 })
 export class Viewport {
-  private readonly startSession = inject(RENDER_SESSION_FACTORY);
+  private readonly injector = inject(Injector);
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
   private readonly current = signal<ViewportState>('starting');
   private readonly exporting = signal<ExportState>('idle');
-  private session: RenderSession | null = null;
+  private readonly activeSession = signal<RenderSession | null>(null);
+  private readonly failureText = signal('');
   private destroyed = false;
   private readonly gestures = new PointerGestures();
 
   readonly settings = input<RenderSettings>(defaultSettings);
+  readonly backend = input<ViewportBackend>('gpu');
   readonly gesture = output<GestureDelta>();
+  readonly gpuFailed = output<GpuFailure>();
 
   protected readonly size = viewportSize;
   protected readonly state = this.current.asReadonly();
   protected readonly exportState = this.exporting.asReadonly();
-  protected readonly exportEdge = exportEdge;
-  protected readonly description = computed(() => canvasDescription(this.settings()));
+  protected readonly failureDetail = this.failureText.asReadonly();
+  protected readonly saveEdge = computed(() =>
+    this.backend() === 'cpu' ? viewportSize : exportEdge,
+  );
+  protected readonly shownSettings = computed(() =>
+    this.backend() === 'cpu' ? cpuSupportedSettings(this.settings()) : this.settings(),
+  );
+  protected readonly description = computed(() => canvasDescription(this.shownSettings()));
   protected readonly inclinationDegrees = computed(() =>
     Math.round((this.settings().view.inclination * 180) / Math.PI),
   );
+  protected readonly progress = computed<RenderProgress | null>(
+    () => this.activeSession()?.progress() ?? null,
+  );
+  protected readonly progressText = computed(() => progressSentence(this.progress()));
+  protected readonly firstImageMilliseconds = computed(() =>
+    roundedOrNull(this.progress()?.firstImageMilliseconds ?? null),
+  );
+  protected readonly fullImageMilliseconds = computed(() =>
+    roundedOrNull(this.progress()?.fullImageMilliseconds ?? null),
+  );
+  private readonly sessionFailure = computed(() => this.activeSession()?.failure() ?? null);
 
   constructor() {
     inject(DestroyRef).onDestroy(() => {
       this.destroyed = true;
-      this.session?.destroy();
+      this.activeSession()?.destroy();
     });
     afterNextRender(() => {
       void this.start();
     });
     effect(() => {
       const settings = this.settings();
-      untracked(() => this.session?.setSettings(settings));
+      untracked(() => this.activeSession()?.setSettings(settings));
+    });
+    effect(() => {
+      const detail = this.sessionFailure();
+      if (detail !== null) {
+        untracked(() => {
+          this.fail('device-lost', detail);
+        });
+      }
     });
   }
 
@@ -103,13 +163,14 @@ export class Viewport {
   }
 
   protected async saveImage(): Promise<void> {
-    const session = this.session;
+    const session = this.activeSession();
     if (session === null || this.exporting() === 'working') {
       return;
     }
     this.exporting.set('working');
     try {
-      const image = await session.exportImage({ width: exportEdge, height: exportEdge });
+      const edge = this.saveEdge();
+      const image = await session.exportImage({ width: edge, height: edge });
       downloadPng(await rgbaToPngBase64(image.rgba, image.width, image.height), exportFileName);
       this.exporting.set('done');
     } catch {
@@ -119,7 +180,10 @@ export class Viewport {
 
   private async start(): Promise<void> {
     try {
-      const session = await this.startSession(
+      const startSession = this.injector.get(
+        this.backend() === 'cpu' ? CPU_SESSION_FACTORY : RENDER_SESSION_FACTORY,
+      );
+      const session = await startSession(
         this.canvas().nativeElement,
         viewportSize,
         untracked(() => this.settings()),
@@ -128,11 +192,19 @@ export class Viewport {
         session.destroy();
         return;
       }
-      this.session = session;
+      this.activeSession.set(session);
       session.setSettings(untracked(() => this.settings()));
       this.current.set('rendered');
-    } catch {
-      this.current.set('failed');
+    } catch (error) {
+      this.fail('render-failed', error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  private fail(reason: GpuFailure['reason'], detail: string): void {
+    this.current.set('failed');
+    this.failureText.set(detail);
+    if (this.backend() === 'gpu') {
+      this.gpuFailed.emit({ reason, detail });
     }
   }
 
