@@ -6,7 +6,7 @@ import { openAutomationPage } from '../bench/gpu-parity-run';
 import { startStaticServer } from '../bench/static-server';
 import { defaultPost } from '../src/core/render/post';
 
-const server = await startStaticServer(4177);
+const server = await startStaticServer(4322);
 const browser = await launchWebGpuBrowser();
 try {
   const page = await browser.newPage();

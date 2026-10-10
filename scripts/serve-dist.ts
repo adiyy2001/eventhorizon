@@ -3,7 +3,7 @@ import { createServer } from 'node:http';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 
 const host = '127.0.0.1';
-const port = Number(process.env['PORT'] ?? 4173);
+const port = Number(process.env['PORT'] ?? 4320);
 const root = resolve(process.env['DIST_DIR'] ?? 'dist/eventhorizon/browser');
 
 const contentTypes: Record<string, string> = {
@@ -13,6 +13,9 @@ const contentTypes: Record<string, string> = {
   '.json': 'application/json; charset=utf-8',
   '.ico': 'image/x-icon',
   '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.vtt': 'text/vtt; charset=utf-8',
   '.svg': 'image/svg+xml',
   '.webm': 'video/webm',
   '.mp4': 'video/mp4',

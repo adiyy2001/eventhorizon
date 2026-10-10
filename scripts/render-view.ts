@@ -17,7 +17,7 @@ const frames = Number(process.env['FRAMES'] ?? '1');
 const overrides =
   overridesText === undefined ? {} : (JSON.parse(overridesText) as Partial<ViewDescription>);
 
-const server = await startStaticServer(4177);
+const server = await startStaticServer(4322);
 const browser = await launchWebGpuBrowser();
 try {
   const page = await browser.newPage();

@@ -7,7 +7,7 @@ import { startStaticServer } from '../bench/static-server';
 import { webGpuLaunchArguments } from '../playwright.config';
 
 export const accessibilityThreshold = 0.95;
-const port = 4174;
+const port = 4321;
 const debuggingPort = 9333;
 const resultPath = join('bench', 'results', 'lighthouse.json');
 const formFactors = ['mobile', 'desktop'] as const;

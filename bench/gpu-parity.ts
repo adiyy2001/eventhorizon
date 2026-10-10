@@ -23,7 +23,7 @@ function row(label: string, report: ParityReport): string {
   ].join(' ');
 }
 
-const server = await startStaticServer(4178);
+const server = await startStaticServer(4323);
 const browser = await launchWebGpuBrowser();
 let failed: boolean;
 try {
