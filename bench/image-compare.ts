@@ -12,7 +12,7 @@ export async function compareEncodedImages(
 ): Promise<ImageDifference> {
   return page.evaluate(
     async ({ first, second }) => {
-      const [left, right] = await Promise.all(
+      const decoded = await Promise.all(
         [first, second].map(async (base64) => {
           const bytes = Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
           const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
@@ -25,7 +25,9 @@ export async function compareEncodedImages(
           return context.getImageData(0, 0, bitmap.width, bitmap.height).data;
         }),
       );
-      if (left.length !== right.length) {
+      const left = decoded[0];
+      const right = decoded[1];
+      if (left === undefined || right?.length !== left.length) {
         return { mean: Number.POSITIVE_INFINITY, max: Number.POSITIVE_INFINITY };
       }
       let total = 0;
