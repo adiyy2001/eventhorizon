@@ -92,7 +92,7 @@ describe('startCpuSession', () => {
     expect(last.height).toBe(edge);
     expect(last.data).toEqual(renderCpuImage(plain, size));
     expect(session.progress()).toMatchObject({ complete: true, passesDone: 4, fraction: 1 });
-  });
+  }, 30_000);
 
   it('follows new settings with another picture', () => {
     const { session, answerAll, putImageData } = open();

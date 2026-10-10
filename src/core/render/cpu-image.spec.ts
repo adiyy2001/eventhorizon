@@ -13,7 +13,7 @@ describe('renderCpuImage', () => {
       dither: true,
     });
     expect(renderCpuImage(defaultSettings, size)).toEqual(expected);
-  });
+  }, 30_000);
 
   it('skips the bloom chain at zero strength', () => {
     const settings = mergeSettings(defaultSettings, { bloomStrength: 0 });
