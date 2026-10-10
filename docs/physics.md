@@ -126,7 +126,13 @@ The leading term $4M/b$ is the weak-field limit named in the brief. Its relative
 
 Three independent computations of $\hat\alpha$ agree: RK4 of the Binet form, the quadrature, and the vector-form integrator (Dormand-Prince at tolerance 1e-13, started and stopped at $r = 10^5$ with a tail correction of section 12). `pnpm validate:physics` gives a worst disagreement of 5e-12 radians for $b$ from 5.3 to 500. At $b = 100$ the deflection is 0.04122 radians against 0.04 for the leading term.
 
-Tests: `deflection.spec.ts`.
+The deflection also has a closed form in elliptic integrals (Darwin 1959, Keeton and Petters 2005). With $P = 1/u_0$ the periastron radius, $Q^2 = (P - 2M)(P + 6M)$, $k^2 = (Q - P + 6M)/(2Q)$ and $\sin^2\zeta = (Q - P + 2M)/(Q - P + 6M)$,
+
+$$\hat\alpha = -\pi + 4\sqrt{\frac{P}{Q}}\,\big[K(k) - F(\zeta, k)\big],$$
+
+where $K$ and $F$ are the complete and incomplete elliptic integrals of the first kind. `deflectionByElliptic` evaluates them with Carlson's symmetric form $R_F$ and matches the quadrature to 1e-10 radians for $b$ from 5.2 to 500. It is an extra check of the same number, computed without any numerical integration along the ray.
+
+Tests: `deflection.spec.ts`, `elliptic.spec.ts`.
 
 ## 9. Circular orbits and the redshift factor
 

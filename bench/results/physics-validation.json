@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-04T03:49:52.953Z",
+  "generatedAt": "2026-10-10T20:04:37.047Z",
   "environment": {
     "node": "v24.21.0",
     "platform": "linux 6.6.87.2-microsoft-standard-WSL2 x64",
@@ -19,8 +19,8 @@
     "maxSteps": 525
   },
   "timing": {
-    "raysPerSecond": 56362,
-    "elapsedMilliseconds": 291
+    "raysPerSecond": 23068,
+    "elapsedMilliseconds": 710
   },
   "checks": [
     {
@@ -55,6 +55,13 @@
       "name": "Binet form against quadrature of the exact integral",
       "value": 5.053735208093713e-13,
       "limit": 1e-8,
+      "unit": "radians",
+      "pass": true
+    },
+    {
+      "name": "elliptic integral form against quadrature of the exact integral, b from 5.2 to 500",
+      "value": 6.217248937900877e-15,
+      "limit": 1e-10,
       "unit": "radians",
       "pass": true
     },

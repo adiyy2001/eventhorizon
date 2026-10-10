@@ -11,6 +11,7 @@ import {
   deflectionSeries,
   weakFieldDeflection,
 } from '../src/core/physics/deflection';
+import { deflectionByElliptic } from '../src/core/physics/elliptic';
 import { keplerianAngularVelocity, redshiftParts } from '../src/core/physics/disk';
 import { cameraBasis, pixelDirection, staticObserverRay } from '../src/core/physics/observer';
 import {
@@ -64,6 +65,17 @@ record(
   'Binet form against quadrature of the exact integral',
   maxOf(impactParameters.map((b) => Math.abs(deflectionByBinet(b) - deflectionByQuadrature(b)))),
   1e-8,
+  'radians',
+);
+
+record(
+  'elliptic integral form against quadrature of the exact integral, b from 5.2 to 500',
+  maxOf(
+    [5.2, ...impactParameters].map((b) =>
+      Math.abs(deflectionByElliptic(b) - deflectionByQuadrature(b)),
+    ),
+  ),
+  1e-10,
   'radians',
 );
 
