@@ -1,50 +1,14 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import {
   baselineDirectory,
   baselineMeanAbsoluteTolerance,
   baselineSpecs,
 } from '../bench/baselines';
 import { openAutomationPage, renderOnGpu } from '../bench/gpu-parity-run';
+import { meanAbsoluteDifference } from '../bench/image-compare';
 import { defaultPost } from '../src/core/render/post';
-
-async function meanAbsoluteDifference(
-  page: Page,
-  firstBase64: string,
-  secondBase64: string,
-): Promise<number> {
-  return page.evaluate(
-    async ({ first, second }) => {
-      async function pixels(base64: string): Promise<Uint8ClampedArray> {
-        const bytes = Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
-        const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
-        const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
-        const context = canvas.getContext('2d');
-        if (context === null) {
-          throw new Error('no 2d context');
-        }
-        context.drawImage(bitmap, 0, 0);
-        return context.getImageData(0, 0, bitmap.width, bitmap.height).data;
-      }
-      const left = await pixels(first);
-      const right = await pixels(second);
-      if (left.length !== right.length) {
-        return Number.POSITIVE_INFINITY;
-      }
-      let total = 0;
-      let count = 0;
-      for (let index = 0; index < left.length; index += 1) {
-        if (index % 4 !== 3) {
-          total += Math.abs((left[index] ?? 0) - (right[index] ?? 0));
-          count += 1;
-        }
-      }
-      return total / count;
-    },
-    { first: firstBase64, second: secondBase64 },
-  );
-}
 
 test.describe('reviewed baseline renders', () => {
   test.beforeEach(async ({ page }) => {
