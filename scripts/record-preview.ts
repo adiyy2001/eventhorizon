@@ -107,7 +107,7 @@ async function captureFrames(page: Page) {
   return {
     adapter: opened.adapter,
     captured,
-    secondsPerCapturedFrame: captured === 0 ? 0 : secondsSince(started) / captured,
+    secondsPerCapturedFrame: captured === 0 ? null : secondsSince(started) / captured,
   };
 }
 
@@ -169,7 +169,10 @@ async function main(): Promise<void> {
       spec: previewSpec,
       frames: previewFrameCount(),
       capturedThisRun: capture.captured,
-      secondsPerCapturedFrame: Number(capture.secondsPerCapturedFrame.toFixed(2)),
+      secondsPerCapturedFrame:
+        capture.secondsPerCapturedFrame === null
+          ? null
+          : Number(capture.secondsPerCapturedFrame.toFixed(2)),
       crf: encoded.crf,
       bytes: encoded.bytes,
       video: probe,

@@ -118,7 +118,7 @@ export function captionsFile(cues: readonly CaptionCue[]): string {
   return `WEBVTT\n\n${body}\n`;
 }
 
-export const crfLadder: readonly number[] = [32, 34, 36, 38, 40, 42, 44, 46, 48, 50];
+export const crfLadder: readonly number[] = [10, 14, 18, 22, 26, 30, 34, 38, 42, 46, 50];
 
 export const frameFilePattern = 'frame-%04d.png';
 
