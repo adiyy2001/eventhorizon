@@ -26,6 +26,7 @@
     "validate:physics": "tsx bench/physics-validation.ts",
     "validate:steps": "tsx bench/step-rule-sweep.ts",
     "bench:parity": "tsx bench/gpu-parity.ts",
+    "bench:cpu-gpu": "tsx bench/cpu-gpu-parity.ts",
     "render:view": "tsx scripts/render-view.ts",
     "capture:baselines": "tsx scripts/capture-baselines.ts",
     "record:preview": "tsx scripts/record-preview.ts"
