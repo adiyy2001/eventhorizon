@@ -1,0 +1,47 @@
+{
+  "generatedAt": "2026-10-10T18:50:47.727Z",
+  "node": "v24.21.0",
+  "platform": "linux 6.6.87.2-microsoft-standard-WSL2 x64",
+  "cpu": "12th Gen Intel(R) Core(TM) i7-12700H",
+  "cores": 20,
+  "memoryGigabytes": 15,
+  "chromium": "153.0.8010.12",
+  "chromiumFlags": [
+    "--enable-unsafe-webgpu",
+    "--use-webgpu-adapter=swiftshader",
+    "--use-angle=swiftshader",
+    "--enable-features=Vulkan,DefaultANGLEVulkan,VulkanFromANGLE"
+  ],
+  "adapter": {
+    "vendor": "google",
+    "architecture": "swiftshader",
+    "device": "",
+    "description": ""
+  },
+  "software": true,
+  "ffmpeg": "ffmpeg version 6.1.1-3ubuntu5 Copyright (c) 2000-2023 the FFmpeg developers",
+  "spec": {
+    "edge": 512,
+    "seconds": 10,
+    "framesPerSecond": 20,
+    "accumulatedFrames": 4,
+    "inclinationLowDegrees": 20,
+    "inclinationHighDegrees": 85,
+    "maxBytes": 4194304,
+    "minSeconds": 8,
+    "maxSeconds": 12
+  },
+  "frames": 200,
+  "capturedThisRun": 200,
+  "secondsPerCapturedFrame": 8,
+  "crf": 10,
+  "bytes": 1480044,
+  "video": {
+    "codec": "vp9",
+    "width": 512,
+    "height": 512,
+    "frames": 200,
+    "seconds": 10
+  },
+  "problems": []
+}
