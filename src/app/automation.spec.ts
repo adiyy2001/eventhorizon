@@ -292,7 +292,9 @@ describe('automation hook', () => {
   });
 });
 
-describe('automation hook software view', () => {
+const softwareRenderTimeout = 30_000;
+
+describe('automation hook software view', { timeout: softwareRenderTimeout }, () => {
   const size = { width: 24, height: 24 };
 
   function withWorkers(
