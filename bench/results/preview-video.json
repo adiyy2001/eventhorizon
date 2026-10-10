@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-10T18:50:47.727Z",
+  "generatedAt": "2026-10-10T20:15:46.954Z",
   "node": "v24.21.0",
   "platform": "linux 6.6.87.2-microsoft-standard-WSL2 x64",
   "cpu": "12th Gen Intel(R) Core(TM) i7-12700H",
@@ -33,9 +33,9 @@
   },
   "frames": 200,
   "capturedThisRun": 200,
-  "secondsPerCapturedFrame": 8,
+  "secondsPerCapturedFrame": 6.97,
   "crf": 10,
-  "bytes": 1480044,
+  "bytes": 845186,
   "video": {
     "codec": "vp9",
     "width": 512,
