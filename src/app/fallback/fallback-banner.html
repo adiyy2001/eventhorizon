@@ -1,0 +1,41 @@
+<section class="banner" aria-labelledby="fallback-heading" data-testid="fallback-banner">
+  <h2 id="fallback-heading">Software rendering</h2>
+  <p class="status-line" role="status" data-testid="gpu-status" data-state="unsupported">
+    {{ reason() }}
+  </p>
+  @if (detail() !== '') {
+    <p class="detail" data-testid="fallback-detail">
+      Reported by the browser: <code>{{ detail() }}</code>
+    </p>
+  }
+  <p data-testid="fallback-explanation">
+    The image is traced on your processor instead, in {{ workers }} background
+    {{ workers === 1 ? 'worker' : 'workers' }}. It follows the same physics as the WebGPU version
+    and draws {{ edge }} by {{ edge }} pixels with one ray each. After every change it shows a
+    coarse picture first and sharpens it in four passes. The line under the image tells how long the
+    last render took.
+  </p>
+  <p data-testid="fallback-overlays">
+    The photon sphere and innermost stable orbit overlays need the graphics path and stay off. The
+    shadow edge and the split comparison work.
+  </p>
+  <figure class="preview">
+    <video
+      controls
+      muted
+      loop
+      playsinline
+      preload="none"
+      poster="media/preview-poster.jpg"
+      aria-describedby="preview-caption"
+      data-testid="preview-video"
+    >
+      <source src="media/preview.webm" type="video/webm" />
+      <track kind="captions" src="media/preview.vtt" srclang="en" label="Description" default />
+    </video>
+    <figcaption id="preview-caption">
+      Recording of the WebGPU version orbiting the black hole. Play it to see what this page draws
+      with a graphics card.
+    </figcaption>
+  </figure>
+</section>

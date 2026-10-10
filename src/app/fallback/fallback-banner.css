@@ -1,0 +1,49 @@
+.banner {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  font-size: 0.875rem;
+}
+
+h2 {
+  margin: 0 0 0.25rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+p {
+  margin: 0 0 0.5rem;
+}
+
+.status-line {
+  color: var(--warn);
+}
+
+.detail {
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+code {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+}
+
+.preview {
+  margin: 0.75rem 0 0;
+}
+
+video {
+  display: block;
+  width: min(100%, 28rem);
+  aspect-ratio: 1;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: #000;
+}
+
+figcaption {
+  margin-top: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
