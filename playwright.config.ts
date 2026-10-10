@@ -23,10 +23,16 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium-webgpu',
+      testIgnore: /fallback.*\.spec\.ts$/,
       use: {
         ...devices['Desktop Chrome'],
         launchOptions: { args: webGpuLaunchArguments },
       },
+    },
+    {
+      name: 'chromium-fallback',
+      testMatch: /fallback.*\.spec\.ts$/,
+      use: { ...devices['Desktop Chrome'] },
     },
   ],
   webServer: {
