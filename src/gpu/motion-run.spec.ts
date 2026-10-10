@@ -1,7 +1,7 @@
 import { defaultSettings, type RenderSettings } from '../core/render/settings';
 import { sceneHash } from '../core/render/settings';
 import { accumulationKey } from './accumulation';
-import { scaledSize } from './dynamic-resolution';
+import { defaultResolutionConfig, scaledSize } from './dynamic-resolution';
 import { type GpuMeasurement } from './gpu-timer';
 import { runMotionPlan } from './motion-run';
 import { type FrameScheduler, type LoopRenderer } from './render-loop';
@@ -61,5 +61,17 @@ describe('runMotionPlan', () => {
     const last = log[log.length - 1];
     expect(last?.moving).toBe(false);
     expect(last?.scale).toBe(1);
+  });
+
+  it('keeps the full resolution while moving when the scale is pinned', async () => {
+    const log = await runMotionPlan(
+      new Renderer(),
+      new Clock(),
+      defaultSettings,
+      { restFrames: 3, moveFrames: 20, settleFrames: 4, azimuthStep: 0.02 },
+      { ...defaultResolutionConfig, minScale: 1 },
+    );
+    expect(log.every((entry) => entry.scale === 1)).toBe(true);
+    expect(log.filter((entry) => entry.moving).length).toBeGreaterThan(0);
   });
 });

@@ -1,5 +1,5 @@
 import { mergeSettings, type RenderSettings } from '../core/render/settings';
-import { type ResolutionLogEntry } from './dynamic-resolution';
+import { type ResolutionConfig, type ResolutionLogEntry } from './dynamic-resolution';
 import { type FrameScheduler, type LoopRenderer, RenderLoop } from './render-loop';
 
 export interface MotionPlan {
@@ -21,11 +21,13 @@ export function runMotionPlan(
   scheduler: FrameScheduler,
   settings: RenderSettings,
   plan: MotionPlan = defaultMotionPlan,
+  resolution?: ResolutionConfig,
 ): Promise<ResolutionLogEntry[]> {
   return new Promise((resolve) => {
     const moveEnd = plan.restFrames + plan.moveFrames;
     const total = moveEnd + plan.settleFrames;
     const loop: RenderLoop = new RenderLoop(renderer, scheduler, settings, {
+      ...(resolution === undefined ? {} : { resolution }),
       onFrame: (_, entry) => {
         const next = entry.frame + 1;
         if (next >= total) {
