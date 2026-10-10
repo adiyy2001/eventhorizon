@@ -40,7 +40,7 @@ export class SkyResources {
       layout: pipeline.getBindGroupLayout(group),
       entries: [
         { binding: 0, resource: this.lut.createView() },
-        { binding: 1, resource: this.cube.createView({ dimension: 'cube' }) },
+        { binding: 1, resource: this.cube.createView({ dimension: '2d-array' }) },
         { binding: 2, resource: this.sampler },
       ],
     });

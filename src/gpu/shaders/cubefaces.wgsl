@@ -1,4 +1,5 @@
 const FACE_COUNT: u32 = 6u;
+const NEBULA_BORDER: u32 = 1u;
 
 fn faceForward(face: u32) -> vec3f {
   switch face {
@@ -30,4 +31,15 @@ fn faceV(face: u32) -> vec3f {
 
 fn faceDirection(face: u32, u: f32, v: f32) -> vec3f {
   return normalize(faceForward(face) + faceU(face) * u + faceV(face) * v);
+}
+
+fn dominantFace(direction: vec3f) -> u32 {
+  let magnitude = abs(direction);
+  if (magnitude.x >= magnitude.y && magnitude.x >= magnitude.z) {
+    return select(1u, 0u, direction.x >= 0.0);
+  }
+  if (magnitude.y >= magnitude.z) {
+    return select(3u, 2u, direction.y >= 0.0);
+  }
+  return select(5u, 4u, direction.z >= 0.0);
 }

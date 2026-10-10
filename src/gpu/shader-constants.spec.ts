@@ -19,6 +19,7 @@ import {
   LUT_SIZE,
   REFERENCE_TEMPERATURE,
 } from '../core/color/temperature-lut';
+import { cubemapBorder } from './passes/bake-pass';
 import { compiledShaders } from './shader-modules';
 
 function scalarConstants(source: string): Record<string, number> {
@@ -63,6 +64,7 @@ describe('WGSL constants against their TypeScript twins', () => {
     expectConstant('FBM_LACUNARITY', FBM_LACUNARITY);
     expectConstant('FBM_GAIN', FBM_GAIN);
     expectConstant('FACE_COUNT', FACE_COUNT);
+    expectConstant('NEBULA_BORDER', cubemapBorder);
   });
 
   it('matches the temperature lookup table range', () => {

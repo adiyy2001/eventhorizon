@@ -1,5 +1,5 @@
 @group(1) @binding(0) var temperatureLut: texture_2d<f32>;
-@group(1) @binding(1) var skyCube: texture_cube<f32>;
+@group(1) @binding(1) var skyFaces: texture_2d_array<f32>;
 @group(1) @binding(2) var skySampler: sampler;
 
 const LUT_SIZE: f32 = 1024.0;
@@ -23,5 +23,12 @@ fn blackbodyRadiance(temperature: f32) -> vec3f {
 }
 
 fn nebulaSample(direction: vec3f) -> vec3f {
-  return textureSampleLevel(skyCube, skySampler, direction, 0.0).rgb;
+  let face = dominantFace(direction);
+  let depth = dot(direction, faceForward(face));
+  let u = dot(direction, faceU(face)) / depth;
+  let v = dot(direction, faceV(face)) / depth;
+  let stored = f32(textureDimensions(skyFaces).x);
+  let inner = stored - 2.0 * f32(NEBULA_BORDER);
+  let coordinates = vec2f(u, v) * (0.5 * inner / stored) + 0.5;
+  return textureSampleLevel(skyFaces, skySampler, coordinates, face, 0.0).rgb;
 }

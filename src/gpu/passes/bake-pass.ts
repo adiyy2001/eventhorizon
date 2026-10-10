@@ -4,6 +4,7 @@ import { workgroupCount } from '../rows';
 import { packBakeParams } from '../uniforms';
 
 export const cubemapSize = 512;
+export const cubemapBorder = 1;
 export const cubemapFormat: GPUTextureFormat = 'rgba16float';
 const bakeWorkgroupEdge = 8;
 
@@ -17,14 +18,15 @@ export async function bakeNebulaCubemap(
     layout: 'auto',
     compute: { module, entryPoint: 'bakeNebula' },
   });
+  const storedEdge = size + 2 * cubemapBorder;
   const cube = device.createTexture({
     label: 'nebula cubemap',
-    size: [size, size, 6],
+    size: [storedEdge, storedEdge, 6],
     format: cubemapFormat,
     usage:
       GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_SRC,
   });
-  const params = packBakeParams(size);
+  const params = packBakeParams(storedEdge);
   const paramsBuffer = device.createBuffer({
     label: 'bake params',
     size: params.byteLength,
@@ -43,8 +45,8 @@ export async function bakeNebulaCubemap(
   pass.setPipeline(pipeline);
   pass.setBindGroup(0, bindGroup);
   pass.dispatchWorkgroups(
-    workgroupCount(size, bakeWorkgroupEdge),
-    workgroupCount(size, bakeWorkgroupEdge),
+    workgroupCount(storedEdge, bakeWorkgroupEdge),
+    workgroupCount(storedEdge, bakeWorkgroupEdge),
     6,
   );
   pass.end();
