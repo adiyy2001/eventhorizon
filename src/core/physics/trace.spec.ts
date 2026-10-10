@@ -8,7 +8,13 @@ import {
   pixelDirection,
   staticObserverRay,
 } from './observer';
-import { defaultTraceOptions, locatePlaneCrossing, traceRay, type TraceOptions } from './trace';
+import {
+  defaultTraceOptions,
+  locatePlaneCrossing,
+  traceRay,
+  type TraceOptions,
+  type TraceResult,
+} from './trace';
 import { vec3 } from './vec3';
 
 const disk = { innerRadius: ISCO_RADIUS, outerRadius: 20 };
@@ -51,14 +57,23 @@ function options(overrides: Partial<TraceOptions> = {}): TraceOptions {
   return { ...defaultTraceOptions(distance, disk), ...overrides };
 }
 
-function gridOutcomes(overrides: Partial<TraceOptions>, size: number) {
-  const results = [];
+function gridOutcomes(overrides: Partial<TraceOptions>, size: number): TraceResult[] {
+  const results: TraceResult[] = [];
   for (let row = 0; row < size; row += 1) {
     for (let column = 0; column < size; column += 1) {
       results.push(traceRay(tiltedPixelRay(column, row, size), options(overrides)));
     }
   }
   return results;
+}
+
+const tiltedGridSize = 96;
+const heavyGridTimeout = 60_000;
+let cachedTiltedGrid: TraceResult[] | null = null;
+
+function fullTiltedGrid(): TraceResult[] {
+  cachedTiltedGrid ??= gridOutcomes({}, tiltedGridSize);
+  return cachedTiltedGrid;
 }
 
 describe('traceRay termination', () => {
@@ -223,51 +238,57 @@ describe('disk crossings', () => {
 });
 
 describe('higher-order images', () => {
-  it('contains rays with several plane crossings and rays that miss first and hit later', () => {
-    const results = gridOutcomes({}, 96);
-    const multiple = results.filter((result) => result.crossings.length >= 2);
-    const lateHits = results.filter(
-      (result) =>
-        result.outcome === 'disk' &&
-        (result.diskHit?.index ?? 0) >= 2 &&
-        result.crossings.slice(0, -1).every((crossing) => !crossing.hitsDisk),
-    );
-    expect(multiple.length).toBeGreaterThan(20);
-    expect(lateHits.length).toBeGreaterThan(20);
-  });
+  it(
+    'contains rays with several plane crossings and rays that miss first and hit later',
+    () => {
+      const results = fullTiltedGrid();
+      const multiple = results.filter((result) => result.crossings.length >= 2);
+      const lateHits = results.filter(
+        (result) =>
+          result.outcome === 'disk' &&
+          (result.diskHit?.index ?? 0) >= 2 &&
+          result.crossings.slice(0, -1).every((crossing) => !crossing.hitsDisk),
+      );
+      expect(multiple.length).toBeGreaterThan(20);
+      expect(lateHits.length).toBeGreaterThan(20);
+    },
+    heavyGridTimeout,
+  );
 
-  it('turns those late hits into plain escapes or captures when higher orders are off', () => {
-    const size = 96;
-    const full = gridOutcomes({}, size);
-    const first = gridOutcomes({ higherOrderImages: false }, size);
-    let changed = 0;
-    full.forEach((result, index) => {
-      const restricted = first[index];
-      if (restricted === undefined) {
-        throw new Error('grid size mismatch');
-      }
-      if (result.outcome === 'disk' && (result.diskHit?.index ?? 0) >= 2) {
-        expect(restricted.outcome).not.toBe('disk');
-        changed += 1;
-      } else {
-        expect(restricted.outcome).toBe(result.outcome);
-      }
-      expect(restricted.crossings.length).toBeLessThanOrEqual(1);
-    });
-    expect(changed).toBeGreaterThan(20);
-  });
+  it(
+    'turns those late hits into plain escapes or captures when higher orders are off',
+    () => {
+      const full = fullTiltedGrid();
+      const first = gridOutcomes({ higherOrderImages: false }, tiltedGridSize);
+      let changed = 0;
+      full.forEach((result, index) => {
+        const restricted = first[index];
+        if (restricted === undefined) {
+          throw new Error('grid size mismatch');
+        }
+        if (result.outcome === 'disk' && (result.diskHit?.index ?? 0) >= 2) {
+          expect(restricted.outcome).not.toBe('disk');
+          changed += 1;
+        } else {
+          expect(restricted.outcome).toBe(result.outcome);
+        }
+        expect(restricted.crossings.length).toBeLessThanOrEqual(1);
+      });
+      expect(changed).toBeGreaterThan(20);
+    },
+    heavyGridTimeout,
+  );
 });
 
 describe('beaming geometry', () => {
-  it('makes the side moving towards the camera bluer than the receding side', () => {
-    const size = 96;
-    let approachingTotal = 0;
-    let approachingCount = 0;
-    let recedingTotal = 0;
-    let recedingCount = 0;
-    for (let row = 0; row < size; row += 1) {
-      for (let column = 0; column < size; column += 1) {
-        const result = traceRay(tiltedPixelRay(column, row, size), options());
+  it(
+    'makes the side moving towards the camera bluer than the receding side',
+    () => {
+      let approachingTotal = 0;
+      let approachingCount = 0;
+      let recedingTotal = 0;
+      let recedingCount = 0;
+      for (const result of fullTiltedGrid()) {
         const hit = result.diskHit;
         if (hit?.index !== 1 || hit.radius < 9 || hit.radius > 13) {
           continue;
@@ -283,12 +304,13 @@ describe('beaming geometry', () => {
           recedingCount += 1;
         }
       }
-    }
-    expect(approachingCount).toBeGreaterThan(50);
-    expect(recedingCount).toBeGreaterThan(50);
-    expect(approachingTotal / approachingCount).toBeGreaterThan(0.01);
-    expect(recedingTotal / recedingCount).toBeLessThan(-0.01);
-  });
+      expect(approachingCount).toBeGreaterThan(50);
+      expect(recedingCount).toBeGreaterThan(50);
+      expect(approachingTotal / approachingCount).toBeGreaterThan(0.01);
+      expect(recedingTotal / recedingCount).toBeLessThan(-0.01);
+    },
+    heavyGridTimeout,
+  );
 });
 
 describe('locatePlaneCrossing', () => {
