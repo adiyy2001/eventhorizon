@@ -8,10 +8,15 @@ import {
   type SessionRenderer,
 } from './render-session';
 
-function fakeDevice() {
+function lostInfo(reason: GPUDeviceLostReason, message: string): GPUDeviceLostInfo {
+  return { reason, message } as unknown as GPUDeviceLostInfo;
+}
+
+function fakeDevice(lost = new Promise<GPUDeviceLostInfo>(() => undefined)) {
   return {
     queue: { onSubmittedWorkDone: vi.fn(() => Promise.resolve()) },
     destroy: vi.fn(),
+    lost,
   };
 }
 
@@ -157,6 +162,68 @@ describe('startRenderSession', () => {
       size: { width: 64, height: 64 },
     });
     session.destroy();
+  });
+
+  it('has no progress to report and no failure while the device is healthy', async () => {
+    const device = fakeDevice();
+    const session = await startRenderSession(
+      {} as HTMLCanvasElement,
+      256,
+      defaultSettings,
+      dependencies(device, fakeRenderer(), new ManualScheduler()),
+    );
+    expect(session.progress()).toBeNull();
+    expect(session.failure()).toBeNull();
+    session.destroy();
+  });
+
+  it('reports the message of a lost device as a failure', async () => {
+    let lose: (info: GPUDeviceLostInfo) => void = () => undefined;
+    const lost = new Promise<GPUDeviceLostInfo>((resolve) => {
+      lose = resolve;
+    });
+    const session = await startRenderSession(
+      {} as HTMLCanvasElement,
+      256,
+      defaultSettings,
+      dependencies(fakeDevice(lost), fakeRenderer(), new ManualScheduler()),
+    );
+    lose(lostInfo('unknown', 'GPU hung'));
+    await lost;
+    await Promise.resolve();
+    expect(session.failure()).toBe('GPU hung');
+  });
+
+  it('names a lost device that gave no message', async () => {
+    const session = await startRenderSession(
+      {} as HTMLCanvasElement,
+      256,
+      defaultSettings,
+      dependencies(
+        fakeDevice(Promise.resolve(lostInfo('unknown', ''))),
+        fakeRenderer(),
+        new ManualScheduler(),
+      ),
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(session.failure()).toBe('the graphics device was lost');
+  });
+
+  it('does not report the loss caused by our own destroy', async () => {
+    const session = await startRenderSession(
+      {} as HTMLCanvasElement,
+      256,
+      defaultSettings,
+      dependencies(
+        fakeDevice(Promise.resolve(lostInfo('destroyed', 'destroyed'))),
+        fakeRenderer(),
+        new ManualScheduler(),
+      ),
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(session.failure()).toBeNull();
   });
 
   it('fails with the detail when no device is available', async () => {

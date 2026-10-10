@@ -1,4 +1,4 @@
-import { InjectionToken } from '@angular/core';
+import { InjectionToken, type Signal, signal } from '@angular/core';
 import { type RenderSettings } from '../../core/render/settings';
 import { acquireDevice, type DeviceResult } from '../../gpu/device';
 import { type ResolutionLogEntry } from '../../gpu/dynamic-resolution';
@@ -18,10 +18,22 @@ export interface ExportRequest {
   frames?: number;
 }
 
+export interface RenderProgress {
+  generation: number;
+  passesDone: number;
+  passesTotal: number;
+  fraction: number;
+  complete: boolean;
+  firstImageMilliseconds: number | null;
+  fullImageMilliseconds: number | null;
+}
+
 export interface RenderSession {
   setSettings: (settings: RenderSettings) => void;
   exportImage: (request: ExportRequest) => Promise<CapturedImage>;
   resolutionLog: () => readonly ResolutionLogEntry[];
+  progress: Signal<RenderProgress | null>;
+  failure: Signal<string | null>;
   destroy: () => void;
 }
 
@@ -33,6 +45,7 @@ export type RenderSessionFactory = (
 
 export const viewportSize = 512;
 export const automationIdleFrames = 4;
+const deviceLostMessage = 'the graphics device was lost';
 
 export interface SessionRenderer extends LoopRenderer {
   sky: SkyResources;
@@ -79,6 +92,12 @@ export async function startRenderSession(
     throw new Error(acquired.detail);
   }
   const canvasSize = { width: size, height: size };
+  const failure = signal<string | null>(null);
+  void acquired.device.lost.then((info) => {
+    if (info.reason !== 'destroyed') {
+      failure.set(info.message === '' ? deviceLostMessage : info.message);
+    }
+  });
   const renderer = await dependencies.createRenderer(acquired.device, canvasSize, canvas);
   renderer.render(settings, 1);
   await acquired.device.queue.onSubmittedWorkDone();
@@ -104,6 +123,8 @@ export async function startRenderSession(
         canvasSize,
       ),
     resolutionLog: () => loop.log,
+    progress: signal<RenderProgress | null>(null).asReadonly(),
+    failure: failure.asReadonly(),
     destroy: () => {
       loop.stop();
       renderer.destroy();

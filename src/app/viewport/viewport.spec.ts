@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { defaultSettings, mergeSettings } from '../../core/render/settings';
 import {
@@ -13,6 +14,8 @@ function fakeSession(overrides: Partial<RenderSession> = {}): RenderSession {
     setSettings: vi.fn(),
     exportImage: vi.fn(() => Promise.resolve({ width: 2, height: 2, rgba: new Uint8Array(16) })),
     resolutionLog: () => [],
+    progress: signal(null).asReadonly(),
+    failure: signal(null).asReadonly(),
     destroy: vi.fn(),
     ...overrides,
   };
