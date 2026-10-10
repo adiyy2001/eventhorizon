@@ -1,6 +1,7 @@
 import { type Xyz } from './cmf';
 
 export type Rgb = readonly [number, number, number];
+export type MutableRgb = [number, number, number];
 
 export const xyzToLinearSrgbMatrix: readonly (readonly [number, number, number])[] = [
   [3.2409699419045226, -1.537383177570094, -0.4986107602930034],

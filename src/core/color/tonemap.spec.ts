@@ -1,4 +1,11 @@
-import { acesFitted, displayEncode, exposureScale } from './tonemap';
+import {
+  acesFitted,
+  acesFittedInto,
+  displayEncode,
+  displayEncodeInto,
+  exposureScale,
+} from './tonemap';
+import { linearToSrgbTransfer, type MutableRgb, type Rgb } from './xyz-srgb';
 
 describe('ACES fitted tone mapping', () => {
   it('maps black to black', () => {
@@ -52,5 +59,78 @@ describe('display encoding', () => {
     expect(brighter[1]).toBeGreaterThan(base[1]);
     expect(brighter[1]).toBeCloseTo(same[1], 12);
     expect(base[1]).toBeGreaterThan(acesFitted([0.25, 0.25, 0.25])[1]);
+  });
+});
+
+describe('allocation free variants', () => {
+  const input = [
+    [0.59719, 0.35458, 0.04823],
+    [0.076, 0.90834, 0.01566],
+    [0.0284, 0.13383, 0.83777],
+  ];
+  const output = [
+    [1.60475, -0.53108, -0.07367],
+    [-0.10208, 1.10813, -0.00605],
+    [-0.00327, -0.07276, 1.07602],
+  ];
+
+  function multiply(matrix: number[][], color: readonly number[]): number[] {
+    return matrix.map(
+      (row) =>
+        (row[0] ?? 0) * (color[0] ?? 0) +
+        (row[1] ?? 0) * (color[1] ?? 0) +
+        (row[2] ?? 0) * (color[2] ?? 0),
+    );
+  }
+
+  function plainAces(color: Rgb): number[] {
+    const curved = multiply(input, color).map((value) => {
+      const numerator = value * (value + 0.0245786) - 0.000090537;
+      const denominator = value * (0.983729 * value + 0.432951) + 0.238081;
+      return numerator / denominator;
+    });
+    return multiply(output, curved).map((value) => Math.min(Math.max(value, 0), 1));
+  }
+
+  const colors: Rgb[] = [
+    [0, 0, 0],
+    [0.02, 0.5, 3],
+    [1, 1, 1],
+    [40, 4, 0.4],
+    [0.001, 0.0004, 0.2],
+  ];
+
+  it('tone maps like a plain matrix implementation of the published fit', () => {
+    for (const color of colors) {
+      const target: MutableRgb = [9, 9, 9];
+      acesFittedInto(target, color[0], color[1], color[2]);
+      plainAces(color).forEach((expected, channel) => {
+        expect(target[channel]).toBeCloseTo(expected, 12);
+      });
+    }
+  });
+
+  it('encodes with a precomputed exposure scale exactly like the returning function', () => {
+    for (const color of colors) {
+      for (const stops of [-2, 0, 1.5]) {
+        const target: MutableRgb = [9, 9, 9];
+        displayEncodeInto(target, color[0], color[1], color[2], exposureScale(stops));
+        const expected = plainAces([
+          color[0] * 2 ** stops,
+          color[1] * 2 ** stops,
+          color[2] * 2 ** stops,
+        ]);
+        expected.forEach((linear, channel) => {
+          expect(target[channel]).toBeCloseTo(linearToSrgbTransfer(linear), 12);
+        });
+        expect(displayEncode(color, stops)).toEqual(target);
+      }
+    }
+  });
+
+  it('overwrites the whole target', () => {
+    const target: MutableRgb = [-5, -5, -5];
+    displayEncodeInto(target, 0, 0, 0, 1);
+    expect(target).toEqual([0, 0, 0]);
   });
 });
