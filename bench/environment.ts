@@ -9,7 +9,7 @@ export interface AdapterDescription {
   description: string;
 }
 
-export function describeEnvironment(browser: Browser, adapter: AdapterDescription) {
+export function describeHost(browser: Browser) {
   return {
     generatedAt: new Date().toISOString(),
     node: process.version,
@@ -18,6 +18,12 @@ export function describeEnvironment(browser: Browser, adapter: AdapterDescriptio
     cores: cpus().length,
     memoryGigabytes: Math.round(totalmem() / 2 ** 30),
     chromium: browser.version(),
+  };
+}
+
+export function describeEnvironment(browser: Browser, adapter: AdapterDescription) {
+  return {
+    ...describeHost(browser),
     chromiumFlags: webGpuLaunchArguments,
     adapter,
     software: /swiftshader|llvmpipe|software/i.test(
