@@ -70,6 +70,23 @@ describe('progressive rendering', () => {
     );
   });
 
+  it('does not depend on the order in which the passes arrive', () => {
+    const size = { width: 40, height: 24 };
+    const settings = mergeSettings(defaultSettings, { split: { enabled: true, position: 0.6 } });
+    const shader = createCpuShader(settings, size);
+    const inOrder = new FrameAssembler(size);
+    const finestFirst = new FrameAssembler(size);
+    const arrivals = planPasses(size).flatMap((pass) => tilesForPass(size, pass));
+    arrivals.forEach((tile) => {
+      inOrder.applyTile(tile, renderTileSamples(shader, tile));
+    });
+    [...arrivals].reverse().forEach((tile) => {
+      finestFirst.applyTile(tile, renderTileSamples(shader, tile));
+    });
+    expect(finestFirst.display(settings, 'final')).toEqual(renderCpuImage(settings, size));
+    expect(inOrder.display(settings, 'final')).toEqual(renderCpuImage(settings, size));
+  });
+
   it('shows a complete coarse image of uniform blocks after the first pass', () => {
     const size = { width: 32, height: 32 };
     const shader = createCpuShader(defaultSettings, size);

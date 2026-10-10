@@ -7,6 +7,8 @@ import { type TileRequest, tileSamples } from './tile-scheduler';
 
 export type DisplayQuality = 'preview' | 'final';
 
+const unwrittenStep = 255;
+
 interface CachedGlow {
   version: number;
   image: RgbImage;
@@ -14,11 +16,13 @@ interface CachedGlow {
 
 export class FrameAssembler {
   private readonly scene: Float32Array<ArrayBuffer>;
+  private readonly finestStep: Uint8Array<ArrayBuffer>;
   private version = 0;
   private cachedGlow: CachedGlow | null = null;
 
   constructor(readonly size: ViewportSize) {
     this.scene = new Float32Array(size.width * size.height * channelsPerSample);
+    this.finestStep = new Uint8Array(size.width * size.height).fill(unwrittenStep);
   }
 
   applyTile(tile: TileRequest, samples: Float32Array): void {
@@ -65,7 +69,12 @@ export class FrameAssembler {
     const lastColumn = Math.min(column + step, this.size.width);
     for (let y = row; y < lastRow; y += 1) {
       for (let x = column; x < lastColumn; x += 1) {
-        const offset = (y * this.size.width + x) * channelsPerSample;
+        const pixel = y * this.size.width + x;
+        if ((this.finestStep[pixel] ?? unwrittenStep) < step) {
+          continue;
+        }
+        this.finestStep[pixel] = step;
+        const offset = pixel * channelsPerSample;
         this.scene[offset] = red;
         this.scene[offset + 1] = green;
         this.scene[offset + 2] = blue;

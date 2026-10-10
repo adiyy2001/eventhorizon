@@ -49,6 +49,26 @@ describe('FrameAssembler', () => {
     expect(pixelAt(pixels, 4, 0)).toEqual(shown([0.2, 0.2, 0.2]));
   });
 
+  it('keeps finer samples when a coarse tile arrives late', () => {
+    const assembler = new FrameAssembler(size);
+    const fine: TileRequest = { pass: 1, step: 2, column: 0, row: 0, columns: 4, rows: 4 };
+    assembler.applyTile(fine, new Float32Array(9).fill(1));
+    assembler.applyTile(coarseTile, new Float32Array(12).fill(0.2));
+    const pixels = assembler.display(plain, 'preview');
+    expect(pixelAt(pixels, 2, 0)).toEqual(shown([1, 1, 1]));
+    expect(pixelAt(pixels, 3, 3)).toEqual(shown([1, 1, 1]));
+    expect(pixelAt(pixels, 0, 0)).toEqual(shown([0.2, 0.2, 0.2]));
+    expect(pixelAt(pixels, 1, 1)).toEqual(shown([0.2, 0.2, 0.2]));
+    expect(pixelAt(pixels, 4, 0)).toEqual(shown([0.2, 0.2, 0.2]));
+  });
+
+  it('accepts a tile twice and keeps the latest values of the same step', () => {
+    const assembler = new FrameAssembler(size);
+    assembler.applyTile(coarseTile, new Float32Array(12).fill(0.2));
+    assembler.applyTile(coarseTile, new Float32Array(12).fill(0.6));
+    expect(pixelAt(assembler.display(plain, 'preview'), 5, 5)).toEqual(shown([0.6, 0.6, 0.6]));
+  });
+
   it('clips blocks at the edge of an image that is not a multiple of the step', () => {
     const odd = new FrameAssembler({ width: 5, height: 5 });
     const tile: TileRequest = { pass: 0, step: 4, column: 0, row: 0, columns: 5, rows: 5 };
