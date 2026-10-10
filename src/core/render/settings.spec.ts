@@ -135,9 +135,9 @@ describe('equality', () => {
 describe('hashes', () => {
   it('has a fixed value for the defaults', () => {
     expect(settingsHash(defaultSettings)).toBe(settingsHash(sanitizeSettings({})));
-    expect(sceneHash(defaultSettings)).toMatchInlineSnapshot(`1022316421`);
+    expect(sceneHash(defaultSettings)).toMatchInlineSnapshot(`1352948614`);
     expect(cameraHash(defaultSettings)).toMatchInlineSnapshot(`1137169010`);
-    expect(settingsHash(defaultSettings)).toMatchInlineSnapshot(`3580701008`);
+    expect(settingsHash(defaultSettings)).toMatchInlineSnapshot(`1379288160`);
   });
 
   it('is deterministic and an unsigned 32 bit integer', () => {

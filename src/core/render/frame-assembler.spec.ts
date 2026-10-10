@@ -6,7 +6,7 @@ import { type TileRequest } from './tile-scheduler';
 
 const size = { width: 8, height: 8 };
 const coarseTile: TileRequest = { pass: 0, step: 4, column: 0, row: 0, columns: 8, rows: 8 };
-const plain = mergeSettings(defaultSettings, { bloomStrength: 0 });
+const plain = mergeSettings(defaultSettings, { bloomStrength: 0, exposure: 0 });
 
 function pixelAt(pixels: Uint8ClampedArray, column: number, row: number, width = size.width) {
   const offset = (row * width + column) * 4;
@@ -113,7 +113,7 @@ describe('FrameAssembler', () => {
 
 describe('FrameAssembler display quality', () => {
   const wide = { width: 64, height: 64 };
-  const bloomy = mergeSettings(defaultSettings, { bloomStrength: 0.4 });
+  const bloomy = mergeSettings(defaultSettings, { bloomStrength: 0.4, exposure: 0 });
 
   function assembleBrightSpot(): FrameAssembler {
     const assembler = new FrameAssembler(wide);

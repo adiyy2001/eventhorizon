@@ -5,7 +5,7 @@ export interface PostSettings {
 }
 
 export const defaultPost: PostSettings = {
-  exposure: 0,
+  exposure: -1.5,
   bloomStrength: 0.06,
   ditherAmplitude: 1,
 };

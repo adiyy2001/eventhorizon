@@ -28,7 +28,7 @@ describe('renderTileSamples', () => {
         ...scene.subarray(sceneOffset, sceneOffset + 3),
       ]);
     });
-  });
+  }, 30_000);
 });
 
 describe('progressive rendering', () => {

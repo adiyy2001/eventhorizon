@@ -27,7 +27,7 @@ export const defaultView: ViewDescription = {
   azimuth: 0,
   verticalFieldOfView: (35 * Math.PI) / 180,
   diskOuterRadius: 16,
-  peakTemperature: 5500,
+  peakTemperature: 6500,
   lensing: true,
   higherOrderImages: true,
   gravitationalRedshift: true,

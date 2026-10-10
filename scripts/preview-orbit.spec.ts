@@ -10,6 +10,7 @@ import {
   previewFrameCount,
   previewSpec,
 } from '../bench/preview-orbit.ts';
+import { defaultSettings } from '../src/core/render/settings.ts';
 import { defaultView } from '../src/core/render/view.ts';
 
 const degrees = (radians: number): number => (radians * 180) / Math.PI;
@@ -67,7 +68,7 @@ describe('preview orbit', () => {
     const settings = frameSettings(10);
     expect(settings.overlays).toEqual({ photonSphere: false, isco: false, shadowEdge: false });
     expect(settings.split.enabled).toBe(false);
-    expect(settings.exposure).toBe(0);
+    expect(settings.exposure).toBe(defaultSettings.exposure);
   });
 });
 

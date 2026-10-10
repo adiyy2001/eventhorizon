@@ -83,7 +83,7 @@ describe('decodeSettings', () => {
     expect(decoded.view.inclination).toBe(defaultSettings.view.inclination);
     expect(decoded.view.diskOuterRadius).toBe(24);
     expect(decoded.view.peakTemperature).toBe(defaultSettings.view.peakTemperature);
-    expect(decoded.exposure).toBe(0);
+    expect(decoded.exposure).toBe(defaultSettings.exposure);
   });
 
   it('clamps values outside the ranges', () => {

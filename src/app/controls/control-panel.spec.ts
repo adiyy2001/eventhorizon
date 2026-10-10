@@ -63,8 +63,8 @@ describe('ControlPanel', () => {
     }
     expect(slider(root, 'inclination').getAttribute('aria-valuetext')).toBe('75 degrees');
     expect(slider(root, 'distance').getAttribute('aria-valuetext')).toBe('50 M');
-    expect(slider(root, 'peak-temperature').getAttribute('aria-valuetext')).toBe('5500 K');
-    expect(slider(root, 'exposure').getAttribute('aria-valuetext')).toBe('0.0 EV');
+    expect(slider(root, 'peak-temperature').getAttribute('aria-valuetext')).toBe('6500 K');
+    expect(slider(root, 'exposure').getAttribute('aria-valuetext')).toBe('-1.5 EV');
   });
 
   it('writes an inclination in degrees as radians', () => {

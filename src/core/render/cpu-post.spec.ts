@@ -5,7 +5,7 @@ import { ditherNoise, encodeFrame } from './cpu-post';
 import { defaultSettings, mergeSettings } from './settings';
 
 const size = { width: 8, height: 6 };
-const plain = mergeSettings(defaultSettings, { bloomStrength: 0 });
+const plain = mergeSettings(defaultSettings, { bloomStrength: 0, exposure: 0 });
 
 function uniformScene(value: readonly [number, number, number], pixels = 48): Float32Array {
   const scene = new Float32Array(pixels * 3);
@@ -105,7 +105,7 @@ describe('encodeFrame with bloom', () => {
   const scene = uniformScene([0.2, 0.2, 0.2]);
 
   it('adds the glow scaled by the bloom strength before the tone map', () => {
-    const settings = mergeSettings(defaultSettings, { bloomStrength: 0.25 });
+    const settings = mergeSettings(defaultSettings, { bloomStrength: 0.25, exposure: 0 });
     const pixels = encodeFrame(scene, glow, settings, size, { dither: false });
     expect(pixelAt(pixels, 4, 3)).toEqual([...quantized([0.7, 0.7, 0.7]), 255]);
   });
@@ -121,7 +121,7 @@ describe('encodeFrame with bloom', () => {
       height: 1,
       data: Float32Array.from([0, 0, 0, 4, 4, 4]),
     };
-    const settings = mergeSettings(defaultSettings, { bloomStrength: 0.5 });
+    const settings = mergeSettings(defaultSettings, { bloomStrength: 0.5, exposure: 0 });
     const flat = uniformScene([0, 0, 0]);
     const pixels = encodeFrame(flat, ramp, settings, size, { dither: false });
     const left = pixelAt(pixels, 0, 0)[0] ?? 0;
