@@ -332,6 +332,18 @@ describe('automation hook software view', () => {
     expect(pool.ports.every((port) => port.terminated)).toBe(true);
   });
 
+  it('uses the worker count it is given within the pool limits', async () => {
+    const counts: number[] = [];
+    for (const requested of [3, 100, 0, 2.6]) {
+      const { api, pool, stop } = withWorkers();
+      const response = await api.renderCpuView({ size, workers: requested });
+      stop();
+      counts.push(response.workers);
+      expect(pool.ports).toHaveLength(response.workers);
+    }
+    expect(counts).toEqual([3, 8, 1, 3]);
+  });
+
   it('leaves out the overlays only the graphics path can draw', async () => {
     const { api, pool, stop } = withWorkers();
     await api.renderCpuView({

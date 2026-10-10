@@ -4,7 +4,7 @@ import {
   type RenderSettings,
   sanitizeSettings,
 } from '../core/render/settings';
-import { poolSize } from '../core/render/tile-scheduler';
+import { maxWorkers, poolSize } from '../core/render/tile-scheduler';
 import { type ViewDescription } from '../core/render/view';
 import { type RayRecord } from '../core/validation/parity';
 import { type ResolutionLogEntry } from '../gpu/dynamic-resolution';
@@ -109,6 +109,7 @@ export interface CompileResponse {
 
 export interface CpuViewRequest extends SettingsInput {
   size: { width: number; height: number };
+  workers?: number;
 }
 
 export interface CpuViewResponse {
@@ -301,7 +302,10 @@ function renderOnWorkers(
   if (workerPorts === null) {
     return Promise.reject(new Error('the software workers are not available in this page'));
   }
-  const workers = poolSize(navigator.hardwareConcurrency);
+  const workers =
+    request.workers === undefined
+      ? poolSize(navigator.hardwareConcurrency)
+      : Math.min(maxWorkers, Math.max(1, Math.round(request.workers)));
   return new Promise<CpuViewResponse>((resolve, reject) => {
     let finalFrame: CpuFrame | null = null;
     const renderer: CpuRenderer = new CpuRenderer({
