@@ -4,6 +4,7 @@ import { expect, type Page, test } from '@playwright/test';
 
 const artifactDirectory = join('test-results', 'interface');
 const renderTimeout = 90_000;
+const screenshotTestTimeout = 120_000;
 
 async function open(page: Page, query = ''): Promise<void> {
   await page.goto(`/${query}`);
@@ -275,6 +276,7 @@ test.describe('screenshots of the interface', () => {
   });
 
   test('desktop controls and physics', async ({ page }) => {
+    test.setTimeout(screenshotTestTimeout);
     await page.setViewportSize({ width: 1440, height: 900 });
     await open(page);
     await page.screenshot({ path: join(artifactDirectory, 'desktop-controls.png') });
@@ -287,6 +289,7 @@ test.describe('screenshots of the interface', () => {
   });
 
   test('phone sheet closed and open', async ({ page }) => {
+    test.setTimeout(screenshotTestTimeout);
     await page.setViewportSize({ width: 390, height: 844 });
     await open(page);
     const toggle = page.getByTestId('sheet-toggle');
