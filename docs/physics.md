@@ -295,7 +295,7 @@ Cool blackbodies fall outside the sRGB gamut (negative blue). The color is scale
 
 $$E = \begin{cases}12.92\,L & L \le 0.0031308\\ 1.055\,L^{1/2.4} - 0.055 & \text{otherwise.}\end{cases}$$
 
-The fit compresses hot, very bright regions toward white. A disk peaking at 9000 K with exposure 0 is therefore nearly white across its width, and the default peak temperature of 5500 K was chosen so the gradient and the beamed side remain visible (ADR 12). Test: `tonemap.spec.ts`, and the GPU kernel against the CPU on 200 random inputs, largest difference 2.9e-7.
+The fit compresses hot, very bright regions toward white. A disk peaking at 9000 K with exposure 0 is therefore nearly white across its width, and the defaults (6500 K at -1.5 EV, ADR 15) were chosen so the gradient and the beamed side remain visible. Test: `tonemap.spec.ts`, and the GPU kernel against the CPU on 200 random inputs, largest difference 2.9e-7.
 
 **Accumulation and bloom.** Each frame is traced with a sub-pixel offset from the R2 sequence, $(\{0.5 + n\,\alpha_1\} - 0.5,\ \{0.5 + n\,\alpha_2\} - 0.5)$ with $\alpha_1 = 0.75488$ and $\alpha_2 = 0.56984$, and blended into the history with weight $1/(n+1)$, which is the running mean. Bloom is a 13-tap downsample chain with a luminance-weighted first level and a tent upsample, added to the resolved image at a small strength before tone mapping. Bloom is an artistic effect, so the radiance returned by the capture path is taken before it.
 

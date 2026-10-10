@@ -22,7 +22,7 @@ The interactive milestone had to fix how the split comparison picks its switches
 
 **Automation additions.** `renderSequence`, `exportImage` and `runMotion` (ADR 11 amendment). `renderSequence` is how the end-to-end test shows that accumulation after a change equals a fresh render, bit for bit.
 
-**Defaults.** The values chosen in the color milestone stay: distance 50, disk outer radius 16, peak temperature 5500 K, inclination 75 degrees, vertical field of view 35 degrees, exposure 0, bloom 0.06. The interactive renderer showed no reason to change them.
+**Defaults.** The values chosen in the color milestone stay: distance 50, disk outer radius 16, peak temperature 5500 K, inclination 75 degrees, vertical field of view 35 degrees, exposure 0, bloom 0.06. The interactive renderer showed no reason to change them. ADR 15 later changed the peak temperature to 6500 K and the exposure to -1.5 EV.
 
 ## Alternatives
 

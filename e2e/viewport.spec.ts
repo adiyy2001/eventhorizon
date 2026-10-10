@@ -53,7 +53,7 @@ test('the shell draws the first lensed frame on its canvas', async ({ page }) =>
 
   expect(statistics.width).toBeGreaterThan(300);
   expect(statistics.centerLuma).toBeLessThan(8);
-  expect(statistics.litFraction).toBeGreaterThan(0.5);
+  expect(statistics.litFraction).toBeGreaterThan(0.25);
   expect(statistics.litFraction).toBeLessThan(0.98);
   expect(statistics.distinctLevels).toBeGreaterThan(10);
 });
