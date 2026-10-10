@@ -7,81 +7,14 @@ import {
   type RenderSettings,
 } from '../../core/render/settings';
 import { poolSize } from '../../core/render/tile-scheduler';
-import { type WorkerRequest, type WorkerResponse } from '../../workers/protocol';
-import { TileHandler } from '../../workers/tile-handler';
-import { browserClock, minimumDisplayInterval, type RendererClock } from './cpu-renderer';
+import { browserClock, minimumDisplayInterval } from './cpu-renderer';
 import { CPU_SESSION_FACTORY, startCpuSession } from './cpu-session';
-import { CPU_WORKER_PORTS, type WorkerPort } from './worker-port';
+import { LoopbackPool, LoopbackPort, ManualClock } from './testing/loopback';
+import { CPU_WORKER_PORTS } from './worker-port';
 
 const edge = 24;
 const size = { width: edge, height: edge };
 const plain = mergeSettings(defaultSettings, { bloomStrength: 0 });
-
-class ManualClock implements RendererClock {
-  time = 0;
-  private nextHandle = 1;
-  private readonly timers = new Map<number, { at: number; callback: () => void }>();
-
-  now = (): number => this.time;
-
-  schedule = (callback: () => void, delayMilliseconds: number): number => {
-    const handle = this.nextHandle;
-    this.nextHandle += 1;
-    this.timers.set(handle, { at: this.time + delayMilliseconds, callback });
-    return handle;
-  };
-
-  cancel = (handle: number): void => {
-    this.timers.delete(handle);
-  };
-
-  advance(milliseconds: number): void {
-    this.time += milliseconds;
-    [...this.timers.entries()]
-      .filter(([, timer]) => timer.at <= this.time)
-      .forEach(([handle, timer]) => {
-        this.timers.delete(handle);
-        timer.callback();
-      });
-  }
-}
-
-class LoopbackPort implements WorkerPort {
-  readonly queue: WorkerRequest[] = [];
-  readonly posted: WorkerRequest[] = [];
-  terminated = false;
-  private responseListener: (response: WorkerResponse) => void = () => undefined;
-  private failureListener: (detail: string) => void = () => undefined;
-  private readonly handler = new TileHandler(() => 0);
-
-  post = (request: WorkerRequest): void => {
-    this.queue.push(request);
-    this.posted.push(request);
-  };
-
-  onResponse = (listener: (response: WorkerResponse) => void): void => {
-    this.responseListener = listener;
-  };
-
-  onFailure = (listener: (detail: string) => void): void => {
-    this.failureListener = listener;
-  };
-
-  terminate = (): void => {
-    this.terminated = true;
-  };
-
-  answerNext(): void {
-    const request = this.queue.shift();
-    if (request !== undefined) {
-      this.responseListener(this.handler.handle(request));
-    }
-  }
-
-  crash(detail: string): void {
-    this.failureListener(detail);
-  }
-}
 
 class FakeImageData {
   constructor(
@@ -98,26 +31,18 @@ function fakeCanvas() {
 }
 
 function open(settings: RenderSettings = plain, workerCount = 2) {
-  const ports: LoopbackPort[] = [];
+  const pool = new LoopbackPool();
   const clock = new ManualClock();
   const { canvas, putImageData, getContext } = fakeCanvas();
   const session = startCpuSession(canvas, edge, settings, {
-    ports: () => {
-      const port = new LoopbackPort();
-      ports.push(port);
-      return port;
-    },
+    ports: pool.create,
     workerCount,
     clock,
   });
   const answerAll = (): void => {
-    while (ports.some((port) => port.queue.length > 0)) {
-      ports.forEach((port) => {
-        port.answerNext();
-      });
-    }
+    pool.answerAll();
   };
-  return { session, ports, clock, canvas, putImageData, getContext, answerAll };
+  return { session, ports: pool.ports, clock, canvas, putImageData, getContext, answerAll };
 }
 
 function lastDrawn(putImageData: ReturnType<typeof fakeCanvas>['putImageData']): FakeImageData {

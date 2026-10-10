@@ -4,5 +4,5 @@
     "types": ["@webgpu/types"]
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts"],
-  "exclude": ["src/**/*.spec.ts", "src/workers/**"]
+  "exclude": ["src/**/*.spec.ts", "src/**/testing/**", "src/workers/**"]
 }
