@@ -10,6 +10,7 @@ import { type RayRecord } from '../core/validation/parity';
 import { type ResolutionLogEntry } from '../gpu/dynamic-resolution';
 import { defaultMotionPlan, type MotionPlan, runMotionPlan } from '../gpu/motion-run';
 import { browserScheduler, type LoopRenderer } from '../gpu/render-loop';
+import { defaultResolutionConfig } from '../gpu/dynamic-resolution';
 import { renderStill } from '../gpu/still';
 import { acquireDevice, type AdapterSummary, type DeviceResult } from '../gpu/device';
 import { type ColorParityMode, runColorParityPass } from '../gpu/passes/color-parity-pass';
@@ -82,12 +83,24 @@ export interface ExportImageResponse {
 export interface MotionRequest extends SettingsInput {
   size: { width: number; height: number };
   plan?: Partial<MotionPlan>;
+  dynamicResolution?: boolean;
 }
 
 export interface MotionResponse {
   adapter: AdapterSummary;
   timestampQuery: boolean;
   log: ResolutionLogEntry[];
+}
+
+export interface ChurnRequest extends SettingsInput {
+  size: { width: number; height: number };
+  cycles: number;
+}
+
+export interface ChurnResponse {
+  adapter: AdapterSummary;
+  cycles: number;
+  deviceLost: boolean;
 }
 
 export interface ColorParityRequest {
@@ -153,6 +166,7 @@ export interface AutomationApi {
   renderSequence: (request: SequenceRequest) => Promise<SequenceResponse>;
   exportImage: (request: ExportImageRequest) => Promise<ExportImageResponse>;
   runMotion: (request: MotionRequest) => Promise<MotionResponse>;
+  churnRenderers: (request: ChurnRequest) => Promise<ChurnResponse>;
   runColorParity: (request: ColorParityRequest) => Promise<ColorParityResponse>;
   renderCpuView: (request: CpuViewRequest) => Promise<CpuViewResponse>;
   openCapture: (request: CaptureOpenRequest) => Promise<CaptureOpenResponse>;
@@ -462,12 +476,36 @@ export function createAutomationApi(
         browserScheduler,
         resolveSettings(request),
         { ...defaultMotionPlan, ...request.plan },
+        request.dynamicResolution === false
+          ? { ...defaultResolutionConfig, minScale: defaultResolutionConfig.maxScale }
+          : defaultResolutionConfig,
       );
       await device.queue.onSubmittedWorkDone();
       assertNoErrors();
       renderer.destroy();
       device.destroy();
       return { adapter, timestampQuery, log };
+    },
+    churnRenderers: async (request) => {
+      const { device, adapter, assertNoErrors } = await readyDevice(dependencies);
+      const settings = resolveSettings(request);
+      for (let cycle = 0; cycle < request.cycles; cycle += 1) {
+        const renderer = await dependencies.createRenderer(device, request.size, null);
+        await renderer.renderFrames(settings, 1);
+        renderer.destroy();
+      }
+      await device.queue.onSubmittedWorkDone();
+      assertNoErrors();
+      const deviceLost = await Promise.race([
+        device.lost.then(() => true),
+        new Promise<boolean>((resolve) => {
+          setTimeout(() => {
+            resolve(false);
+          }, 0);
+        }),
+      ]);
+      device.destroy();
+      return { adapter, cycles: request.cycles, deviceLost };
     },
     runColorParity: async (request) => {
       const { device, adapter, assertNoErrors } = await readyDevice(dependencies);

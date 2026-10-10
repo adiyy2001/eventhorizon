@@ -19,6 +19,8 @@ import { LoopbackPool } from './fallback/testing/loopback';
 
 class FakeDevice {
   readonly destroy = vi.fn();
+  lost: Promise<unknown> = new Promise<unknown>(() => undefined);
+  queue = { onSubmittedWorkDone: () => Promise.resolve() };
   private readonly listeners: ((event: { error: { message: string } }) => void)[] = [];
 
   addEventListener(_type: string, listener: (event: { error: { message: string } }) => void) {
@@ -229,6 +231,66 @@ describe('automation hook', () => {
     expect(response.timestampQuery).toBe(false);
     const plan = (runMotion.mock.calls[0] as unknown as [unknown, unknown, unknown, unknown])[3];
     expect(plan).toMatchObject({ moveFrames: 5, restFrames: 3 });
+  });
+
+  it('pins the resolution scale when dynamic resolution is switched off', async () => {
+    const device = new FakeDevice();
+    (device as unknown as { queue: unknown }).queue = {
+      onSubmittedWorkDone: () => Promise.resolve(),
+    };
+    const runMotion = vi.fn(() => Promise.resolve([]));
+    const api = createAutomationApi(dependencies(device, { runMotion }));
+    await api.runMotion({ size: { width: 2, height: 2 }, dynamicResolution: false });
+    await api.runMotion({ size: { width: 2, height: 2 } });
+    const calls = runMotion.mock.calls as unknown as [
+      unknown,
+      unknown,
+      unknown,
+      unknown,
+      unknown,
+    ][];
+    expect(calls[0]?.[4]).toMatchObject({ minScale: 1, maxScale: 1 });
+    expect(calls[1]?.[4]).toMatchObject({ minScale: 0.35, maxScale: 1 });
+  });
+
+  it('creates and destroys the renderer once per cycle on one device', async () => {
+    const device = new FakeDevice();
+    const created = vi.fn();
+    const base = dependencies(device);
+    const api = createAutomationApi({
+      ...base,
+      createRenderer: async (...args) => {
+        created();
+        return base.createRenderer(...args);
+      },
+    });
+    const response = await api.churnRenderers({ size: { width: 2, height: 2 }, cycles: 5 });
+    expect(created).toHaveBeenCalledTimes(5);
+    expect(response).toEqual({ adapter, cycles: 5, deviceLost: false });
+    expect(device.destroy).toHaveBeenCalledOnce();
+  });
+
+  it('reports a device that was lost during the cycles', async () => {
+    const device = new FakeDevice();
+    device.lost = Promise.resolve({ reason: 'unknown' });
+    const api = createAutomationApi(dependencies(device));
+    const response = await api.churnRenderers({ size: { width: 2, height: 2 }, cycles: 2 });
+    expect(response.deviceLost).toBe(true);
+  });
+
+  it('fails the churn when the device reports an error', async () => {
+    const device = new FakeDevice();
+    const base = dependencies(device);
+    const api = createAutomationApi({
+      ...base,
+      createRenderer: async (...args) => {
+        device.fail('out of memory');
+        return base.createRenderer(...args);
+      },
+    });
+    await expect(api.churnRenderers({ size: { width: 2, height: 2 }, cycles: 1 })).rejects.toThrow(
+      'out of memory',
+    );
   });
 
   it('runs a colour parity mode and returns the outputs', async () => {
