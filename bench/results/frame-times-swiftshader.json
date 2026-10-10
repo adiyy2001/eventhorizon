@@ -1,0 +1,78 @@
+{
+  "generatedAt": "2026-10-10T21:03:31.739Z",
+  "node": "v24.21.0",
+  "platform": "linux 6.6.87.2-microsoft-standard-WSL2 x64",
+  "cpu": "12th Gen Intel(R) Core(TM) i7-12700H",
+  "cores": 20,
+  "memoryGigabytes": 15,
+  "chromium": "153.0.8010.12",
+  "chromiumFlags": [
+    "--enable-unsafe-webgpu",
+    "--use-webgpu-adapter=swiftshader",
+    "--use-angle=swiftshader",
+    "--enable-features=Vulkan,DefaultANGLEVulkan,VulkanFromANGLE"
+  ],
+  "adapter": {
+    "vendor": "google",
+    "architecture": "swiftshader",
+    "device": "",
+    "description": ""
+  },
+  "software": true,
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "plan": {
+    "restFrames": 3,
+    "moveFrames": 6,
+    "settleFrames": 3
+  },
+  "timestampQuery": true,
+  "dynamicResolutionOn": {
+    "movingFrames": 8,
+    "restFrames": 4,
+    "frameMilliseconds": {
+      "count": 8,
+      "median": 1866.5999999999985,
+      "p95": 24015.800000000003,
+      "mean": 5356.0375
+    },
+    "framesPerSecondAtMedian": 0.5357334190506808,
+    "gpuMilliseconds": {
+      "count": 8,
+      "median": 1905.610388,
+      "p95": 14458.887538,
+      "mean": 5187.126633875001
+    },
+    "scale": {
+      "count": 8,
+      "median": 0.35,
+      "p95": 0.35,
+      "mean": 0.35000000000000003
+    }
+  },
+  "dynamicResolutionOff": {
+    "movingFrames": 8,
+    "restFrames": 4,
+    "frameMilliseconds": {
+      "count": 8,
+      "median": 14616,
+      "p95": 15116.100000000006,
+      "mean": 14166.1
+    },
+    "framesPerSecondAtMedian": 0.06841817186644773,
+    "gpuMilliseconds": {
+      "count": 8,
+      "median": 14600.986102,
+      "p95": 15110.710276,
+      "mean": 14152.190756
+    },
+    "scale": {
+      "count": 8,
+      "median": 1,
+      "p95": 1,
+      "mean": 1
+    }
+  }
+}

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-04T04:39:34.108Z",
+  "generatedAt": "2026-10-10T20:59:14.260Z",
   "node": "v24.21.0",
   "platform": "linux 6.6.87.2-microsoft-standard-WSL2 x64",
   "cpu": "12th Gen Intel(R) Core(TM) i7-12700H",
@@ -51,8 +51,8 @@
     "lowestImpactFactor": 0.5,
     "highestImpactParameter": 40
   },
-  "gpuMilliseconds": 93.90000000596046,
-  "cpuMilliseconds": 1046.1903250000003,
+  "gpuMilliseconds": 112.8999999994412,
+  "cpuMilliseconds": 1364.16809,
   "shaderMessages": {
     "parity": []
   },
@@ -201,11 +201,11 @@
       "escaped": 10608,
       "disk": 4838
     },
-    "diskRadianceMeanRelativeError": 0.00008133064493664004,
-    "diskRadianceMaxRelativeError": 0.002010128861627412,
+    "diskRadianceMeanRelativeError": 0.00007993060753578003,
+    "diskRadianceMaxRelativeError": 0.0022072656555395366,
     "skyPixels": 10608,
-    "skyAggregateRelativeError": 0.0015593885063854708,
-    "skyMaxAbsoluteError": 0.0006076660072430969,
+    "skyAggregateRelativeError": 0.001555644315640728,
+    "skyMaxAbsoluteError": 0.000521908562630416,
     "disagreementBand": {
       "criticalMargin": 0.05,
       "diskEdgeMargin": 0.005
@@ -249,6 +249,14 @@
       "samples": 300,
       "maxAbsoluteError": 0.0000538296933197957,
       "maxRelativeError": 0.01586432921165094,
+      "violations": 0,
+      "pass": true
+    },
+    {
+      "mode": "cubemap-edges",
+      "samples": 360,
+      "maxAbsoluteError": 0.00010437279361742019,
+      "maxRelativeError": 0.017896899912821083,
       "violations": 0,
       "pass": true
     },
