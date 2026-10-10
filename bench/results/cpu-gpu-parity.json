@@ -1,0 +1,118 @@
+{
+  "generatedAt": "2026-10-10T19:27:23.311Z",
+  "node": "v24.21.0",
+  "platform": "linux 6.6.87.2-microsoft-standard-WSL2 x64",
+  "cpu": "12th Gen Intel(R) Core(TM) i7-12700H",
+  "cores": 20,
+  "memoryGigabytes": 15,
+  "chromium": "153.0.8010.12",
+  "chromiumFlags": [
+    "--enable-unsafe-webgpu",
+    "--use-webgpu-adapter=swiftshader",
+    "--use-angle=swiftshader",
+    "--enable-features=Vulkan,DefaultANGLEVulkan,VulkanFromANGLE"
+  ],
+  "adapter": {
+    "vendor": "google",
+    "architecture": "swiftshader",
+    "device": "",
+    "description": ""
+  },
+  "software": true,
+  "edge": 128,
+  "tolerance": 0.25,
+  "note": "Mean and maximum absolute difference per colour channel on a 0 to 255 scale, graphics image with one sample per pixel against the software image.",
+  "worstMean": 0.020161946614583332,
+  "results": [
+    {
+      "name": "default view",
+      "mean": 0.014261881510416666,
+      "max": 1,
+      "size": 128,
+      "workers": 8,
+      "gpuMilliseconds": 8509.40000000014,
+      "cpuFirstImageMilliseconds": 270.80000000004657,
+      "cpuFullImageMilliseconds": 410.10000000009313
+    },
+    {
+      "name": "inclination 10 degrees",
+      "mean": 0.010721842447916666,
+      "max": 3,
+      "size": 128,
+      "workers": 8,
+      "gpuMilliseconds": 1760.0999999998603,
+      "cpuFirstImageMilliseconds": 212.60000000009313,
+      "cpuFullImageMilliseconds": 344.69999999995343
+    },
+    {
+      "name": "inclination 85 degrees",
+      "mean": 0.017578125,
+      "max": 1,
+      "size": 128,
+      "workers": 8,
+      "gpuMilliseconds": 1821.8999999999069,
+      "cpuFirstImageMilliseconds": 262.4000000001397,
+      "cpuFullImageMilliseconds": 408.10000000009313
+    },
+    {
+      "name": "lensing off",
+      "mean": 0.014200846354166666,
+      "max": 1,
+      "size": 128,
+      "workers": 8,
+      "gpuMilliseconds": 1677.1999999999534,
+      "cpuFirstImageMilliseconds": 283.0999999998603,
+      "cpuFullImageMilliseconds": 354.5
+    },
+    {
+      "name": "doppler beaming and redshift off",
+      "mean": 0.015157063802083334,
+      "max": 1,
+      "size": 128,
+      "workers": 8,
+      "gpuMilliseconds": 1725.1999999999534,
+      "cpuFirstImageMilliseconds": 237.89999999990687,
+      "cpuFullImageMilliseconds": 392.80000000004657
+    },
+    {
+      "name": "hot disk with a wide field of view",
+      "mean": 0.011088053385416666,
+      "max": 1,
+      "size": 128,
+      "workers": 8,
+      "gpuMilliseconds": 1729.7999999998137,
+      "cpuFirstImageMilliseconds": 258.19999999995343,
+      "cpuFullImageMilliseconds": 378.0999999998603
+    },
+    {
+      "name": "strong bloom and exposure",
+      "mean": 0.020161946614583332,
+      "max": 1,
+      "size": 128,
+      "workers": 8,
+      "gpuMilliseconds": 1703.8000000000466,
+      "cpuFirstImageMilliseconds": 248.89999999990687,
+      "cpuFullImageMilliseconds": 366.79999999981374
+    },
+    {
+      "name": "shadow edge overlay",
+      "mean": 0.014058430989583334,
+      "max": 1,
+      "size": 128,
+      "workers": 8,
+      "gpuMilliseconds": 1713.3999999999069,
+      "cpuFirstImageMilliseconds": 280.30000000004657,
+      "cpuFullImageMilliseconds": 399.10000000009313
+    },
+    {
+      "name": "split comparison",
+      "mean": 0.01348876953125,
+      "max": 1,
+      "size": 128,
+      "workers": 8,
+      "gpuMilliseconds": 1695,
+      "cpuFirstImageMilliseconds": 301.80000000004657,
+      "cpuFullImageMilliseconds": 412.89999999990687
+    }
+  ]
+}
