@@ -2,6 +2,7 @@ BRIEF.md
 NOTES_FOR_ADRIAN.md
 
 node_modules/
+.pnpm-store/
 dist/
 .angular/
 coverage/
