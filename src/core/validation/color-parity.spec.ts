@@ -40,6 +40,25 @@ describe('colour parity sets', () => {
     expect(lit).toBeGreaterThan(set.expected.length / 4);
   });
 
+  it('probes both sides of every cube edge, including directions exactly on it', () => {
+    const set = setFor('cubemap-edges');
+    const samples = set.inputs.length / 4;
+    expect(samples).toBe(12 * 5 * 6);
+    let onEdge = 0;
+    for (let sample = 0; sample < samples; sample += 1) {
+      const magnitudes = [0, 1, 2]
+        .map((axis) => Math.abs(set.inputs[sample * 4 + axis] ?? 0))
+        .sort((first, second) => second - first);
+      const largest = magnitudes[0] ?? 0;
+      const second = magnitudes[1] ?? 0;
+      expect((largest - second) / largest, `sample ${String(sample)}`).toBeLessThan(0.01);
+      if (largest - second < 1e-12) {
+        onEdge += 1;
+      }
+    }
+    expect(onEdge).toBeGreaterThanOrEqual(12 * 5);
+  });
+
   it('marks only the hash set as raw integer input', () => {
     expect(sets.filter((set) => set.inputsAreUint32).map((set) => set.mode)).toEqual(['hash']);
   });

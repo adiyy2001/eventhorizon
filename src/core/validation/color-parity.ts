@@ -7,7 +7,15 @@ import { displayEncode } from '../color/tonemap';
 import { normalize, type Vec3, vec3 } from '../physics/vec3';
 import { createMulberry32, uniformBetween } from './prng';
 
-export const COLOR_PARITY_MODES = ['lut', 'tonemap', 'stars', 'nebula', 'cubemap', 'hash'] as const;
+export const COLOR_PARITY_MODES = [
+  'lut',
+  'tonemap',
+  'stars',
+  'nebula',
+  'cubemap',
+  'cubemap-edges',
+  'hash',
+] as const;
 
 export type ColorParityMode = (typeof COLOR_PARITY_MODES)[number];
 
@@ -163,6 +171,64 @@ function cubemapSet(): ColorParitySet {
   };
 }
 
+const edgeAxes: readonly Vec3[] = [vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 1)];
+const edgeAxisTriples: readonly (readonly [number, number, number])[] = [
+  [0, 1, 2],
+  [0, 2, 1],
+  [1, 2, 0],
+];
+const edgeSigns = [1, -1] as const;
+const edgeOffsets = [-0.004, -0.001, 0, 0.0003, 0.001, 0.004];
+const edgePositions = [-0.9, -0.4, 0, 0.4, 0.9];
+
+function edgeDirections(): Vec3[] {
+  const directions: Vec3[] = [];
+  for (const [firstIndex, secondIndex, alongIndex] of edgeAxisTriples) {
+    const first = edgeAxes[firstIndex] ?? vec3(1, 0, 0);
+    const second = edgeAxes[secondIndex] ?? vec3(0, 1, 0);
+    const along = edgeAxes[alongIndex] ?? vec3(0, 0, 1);
+    for (const firstSign of edgeSigns) {
+      for (const secondSign of edgeSigns) {
+        for (const position of edgePositions) {
+          for (const offset of edgeOffsets) {
+            const firstWeight = firstSign * (1 + offset);
+            const secondWeight = secondSign * (1 - offset);
+            directions.push(
+              normalize(
+                vec3(
+                  first.x * firstWeight + second.x * secondWeight + along.x * position,
+                  first.y * firstWeight + second.y * secondWeight + along.y * position,
+                  first.z * firstWeight + second.z * secondWeight + along.z * position,
+                ),
+              ),
+            );
+          }
+        }
+      }
+    }
+  }
+  return directions;
+}
+
+function cubemapEdgeSet(): ColorParitySet {
+  const inputs: number[] = [];
+  const expected: number[] = [];
+  for (const direction of edgeDirections()) {
+    pushVector(inputs, direction);
+    const radiance = nebulaRadiance(direction);
+    expected.push(radiance[0], radiance[1], radiance[2], 0);
+  }
+  return {
+    mode: 'cubemap-edges',
+    inputs,
+    expected,
+    inputsAreUint32: false,
+    componentsCompared: 3,
+    absoluteTolerance: 2e-3,
+    relativeTolerance: 2e-2,
+  };
+}
+
 function hashSet(): ColorParitySet {
   const random = createMulberry32(606);
   const inputs: number[] = [];
@@ -185,7 +251,15 @@ function hashSet(): ColorParitySet {
 }
 
 export function buildColorParitySets(lut: TemperatureLut): ColorParitySet[] {
-  return [lutSet(lut), tonemapSet(), starSet(lut), nebulaSet(), cubemapSet(), hashSet()];
+  return [
+    lutSet(lut),
+    tonemapSet(),
+    starSet(lut),
+    nebulaSet(),
+    cubemapSet(),
+    cubemapEdgeSet(),
+    hashSet(),
+  ];
 }
 
 export function compareColorOutputs(

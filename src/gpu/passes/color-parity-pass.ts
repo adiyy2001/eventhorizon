@@ -14,6 +14,7 @@ export const colorParityModes: Record<ColorParityMode, number> = {
   stars: 2,
   nebula: 3,
   cubemap: 4,
+  'cubemap-edges': 4,
   hash: 5,
 };
 
