@@ -1,0 +1,274 @@
+{
+  "generatedAt": "2026-10-10T19:03:25.888Z",
+  "node": "v24.21.0",
+  "platform": "linux 6.6.87.2-microsoft-standard-WSL2 x64",
+  "cpu": "12th Gen Intel(R) Core(TM) i7-12700H",
+  "cores": 20,
+  "memoryGigabytes": 15,
+  "chromium": "153.0.8010.12",
+  "note": "Plain Chromium without WebGPU flags, so the page takes the software path. The worker count is set through navigator.hardwareConcurrency, one more than the pool size. Page times run from navigation start, render times from the start of the render job. The one minute load average is recorded because other processes on the machine change the timings.",
+  "size": {
+    "width": 512,
+    "height": 512
+  },
+  "repeats": 5,
+  "loadAverageBefore": 2.25,
+  "results": [
+    {
+      "workers": 1,
+      "pageFirstImageMilliseconds": 520,
+      "pageFullImageMilliseconds": 11675,
+      "renderFirstImageMilliseconds": 421,
+      "renderFullImageMilliseconds": 11541,
+      "changeFirstImageMilliseconds": 154,
+      "changeFullImageMilliseconds": 9291,
+      "loadAverageAfter": 4.06,
+      "samples": [
+        {
+          "pageFirstImageMilliseconds": 874,
+          "pageFullImageMilliseconds": 19557,
+          "renderFirstImageMilliseconds": 660,
+          "renderFullImageMilliseconds": 19342
+        },
+        {
+          "pageFirstImageMilliseconds": 625,
+          "pageFullImageMilliseconds": 11675,
+          "renderFirstImageMilliseconds": 492,
+          "renderFullImageMilliseconds": 11541
+        },
+        {
+          "pageFirstImageMilliseconds": 520,
+          "pageFullImageMilliseconds": 11835,
+          "renderFirstImageMilliseconds": 421,
+          "renderFullImageMilliseconds": 11737
+        },
+        {
+          "pageFirstImageMilliseconds": 425,
+          "pageFullImageMilliseconds": 10929,
+          "renderFirstImageMilliseconds": 353,
+          "renderFullImageMilliseconds": 10857
+        },
+        {
+          "pageFirstImageMilliseconds": 508,
+          "pageFullImageMilliseconds": 9366,
+          "renderFirstImageMilliseconds": 416,
+          "renderFullImageMilliseconds": 9274
+        }
+      ],
+      "changes": [
+        {
+          "firstImageMilliseconds": 469,
+          "fullImageMilliseconds": 13998
+        },
+        {
+          "firstImageMilliseconds": 177,
+          "fullImageMilliseconds": 9555
+        },
+        {
+          "firstImageMilliseconds": 154,
+          "fullImageMilliseconds": 9291
+        },
+        {
+          "firstImageMilliseconds": 151,
+          "fullImageMilliseconds": 9074
+        },
+        {
+          "firstImageMilliseconds": 141,
+          "fullImageMilliseconds": 8962
+        }
+      ]
+    },
+    {
+      "workers": 2,
+      "pageFirstImageMilliseconds": 488,
+      "pageFullImageMilliseconds": 5689,
+      "renderFirstImageMilliseconds": 338,
+      "renderFullImageMilliseconds": 5540,
+      "changeFirstImageMilliseconds": 110,
+      "changeFullImageMilliseconds": 4963,
+      "loadAverageAfter": 5.72,
+      "samples": [
+        {
+          "pageFirstImageMilliseconds": 523,
+          "pageFullImageMilliseconds": 7235,
+          "renderFirstImageMilliseconds": 410,
+          "renderFullImageMilliseconds": 7122
+        },
+        {
+          "pageFirstImageMilliseconds": 490,
+          "pageFullImageMilliseconds": 6689,
+          "renderFirstImageMilliseconds": 395,
+          "renderFullImageMilliseconds": 6594
+        },
+        {
+          "pageFirstImageMilliseconds": 423,
+          "pageFullImageMilliseconds": 5579,
+          "renderFirstImageMilliseconds": 329,
+          "renderFullImageMilliseconds": 5486
+        },
+        {
+          "pageFirstImageMilliseconds": 488,
+          "pageFullImageMilliseconds": 5689,
+          "renderFirstImageMilliseconds": 338,
+          "renderFullImageMilliseconds": 5540
+        },
+        {
+          "pageFirstImageMilliseconds": 429,
+          "pageFullImageMilliseconds": 5554,
+          "renderFirstImageMilliseconds": 333,
+          "renderFullImageMilliseconds": 5459
+        }
+      ],
+      "changes": [
+        {
+          "firstImageMilliseconds": 114,
+          "fullImageMilliseconds": 6311
+        },
+        {
+          "firstImageMilliseconds": 110,
+          "fullImageMilliseconds": 5516
+        },
+        {
+          "firstImageMilliseconds": 88,
+          "fullImageMilliseconds": 4903
+        },
+        {
+          "firstImageMilliseconds": 91,
+          "fullImageMilliseconds": 4963
+        },
+        {
+          "firstImageMilliseconds": 116,
+          "fullImageMilliseconds": 4782
+        }
+      ]
+    },
+    {
+      "workers": 4,
+      "pageFirstImageMilliseconds": 440,
+      "pageFullImageMilliseconds": 3565,
+      "renderFirstImageMilliseconds": 354,
+      "renderFullImageMilliseconds": 3474,
+      "changeFirstImageMilliseconds": 79,
+      "changeFullImageMilliseconds": 3152,
+      "loadAverageAfter": 4.93,
+      "samples": [
+        {
+          "pageFirstImageMilliseconds": 483,
+          "pageFullImageMilliseconds": 3410,
+          "renderFirstImageMilliseconds": 384,
+          "renderFullImageMilliseconds": 3312
+        },
+        {
+          "pageFirstImageMilliseconds": 421,
+          "pageFullImageMilliseconds": 3565,
+          "renderFirstImageMilliseconds": 330,
+          "renderFullImageMilliseconds": 3474
+        },
+        {
+          "pageFirstImageMilliseconds": 476,
+          "pageFullImageMilliseconds": 3993,
+          "renderFirstImageMilliseconds": 382,
+          "renderFullImageMilliseconds": 3899
+        },
+        {
+          "pageFirstImageMilliseconds": 430,
+          "pageFullImageMilliseconds": 3377,
+          "renderFirstImageMilliseconds": 345,
+          "renderFullImageMilliseconds": 3292
+        },
+        {
+          "pageFirstImageMilliseconds": 440,
+          "pageFullImageMilliseconds": 3706,
+          "renderFirstImageMilliseconds": 354,
+          "renderFullImageMilliseconds": 3620
+        }
+      ],
+      "changes": [
+        {
+          "firstImageMilliseconds": 58,
+          "fullImageMilliseconds": 3171
+        },
+        {
+          "firstImageMilliseconds": 84,
+          "fullImageMilliseconds": 3002
+        },
+        {
+          "firstImageMilliseconds": 79,
+          "fullImageMilliseconds": 3152
+        },
+        {
+          "firstImageMilliseconds": 66,
+          "fullImageMilliseconds": 3299
+        },
+        {
+          "firstImageMilliseconds": 83,
+          "fullImageMilliseconds": 3092
+        }
+      ]
+    },
+    {
+      "workers": 8,
+      "pageFirstImageMilliseconds": 607,
+      "pageFullImageMilliseconds": 3005,
+      "renderFirstImageMilliseconds": 529,
+      "renderFullImageMilliseconds": 2883,
+      "changeFirstImageMilliseconds": 67,
+      "changeFullImageMilliseconds": 2248,
+      "loadAverageAfter": 6.54,
+      "samples": [
+        {
+          "pageFirstImageMilliseconds": 604,
+          "pageFullImageMilliseconds": 2807,
+          "renderFirstImageMilliseconds": 518,
+          "renderFullImageMilliseconds": 2722
+        },
+        {
+          "pageFirstImageMilliseconds": 733,
+          "pageFullImageMilliseconds": 3045,
+          "renderFirstImageMilliseconds": 571,
+          "renderFullImageMilliseconds": 2883
+        },
+        {
+          "pageFirstImageMilliseconds": 606,
+          "pageFullImageMilliseconds": 3005,
+          "renderFirstImageMilliseconds": 504,
+          "renderFullImageMilliseconds": 2905
+        },
+        {
+          "pageFirstImageMilliseconds": 640,
+          "pageFullImageMilliseconds": 3031,
+          "renderFirstImageMilliseconds": 534,
+          "renderFullImageMilliseconds": 2925
+        },
+        {
+          "pageFirstImageMilliseconds": 607,
+          "pageFullImageMilliseconds": 2948,
+          "renderFirstImageMilliseconds": 529,
+          "renderFullImageMilliseconds": 2870
+        }
+      ],
+      "changes": [
+        {
+          "firstImageMilliseconds": 68,
+          "fullImageMilliseconds": 2406
+        },
+        {
+          "firstImageMilliseconds": 60,
+          "fullImageMilliseconds": 2163
+        },
+        {
+          "firstImageMilliseconds": 67,
+          "fullImageMilliseconds": 2248
+        },
+        {
+          "firstImageMilliseconds": 67,
+          "fullImageMilliseconds": 2084
+        },
+        {
+          "firstImageMilliseconds": 69,
+          "fullImageMilliseconds": 2363
+        }
+      ]
+    }
+  ]
+}
