@@ -29,3 +29,9 @@ The post chain is: trace into `rgba32float`, accumulate with weight `1/(n+1)` in
 - Star lookup costs nine cell hashes per escaped ray. It runs only for rays that reach the sky.
 - Everything on the GPU that has a CPU twin (hash, noise, nebula, stars, LUT, tone map) is compared in `e2e/color-pipeline.spec.ts`, and `src/gpu/shader-constants.spec.ts` fails if a WGSL constant drifts from its TypeScript value.
 - Results from the software adapter: LUT within 4.3e-4 relative of the CPU, tone mapper within 2.9e-7 absolute, stars within 6.7e-4 absolute, nebula within 8.8e-4 relative, hashes bit-exact, baked cubemap texels within 1.6e-2 relative on the smallest values (float16 storage).
+
+## Amendment from the fallback renderer milestone
+
+The recorded preview video showed faint dark hairlines along the cube edges of the nebula whenever the camera azimuth was a multiple of 45 degrees. On the software adapter, hardware cube filtering returned about half of the analytic value (a ratio of 0.52) for rays within a thousandth of a radian of a face edge. The CPU picture was smooth, so the lines came from the graphics path.
+
+The bake now stores each face with a one texel border, 514 by 514 texels for a 512 texel face, with the border evaluated on the extended face plane. The sky shader picks the dominant face itself, projects the direction onto it and reads one layer of a `texture_2d_array` through the same linear sampler. No cube lookup remains. A new parity set, `cubemap-edges`, samples 360 directions on both sides of all twelve edges, including directions exactly on an edge, and compares them with the CPU nebula at 2e-3 absolute plus 2e-2 relative. On the software adapter its worst absolute error is 1.0e-4 and its worst relative error is 1.8e-2.
