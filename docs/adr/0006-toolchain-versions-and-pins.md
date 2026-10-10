@@ -4,7 +4,7 @@ Status: accepted
 
 ## Context
 
-The brief says to use the latest stable version of everything it names and to check it on the official registry. On 2026-10-04 that check produced two surprises.
+The rule for this project is to use the latest stable version of every tool and to check it on the official registry. On 2026-10-04 that check produced two surprises.
 
 - TypeScript's `latest` tag on npm is 7.0.2 (the native compiler). Angular 22.2.1 declares `typescript: >=6.0 <6.1` as a peer of both `@angular/build` and `@angular/compiler-cli`.
 - `@angular/build` 22.2.1 requires Node `^22.22.3 || ^24.15.0 || >=26`. The default Node on this machine is 24.13.0, which does not satisfy it. Version 24.21.0 is installed next to it.
@@ -18,7 +18,7 @@ The brief says to use the latest stable version of everything it names and to ch
 - pnpm 11 refuses to run dependency build scripts until they are approved. `pnpm-workspace.yaml` carries an `allowBuilds` map with `esbuild` and `@parcel/watcher` set to true and `lmdb` and `msgpackr-extract` set to false. The Angular build works with that set (checked on a throwaway app).
 - Versions are written as caret ranges in `package.json` and frozen by `pnpm-lock.yaml`. CI installs with `--frozen-lockfile`.
 
-The full table of checked versions, with sources, is in `PLAN.md`.
+`package.json` and `pnpm-lock.yaml` hold the exact versions.
 
 ## Alternatives
 
@@ -27,5 +27,5 @@ The full table of checked versions, with sources, is in `PLAN.md`.
 
 ## Consequences
 
-- The Node requirement is stricter than the default on the machine. Every agent and the README have to say so.
+- The Node requirement is stricter than the default on the machine. The README says so.
 - TypeScript 7 is not used. It can be tried later as an extra type check over `src/core` only, since that code has no Angular dependency.

@@ -21,10 +21,33 @@ These are published techniques. The code was written for this project from the d
 - R2 low-discrepancy sequence for the sub-pixel jitter: Martin Roberts, "The Unreasonable Effectiveness of Quasirandom Sequences", 2018.
 - Bloom: the 13-tap downsample, the luminance-weighted average on the first level that suppresses fireflies, and the tent upsample, as described in Jorge Jimenez, "Next Generation Post Processing in Call of Duty: Advanced Warfare", SIGGRAPH 2014.
 
+## Numerical methods
+
+These are published algorithms, written from their descriptions for this project.
+
+- Dormand-Prince 5(4) embedded Runge-Kutta pair, used as the error reference for RK4: J. R. Dormand and P. J. Prince, "A family of embedded Runge-Kutta formulae", Journal of Computational and Applied Mathematics 6, 1980. The tableau coefficients are the published numbers.
+- Carlson's duplication algorithm for the symmetric elliptic integral R_F, used by the exact deflection check in `src/core/physics/elliptic.ts`: B. C. Carlson, "Numerical computation of real or complex elliptic integrals", Numerical Algorithms 10, 1995. The series coefficients 1/24, 3/44 and 1/14 are from that paper.
+- Gauss-Legendre quadrature nodes, computed at startup by Newton iteration on the Legendre polynomials.
+- Closed-form deflection in elliptic integrals and the weak-field series: C. Darwin, "The gravity field of a particle", Proceedings of the Royal Society A 249, 1959, and C. R. Keeton and A. O. Petters, Physical Review D 72, 104006, 2005.
+- Accretion disk temperature profile: N. I. Shakura and R. A. Sunyaev, Astronomy and Astrophysics 24, 1973. Static observer frame conventions: J. M. Bardeen, 1973, and O. James, E. von Tunzelmann, P. Franklin and K. S. Thorne, Classical and Quantum Gravity 32, 065001, 2015.
+
 ## Physics references
 
 The sources for every equation are listed at the end of `docs/physics.md`.
 
 ## Tooling
 
-Runtime and development dependencies are listed in `package.json`. All of them are MIT, Apache 2.0, BSD or ISC licensed. KaTeX (MIT) joins the list with the physics side panel. Its fonts ship with the package under the same MIT license and are bundled with the build. Lighthouse (Apache 2.0) is a development dependency for `pnpm lighthouse`.
+Runtime and development dependencies are listed in `package.json`, and the exact versions are in `pnpm-lock.yaml`. Their licenses, read from the installed packages on 2026-10-10:
+
+- MIT: Angular (common, compiler, core, platform-browser, build, CLI, compiler-cli), NgRx Signals, KaTeX, ESLint, `@eslint/js`, angular-eslint, typescript-eslint, Vitest and its coverage package, jsdom, Prettier, tsx, esbuild, `@types/node`.
+- Apache 2.0: RxJS, Playwright, Lighthouse, TypeScript.
+- BSD 3-Clause: `@webgpu/types`.
+- 0BSD: tslib.
+
+KaTeX ships with the physics side panel. Its package license is MIT. The font files in the build come from the KaTeX package, and the font sources in the KaTeX repository carry SIL Open Font License 1.1 headers, so the fonts are redistributed under those terms. The production build writes `3rdpartylicenses.txt` next to the application for the code it bundles.
+
+Lighthouse is only used by `pnpm lighthouse`, esbuild only by `bench/windows/bundle-parity.mjs` and the Angular build, and Playwright by the tests, the benchmarks and the recording scripts. ffmpeg (run from the command line, not distributed) encodes the preview video and the demo GIF.
+
+## Original work
+
+Everything else in the repository was written for this project: the physics, the WGSL shaders, the star field and nebula, the CPU renderer and the Angular interface. The star field and the nebula are procedural. No photograph, texture or other third-party image is used, and the demo GIF and the preview video are recordings of this application.

@@ -22,7 +22,7 @@ Capability detection checks the API and the adapter. It does not sniff the user 
 
 ## Alternatives
 
-- WebGL2 fragment shader fallback. Faster than workers for most users, but it means a second shader implementation in float32 GLSL with its own parity story, which is outside the brief.
+- WebGL2 fragment shader fallback. Faster than workers for most users, but it means a second shader implementation in float32 GLSL with its own parity story, which is outside the scope of this project.
 - A static image only. Honest, but it throws away the reference integrator that already exists.
 
 ## Consequences
@@ -30,11 +30,11 @@ Capability detection checks the API and the adapter. It does not sniff the user 
 - The worker path doubles as a live demonstration of the validation: the fallback image and the GPU image of the same settings are compared in a test.
 - The fallback is slow by design. The benchmark script records its time to first image and time to full resolution, with the CPU model printed.
 
-## Amendment from the fallback renderer milestone
+## Amendment: fallback renderer
 
-This section records what was built and where it differs from the plan above. The numbers come from `bench/results/fallback.json` and `bench/results/cpu-gpu-parity.json`.
+This section records what was built and where it differs from the design above. The numbers come from `bench/results/fallback.json` and `bench/results/cpu-gpu-parity.json`.
 
-The plan assumed that workers send back finished pixels. They send back linear radiance instead. A worker traces the samples of one tile with the core integrator and returns a `Float32Array` with three values per sample in a transferable buffer. The main thread keeps a `FrameAssembler` that holds the radiance of the whole frame, writes each sample into a block of its pass step until finer data arrives, and runs the CPU twins of the post chain when a picture is drawn. A preview applies exposure, the ACES fit and the sRGB transfer. The final picture adds the bloom, cached per version of the frame, and the dither. A change of exposure, bloom strength or overlay therefore shows up without tracing again, and `cpuRenderKey` lists the settings that do need a new trace.
+The first design had workers send back finished pixels. They send back linear radiance instead. A worker traces the samples of one tile with the core integrator and returns a `Float32Array` with three values per sample in a transferable buffer. The main thread keeps a `FrameAssembler` that holds the radiance of the whole frame, writes each sample into a block of its pass step until finer data arrives, and runs the CPU twins of the post chain when a picture is drawn. A preview applies exposure, the ACES fit and the sRGB transfer. The final picture adds the bloom, cached per version of the frame, and the dither. A change of exposure, bloom strength or overlay therefore shows up without tracing again, and `cpuRenderKey` lists the settings that do need a new trace.
 
 The picture is 512 by 512 with one ray through the pixel centre. The first frame of the graphics path uses a zero jitter offset, so both paths sample the same positions, and the software path has no accumulation of its own. The save button writes 512 pixel images in this mode.
 
@@ -46,15 +46,15 @@ Capability detection routes on the result of the device acquisition. A missing `
 
 `scripts/record-preview.ts` records the preview from the graphics path through the capture hook: 200 frames at 20 frames per second, 512 pixels, four accumulated frames each, the azimuth turning once while the inclination moves between 20 and 85 degrees. ffmpeg encodes VP9 at the lowest constant quality factor of a ladder that fits under 4 MB, and the stream carries the bt709 matrix and sRGB transfer tags so that a browser decodes the colors the way the frames were drawn. The result lasts 10.0 s and takes 1.48 MB, with a poster from the first frame and a WebVTT description. It was recorded on the software adapter at about 8 s per frame, and `pnpm record:preview` repeats it on any machine with WebGPU.
 
-Timings on an i7-12700H with 20 logical cores and plain Chromium 153 without WebGPU flags, median of five loads from `pnpm bench:fallback`:
+Timings on an i7-12700H with 20 logical cores and plain Chromium 153 without WebGPU flags, median of five loads from `pnpm bench:fallback` at 512 by 512 pixels:
 
 | Workers | First image after navigation | Full image after navigation | First image after a camera change | Full image after a camera change |
 | ------- | ---------------------------- | --------------------------- | --------------------------------- | -------------------------------- |
-| 1       | 520 ms                       | 11.7 s                      | 154 ms                            | 9.3 s                            |
-| 2       | 488 ms                       | 5.7 s                       | 110 ms                            | 5.0 s                            |
-| 4       | 440 ms                       | 3.6 s                       | 79 ms                             | 3.2 s                            |
-| 8       | 607 ms                       | 3.0 s                       | 67 ms                             | 2.2 s                            |
+| 1       | 781 ms                       | 13.0 s                      | 235 ms                            | 15.8 s                           |
+| 2       | 504 ms                       | 7.3 s                       | 112 ms                            | 6.1 s                            |
+| 4       | 408 ms                       | 3.1 s                       | 62 ms                             | 2.7 s                            |
+| 8       | 558 ms                       | 2.6 s                       | 58 ms                             | 2.0 s                            |
 
-The result file records the one minute load average after each row, since other work on the machine changes the timings.
+The result file records the one minute load average after each row (between 9 and 18 during this run). Other work on the machine changes the timings, so an idle machine is faster.
 
 Against the graphics image at 128 pixels, the mean absolute difference per color channel over nine scenarios stays at or below 0.020 on a 0 to 255 scale, with at most 3 levels on any single pixel. The scenarios are the default view, two inclinations, lensing off, beaming and redshift off, a hot disk with a wide field of view, strong bloom and exposure, the shadow edge and the split comparison. The tolerance is 0.25, and a deliberately different camera lands above ten times that.

@@ -4,7 +4,7 @@ Status: accepted
 
 ## Context
 
-The disk color comes from integrating a Planck spectrum against the CIE 1931 color matching functions and converting XYZ to linear sRGB. The brief asks for the source and license of the matching data in `CREDITS.md`, and all dependencies must be permissive (MIT, Apache 2.0, BSD, ISC).
+The disk color comes from integrating a Planck spectrum against the CIE 1931 color matching functions and converting XYZ to linear sRGB. The source and license of the matching data go into `CREDITS.md`, and all dependencies must be permissive (MIT, Apache 2.0, BSD, ISC).
 
 I checked the official CIE data table for the 1931 2 degree observer (DOI 10.25039/CIE.DS.xvudnb9b, from CIE 018:2019, table 6). Its metadata states the license as CC BY-SA 4.0. ShareAlike is a copyleft condition, which does not fit the rule for this repo. The CVRL copy of the same table carries no clear license statement.
 

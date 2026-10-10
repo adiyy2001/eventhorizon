@@ -1,6 +1,6 @@
 # Physics
 
-This file derives every equation the renderer uses, says where each one comes from, and points at the test that checks it. Units are G = c = M = 1, so the Schwarzschild radius is $r_s = 2$, the photon sphere sits at $r = 3$ and the ISCO at $r = 6$. Code lives in `src/core/physics`. The GPU shaders in later milestones implement the same equations with the same constants.
+This file derives every equation the renderer uses, says where each one comes from, and points at the test that checks it. Units are G = c = M = 1, so the Schwarzschild radius is $r_s = 2$, the photon sphere sits at $r = 3$ and the ISCO at $r = 6$. Code lives in `src/core/physics`. The GPU shaders implement the same equations with the same constants.
 
 Sources are cited by author and year. The full references are at the end.
 
@@ -29,7 +29,7 @@ Define the impact parameter $b = L/E$ and $u = 1/r$. Since $dr/d\lambda = -L\,du
 
 $$\left(\frac{du}{d\varphi}\right)^2 = \frac{1}{b^2} - u^2 + r_s u^3.$$
 
-Differentiating and dividing by $du/d\varphi$ gives the Binet form from the brief:
+Differentiating and dividing by $du/d\varphi$ gives the Binet form:
 
 $$\frac{d^2u}{d\varphi^2} + u = \frac{3}{2}\,r_s\,u^2 = 3M u^2.$$
 
@@ -94,7 +94,7 @@ A photon with $E = 1$ reaches radius $r$ only if $1 \ge (1 - r_s/r)\,b^2/r^2$. T
 
 $$b_c = 3\sqrt{3}\,M \approx 5.19615.$$
 
-The photon sphere at $r = 3M$ is where the maximum sits. The brief's $b_c$ is an impact parameter. On the screen it shows up as an angle. For the static observer of section 6 the shadow edge appears at the angular radius
+The photon sphere at $r = 3M$ is where the maximum sits. $b_c$ is an impact parameter, and on the screen it shows up as an angle. For the static observer of section 6 the shadow edge appears at the angular radius
 
 $$\alpha_c = \arcsin\!\left(\frac{b_c}{D}\sqrt{1 - \frac{r_s}{D}}\right),$$
 
@@ -122,7 +122,7 @@ For large $b$ the expansion is (Darwin 1959, Keeton and Petters 2005)
 
 $$\hat\alpha = \frac{4M}{b} + \frac{15\pi}{4}\frac{M^2}{b^2} + \frac{128}{3}\frac{M^3}{b^3} + O(b^{-4}).$$
 
-The leading term $4M/b$ is the weak-field limit named in the brief. Its relative error is $(15\pi/16)\,M/b$, so it shrinks only like $1/b$: 2.97 percent at $b = 100$ and 1.47 percent at $b = 200$. The test therefore compares against the three-term series and checks that the error of the leading term falls with $b$ at the predicted rate.
+The leading term $4M/b$ is the weak-field limit. Its relative error is $(15\pi/16)\,M/b$, so it shrinks only like $1/b$: 2.97 percent at $b = 100$ and 1.47 percent at $b = 200$. The test therefore compares against the three-term series and checks that the error of the leading term falls with $b$ at the predicted rate.
 
 Three independent computations of $\hat\alpha$ agree: RK4 of the Binet form, the quadrature, and the vector-form integrator (Dormand-Prince at tolerance 1e-13, started and stopped at $r = 10^5$ with a tail correction of section 12). `pnpm validate:physics` gives a worst disagreement of 5e-12 radians for $b$ from 5.3 to 500. At $b = 100$ the deflection is 0.04122 radians against 0.04 for the leading term.
 
@@ -140,7 +140,7 @@ A circular geodesic at radius $r$ has the coordinate angular velocity $\Omega = 
 
 $$g_\infty = \frac{E}{E_\text{em}} = \frac{\sqrt{1 - 3M/r}}{1 - \Omega\lambda}.$$
 
-This is the factor in the brief. It covers gravitational redshift, transverse Doppler shift and beaming in one expression.
+This is the standard factor for a circular emitter. It covers gravitational redshift, transverse Doppler shift and beaming in one expression.
 
 ### Decomposition
 
@@ -190,7 +190,7 @@ Liouville's theorem makes $I_\nu/\nu^3$ constant along a light ray (Rybicki and 
 
 $$I_\nu^\text{obs}(\nu) = g^3 B_{\nu/g}(T) = B_\nu(gT),$$
 
-which is again a Planck spectrum, at the temperature $gT$. Its bolometric integral scales as $(gT)^4$, so the displayed radiance is proportional to $g^4 T^4$ and the chromaticity comes from the colour of a blackbody at $gT$. This is the brief's "observed temperature $gT$, intensity scaled by $g^4$". The visible-band luminance grows more slowly than $g^4$ for hot gas, which section 14 returns to.
+which is again a Planck spectrum, at the temperature $gT$. Its bolometric integral scales as $(gT)^4$, so the displayed radiance is proportional to $g^4 T^4$ and the chromaticity comes from the colour of a blackbody at $gT$. So the observed temperature is $gT$ and the intensity scales with $g^4$. The visible-band luminance grows more slowly than $g^4$ for hot gas, which section 14 returns to.
 
 Code: `observedTemperature`, `observedIntensityScale` in `disk.ts`. Test: `disk.spec.ts`.
 
@@ -214,7 +214,7 @@ The term $h^2/r^2$ is the squared angular speed of the ray, so the swept angle p
 | 0.01 | 0.5 | 9.2e-10 | 6.3e-9 | 323 |
 | 0.003 | 0.5 | 2.2e-10 | 5.0e-11 | 1075 |
 
-The chosen row keeps the error of the shadow edge three orders of magnitude below the brief's 1e-4 target and costs about 108 steps per ray. The GPU port kept this row: it agrees with the float64 reference on every parity ray (see Single precision on the GPU), so no cheaper row was needed.
+The chosen row keeps the error of the shadow edge three orders of magnitude below a target of 1e-4 and costs about 108 steps per ray. The GPU port kept this row: it agrees with the float64 reference on every parity ray (see Single precision on the GPU), so no cheaper row was needed.
 
 ### Convergence and reference
 
@@ -255,7 +255,16 @@ Measured on the SwiftShader adapter (`pnpm bench:parity`, `bench/results/gpu-par
 | float32 twin against float64 | 4096 of 4096 | 1.7e-4 | 1.1e-4 | 1.7e-5 |
 | GPU against float32 twin | 4096 of 4096 | 7.1e-5 | 7.0e-5 | 7.6e-6 |
 
-The tolerances are 1e-3 for each. The twin explains the GPU error: both sit near the same distance from the float64 answer, so the error is the cost of float32 and not a bug in the port. The 128 by 128 image at the default view has the same outcome in all 16384 pixels, and the disk radiance differs from the CPU by 8.1e-5 on average (largest 2.0e-3, on pixels next to the inner edge where the temperature tends to zero).
+The same run on the hardware adapters of the development laptop (Chrome 154 on Windows, `bench/results/gpu-parity-ampere.json` and `gpu-parity-gen-12lp.json`, produced by `bench/windows/bundle-parity.mjs` and `bench/gpu-parity.ts`), GPU against float64:
+
+| Adapter | Outcomes equal | Direction, max (rad) | Hit radius, max relative | $\lambda$, max absolute |
+| --- | --- | --- | --- | --- |
+| RTX 3070 Ti Laptop (`ampere`) | 4096 of 4096 | 1.5e-04 | 8.1e-05 | 1.9e-05 |
+| Intel Iris Xe (`gen-12lp`) | 4096 of 4096 | 1.6e-04 | 1.5e-04 | 1.5e-05 |
+
+Both pass the same tolerances, and the 128 by 128 image again has the same outcome in all 16384 pixels.
+
+The tolerances are 1e-3 for each. The twin explains the GPU error: both sit near the same distance from the float64 answer, so the error is the cost of float32 and not a bug in the port. The 128 by 128 image at the default view has the same outcome in all 16384 pixels, and the disk radiance differs from the CPU by 8.0e-5 on average (largest 2.2e-3, on pixels next to the inner edge where the temperature tends to zero).
 
 ## 13. Disk crossings and higher-order images
 
@@ -269,47 +278,47 @@ Tests: `trace.spec.ts` (location error, annulus bounds, multi-crossing rays, lat
 
 The disk emits a blackbody spectrum at the temperature the observer sees, $T_\text{obs} = gT$ (section 11). Turning that into a pixel takes four steps.
 
-**Spectrum.** Planck's law in wavelength form,
+Spectrum. Planck's law in wavelength form,
 
 $$B_\lambda(T) = \frac{2hc^2}{\lambda^5}\,\frac{1}{e^{c_2/\lambda T} - 1},\qquad c_2 = \frac{hc}{k}.$$
 
 $c_2$ is computed from the CODATA 2022 constants, which are exact, and is not typed in as a rounded number. Tests: `planck.spec.ts` (the constant against the exact SI value, the spectral peak within 1.5 nm of the Wien displacement law, monotonic growth with temperature, the $T^4$ scaling of the bolometric flux).
 
-**Colour matching.** The tristimulus values are
+Colour matching. The tristimulus values are
 
 $$X = \int B_\lambda\,\bar x(\lambda)\,d\lambda,\quad Y = \int B_\lambda\,\bar y(\lambda)\,d\lambda,\quad Z = \int B_\lambda\,\bar z(\lambda)\,d\lambda,$$
 
 summed at 1 nm steps from 360 to 830 nm. The matching functions come from the multi-lobe piecewise Gaussian fit of Wyman, Sloan and Shirley (2013), because the official CIE table is licensed CC BY-SA (ADR 3). Each function is a sum of lobes $a\,\exp(-\tfrac12 (s(\lambda - \mu))^2)$ with a different slope $s$ on each side of the center $\mu$. Against the CIE 1931 table the largest absolute difference in any function is 0.022 where $\bar y$ peaks at 1. The chromaticity $(x, y)$ of a blackbody at 2000, 3000, 4000, 5000, 6500 and 10000 K agrees with the Planckian locus within 3e-3, and at 1500 K within 6e-3 (`color/planck.spec.ts`). The fit approximates the measured observer, and an error of this size is invisible in the rendered image.
 
-**Linear sRGB.** The CSS Color 4 matrix takes XYZ to linear sRGB with the D65 white point,
+Linear sRGB. The CSS Color 4 matrix takes XYZ to linear sRGB with the D65 white point,
 
 $$\begin{pmatrix}R\\G\\B\end{pmatrix} = \begin{pmatrix}3.2409699 & -1.5373832 & -0.4986108\\ -0.9692436 & 1.8759675 & 0.0415551\\ 0.0556301 & -0.2039770 & 1.0569715\end{pmatrix}\begin{pmatrix}X\\Y\\Z\end{pmatrix}.$$
 
 Cool blackbodies fall outside the sRGB gamut (negative blue). The color is scaled to unit luminance, the negative channels are clipped to zero and the result is rescaled to unit luminance again (`clipToGamutAtUnitLuminance`), so a clipped color keeps its brightness and only loses saturation.
 
-**Lookup table.** Integrating at every pixel is too slow, so a 1024 entry table holds the unit-luminance color at temperatures spaced logarithmically from 1000 K to 100000 K. Lookup interpolates linearly in $\ln T$. On the GPU the table is an `rgba16float` texture sampled with a linear sampler (the CPU packs it with a round-half-even float16 encoder that is tested on every finite bit pattern). The GPU values agree with the CPU function within 4.3e-4 relative. Temperatures outside the range clamp, which matters only for the glowing edge of the disk where $T \to 0$ and the radiance below goes to zero anyway.
+Lookup table. Integrating at every pixel is too slow, so a 1024 entry table holds the unit-luminance color at temperatures spaced logarithmically from 1000 K to 100000 K. Lookup interpolates linearly in $\ln T$. On the GPU the table is an `rgba16float` texture sampled with a linear sampler (the CPU packs it with a round-half-even float16 encoder that is tested on every finite bit pattern). The GPU values agree with the CPU function within 4.3e-4 relative. Temperatures outside the range clamp, which matters only for the glowing edge of the disk where $T \to 0$ and the radiance below goes to zero anyway.
 
-**Radiance scale.** The picture is scaled bolometrically: radiance is the table color times $(T_\text{obs}/6500\,\text{K})^4$, so a 6500 K surface has luminance 1 and $gT$ enters through its fourth power, which is the g⁴ of the brief. A camera that integrates only the visible band would see a flatter dependence for hot gas, because most of the energy of a 30000 K blackbody is in the ultraviolet. The choice and its consequence are in ADR 12.
+Radiance scale. The picture is scaled bolometrically: radiance is the table color times $(T_\text{obs}/6500\,\text{K})^4$, so a 6500 K surface has luminance 1 and $gT$ enters through its fourth power, which is the $g^4$ scaling. A camera that integrates only the visible band would see a flatter dependence for hot gas, because most of the energy of a 30000 K blackbody is in the ultraviolet. The choice and its consequence are in ADR 12.
 
-**Tone mapping.** Scene radiance is linear and unbounded. Display encoding multiplies by $2^{\text{EV}}$, applies the ACES filmic fit of Stephen Hill (input matrix, the rational curve $\dfrac{v(v + 0.0245786) - 0.000090537}{v(0.983729\,v + 0.4329510) + 0.238081}$, output matrix, clamp to $[0, 1]$) and the sRGB transfer function,
+Tone mapping. Scene radiance is linear and unbounded. Display encoding multiplies by $2^{\text{EV}}$, applies the ACES filmic fit of Stephen Hill (input matrix, the rational curve $\dfrac{v(v + 0.0245786) - 0.000090537}{v(0.983729\,v + 0.4329510) + 0.238081}$, output matrix, clamp to $[0, 1]$) and the sRGB transfer function,
 
 $$E = \begin{cases}12.92\,L & L \le 0.0031308\\ 1.055\,L^{1/2.4} - 0.055 & \text{otherwise.}\end{cases}$$
 
 The fit compresses hot, very bright regions toward white. A disk peaking at 9000 K with exposure 0 is therefore nearly white across its width, and the defaults (6500 K at -1.5 EV, ADR 15) were chosen so the gradient and the beamed side remain visible. Test: `tonemap.spec.ts`, and the GPU kernel against the CPU on 200 random inputs, largest difference 2.9e-7.
 
-**Accumulation and bloom.** Each frame is traced with a sub-pixel offset from the R2 sequence, $(\{0.5 + n\,\alpha_1\} - 0.5,\ \{0.5 + n\,\alpha_2\} - 0.5)$ with $\alpha_1 = 0.75488$ and $\alpha_2 = 0.56984$, and blended into the history with weight $1/(n+1)$, which is the running mean. Bloom is a 13-tap downsample chain with a luminance-weighted first level and a tent upsample, added to the resolved image at a small strength before tone mapping. Bloom is an artistic effect, so the radiance returned by the capture path is taken before it.
+Accumulation and bloom. Each frame is traced with a sub-pixel offset from the R2 sequence, $(\{0.5 + n\,\alpha_1\} - 0.5,\ \{0.5 + n\,\alpha_2\} - 0.5)$ with $\alpha_1 = 0.75488$ and $\alpha_2 = 0.56984$, and blended into the history with weight $1/(n+1)$, which is the running mean. Bloom is a 13-tap downsample chain with a luminance-weighted first level and a tent upsample, added to the resolved image at a small strength before tone mapping. Bloom is an artistic effect, so the radiance returned by the capture path is taken before it.
 
 ## 15. The background
 
 The sky has two parts, both procedural and both written once in TypeScript and once in WGSL.
 
-**Hash.** A 32-bit PCG output function, chained over three integer coordinates and a seed. On the CPU `Math.imul` gives the same wraparound multiplication as `u32` in WGSL, and the GPU output is bit-exact against the CPU on 500 random inputs. A float in $[0, 1)$ takes the top 24 bits, $(h \gg 8)/2^{24}$, which float32 represents exactly.
+Hash. A 32-bit PCG output function, chained over three integer coordinates and a seed. On the CPU `Math.imul` gives the same wraparound multiplication as `u32` in WGSL, and the GPU output is bit-exact against the CPU on 500 random inputs. A float in $[0, 1)$ takes the top 24 bits, $(h \gg 8)/2^{24}$, which float32 represents exactly.
 
-**Stars.** A star is a Gaussian spot in the direction of the escaped ray, of angular width $\sigma = 7\times10^{-4}$ rad, with the radiance of a blackbody at its temperature. Cells are a $96\times96$ grid on each cube face (about 14300 stars in total). A cell holds a star with probability $0.5\,(1 + u^2 + v^2)^{-3/2}$, which cancels the cube projection's solid-angle distortion, so the density on the sphere is uniform (checked by counting stars in caps). Peak brightness follows a Pareto law, $P(>s) = (s_0/s)^{1.25}$ (peak $= s_0\,(1-u)^{-0.8}$ for a uniform $u$, i.e. flux exponent $-0.8$) with $s_0 = 0.06$ and a cap of 6. Temperature is log-uniform between 2600 K and 18000 K. The test against a brute-force sum over all stars confirms that the 3 by 3 cell search misses nothing, including across cube edges.
+Stars. A star is a Gaussian spot in the direction of the escaped ray, of angular width $\sigma = 7\times10^{-4}$ rad, with the radiance of a blackbody at its temperature. Cells are a $96\times96$ grid on each cube face (about 14300 stars in total). A cell holds a star with probability $0.5\,(1 + u^2 + v^2)^{-3/2}$, which cancels the cube projection's solid-angle distortion, so the density on the sphere is uniform (checked by counting stars in caps). Peak brightness follows a Pareto law, $P(>s) = (s_0/s)^{1.25}$ (peak $= s_0\,(1-u)^{-0.8}$ for a uniform $u$, i.e. flux exponent $-0.8$) with $s_0 = 0.06$ and a cap of 6. Temperature is log-uniform between 2600 K and 18000 K. The test against a brute-force sum over all stars confirms that the 3 by 3 cell search misses nothing, including across cube edges.
 
-**Why per ray.** Gravitational lensing maps one sky direction to several image positions and stretches each. Evaluating the star profile at the final direction of every ray reproduces both: a point-like star near the photon ring turns into an arc after accumulation, and a star behind the hole appears as a second image. Baked into a cubemap, stars would blur when magnified.
+Why per ray. Gravitational lensing maps one sky direction to several image positions and stretches each. Evaluating the star profile at the final direction of every ray reproduces both: a point-like star near the photon ring turns into an arc after accumulation, and a star behind the hole appears as a second image. Baked into a cubemap, stars would blur when magnified.
 
-**Nebula.** Radiance is the sum of a diffuse band (a Gaussian in the angle from a fixed galactic plane) and clouds from three fractional Brownian motion fields: one warps the coordinates, one gives the density through a smoothstep, one mixes a warm and a cool tint. Value noise on an integer lattice with smooth interpolation, five octaves, lacunarity 2.02 and gain 0.5. The result is baked once into a $512^2$ cube. The GPU bake matches the CPU function at texel centers within 1.6e-2 relative on the smallest values (float16 storage) and the face orientation is verified by that same comparison, since a wrong axis convention would put the pattern on the wrong face.
+Nebula. Radiance is the sum of a diffuse band (a Gaussian in the angle from a fixed galactic plane) and clouds from three fractional Brownian motion fields: one warps the coordinates, one gives the density through a smoothstep, one mixes a warm and a cool tint. Value noise on an integer lattice with smooth interpolation, five octaves, lacunarity 2.02 and gain 0.5. The result is baked once into a $512^2$ cube. The GPU bake matches the CPU function at texel centers within 1.6e-2 relative on the smallest values (float16 storage) and the face orientation is verified by that same comparison, since a wrong axis convention would put the pattern on the wrong face.
 
 Tests: `hash.spec.ts`, `noise.spec.ts`, `cube-faces.spec.ts`, `nebula.spec.ts`, `stars.spec.ts` on the CPU, and `e2e/color-pipeline.spec.ts` for the GPU against the CPU.
 
@@ -317,11 +326,11 @@ Tests: `hash.spec.ts`, `noise.spec.ts`, `cube-faces.spec.ts`, `nebula.spec.ts`, 
 
 Three overlays mark the radii that matter in the picture. They are drawn as thin lines, and each has its own line style so that color is never the only signal: the photon sphere is dotted, the ISCO is dashed, the shadow edge is solid.
 
-**Photon sphere, $r = 3M$.** A ray crosses the sphere when $|x|$ passes through 3. The tracer tests every step for an inward crossing of $r = 3$, interpolates the crossing point along the step, and marks the pixel if that point lies within about one pixel of one of three orthogonal great circles (the planes $x = 0$, $y = 0$, $z = 0$ of the black hole frame), with a dotted pattern along the circle. The band width is $0.9$ pixel of world size at the observer distance divided by the sine of the angle between the ray and the circle's axis, so the line keeps a constant screen width where the ray grazes the sphere. Only the inward crossing is tested. A ray that leaves again would otherwise draw every circle twice.
+Photon sphere, $r = 3M$. A ray crosses the sphere when $|x|$ passes through 3. The tracer tests every step for an inward crossing of $r = 3$, interpolates the crossing point along the step, and marks the pixel if that point lies within about one pixel of one of three orthogonal great circles (the planes $x = 0$, $y = 0$, $z = 0$ of the black hole frame), with a dotted pattern along the circle. The band width is $0.9$ pixel of world size at the observer distance divided by the sine of the angle between the ray and the circle's axis, so the line keeps a constant screen width where the ray grazes the sphere. Only the inward crossing is tested. A ray that leaves again would otherwise draw every circle twice.
 
-**ISCO, $r = 6M$.** The ring lies in the disk plane. The tracer checks the plane crossings it already computes for the disk and marks the pixel when the crossing radius is within the same pixel-wide band of $r = 6$, with a dashed pattern along the angle. The ring is therefore visible through the disk, behind the hole and in the lensed secondary image, because it is found where light actually crosses the plane.
+ISCO, $r = 6M$. The ring lies in the disk plane. The tracer checks the plane crossings it already computes for the disk and marks the pixel when the crossing radius is within the same pixel-wide band of $r = 6$, with a dashed pattern along the angle. The ring is therefore visible through the disk, behind the hole and in the lensed secondary image, because it is found where light actually crosses the plane.
 
-**Shadow edge.** This one is analytic and is drawn in the present pass. For the static observer at distance $D$, the critical ray leaves the camera at the angle $\alpha_c$ from section 7. The pinhole camera places a ray at angle $\alpha$ at the tangent-plane radius $\tan\alpha$, so the circle has the radius
+Shadow edge. This one is analytic and is drawn in the present pass. For the static observer at distance $D$, the critical ray leaves the camera at the angle $\alpha_c$ from section 7. The pinhole camera places a ray at angle $\alpha$ at the tangent-plane radius $\tan\alpha$, so the circle has the radius
 
 $$\rho = \tan\alpha_c = \tan\arcsin\!\left(\frac{b_c}{D}\sqrt{1 - \frac{r_s}{D}}\right)$$
 

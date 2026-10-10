@@ -4,14 +4,14 @@ Status: accepted
 
 ## Context
 
-The default rules say Jest for unit tests unless the current Angular CLI default is clearly the better fit, and Cypress for end-to-end tests unless the brief says otherwise.
+The usual choice would be Jest for unit tests and Cypress for end-to-end tests.
 
-Angular 22 ships `@angular/build:unit-test` with Vitest as the runner. The brief itself names Playwright for screenshots and for the demo recording, and several tests here need things Cypress makes awkward: launching Chromium with WebGPU flags, running a compute pipeline and reading buffers back inside the page, and comparing rendered frames.
+Angular 22 ships `@angular/build:unit-test` with Vitest as the runner. The project needs Playwright anyway for screenshots and for the demo recording, and several tests here need things Cypress makes awkward: launching Chromium with WebGPU flags, running a compute pipeline and reading buffers back inside the page, and comparing rendered frames.
 
 ## Decision
 
 - Unit and component tests: Vitest 5 through the Angular builder, with `@vitest/coverage-v8` and jsdom for component tests. The pure physics and color code runs in the same runner, with no DOM involved.
-- End-to-end, GPU parity and visual regression: Playwright Test 1.63 with its pinned Chromium (153) in headless mode, started with the SwiftShader WebGPU flags documented in `PLAN.md`. The same tool records the fallback video and the demo GIF frames.
+- End-to-end, GPU parity and visual regression: Playwright Test 1.63 with its pinned Chromium (153) in headless mode, started with the SwiftShader WebGPU flags documented in ADR 11. The same tool records the fallback video and the demo GIF frames.
 - No Jest and no Cypress.
 
 ## Alternatives

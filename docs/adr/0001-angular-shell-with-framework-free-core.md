@@ -4,7 +4,7 @@ Status: accepted
 
 ## Context
 
-The brief asks for an Angular control panel, and Angular is the framework I use every day, so the interface is an Angular application. The rest of the project has different needs. The CPU reference integrator has to run in Node for the tests, in a Web Worker for the no-WebGPU fallback and in the bench scripts. The WebGPU code has to be testable without a component tree. Neither of them should know that Angular exists.
+The project needs an Angular control panel, and Angular is the framework I use every day, so the interface is an Angular application. The rest of the project has different needs. The CPU reference integrator has to run in Node for the tests, in a Web Worker for the no-WebGPU fallback and in the bench scripts. The WebGPU code has to be testable without a component tree. Neither of them should know that Angular exists.
 
 ## Decision
 

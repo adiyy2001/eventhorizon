@@ -31,24 +31,24 @@ The WGSL sources are plain `.wgsl` files imported as text through the Angular es
 
 ## Consequences
 
-- Memory at 1080p: the trace target and two history textures at 16 bytes per pixel, about 100 MB, plus the cubemap (6 x 1024² x 8 bytes, about 67 MB with mips). Both are acceptable on integrated GPUs and checked in the benchmark milestone.
+- Memory at 1080p: the trace target and two history textures at 16 bytes per pixel, about 100 MB, plus the cubemap (6 x 1024² x 8 bytes, about 67 MB with mips). Both are acceptable on integrated GPUs and measured by the frame time benchmark (ADR 15).
 - The tracer has no dependency on a read-write storage texture, `shader-f16` or subgroups, so any WebGPU adapter that passes the default limits can run it.
 - Frames for tests and exports are read back from GPU buffers (see ADR 11), which keeps them independent of the browser compositor.
 
-## Amendment from the GPU tracer milestone
+## Amendment: GPU tracer
 
 - The trace kernel also writes one `u32` outcome per pixel into a storage buffer. The overlay and test code can read which pixels were captured, escaped or hit the disk without decoding colors, and the image comparison against the CPU uses it.
 - A second kernel, `traceParity`, runs the same `traceRay` function over a buffer of rays and writes a 48 byte `TraceResult` per ray. It shares every WGSL module with the image kernel except the entry file, which is what makes the parity result a statement about the shipped tracer.
 - The present pass loads the `rgba32float` radiance texture with `textureLoad` and an explicit `unfilterable-float` bind group layout, so it does not need the `float32-filterable` feature.
 - WGSL modules are plain files composed in a fixed order by `shader-modules.ts`. A unit test fails when two modules declare the same name, and the struct layouts in WGSL are parsed and compared with the TypeScript layout used for packing.
 
-## Amendment from the color milestone
+## Amendment: color
 
 - The nebula cube is 512² per face with no mip chain, and stars are evaluated per ray in the tracer instead of being baked (ADR 12). The temperature LUT and the cube are bound as group 1 of the trace pipeline.
 - The accumulation pair holds `rgba32float` history, and a resolve step writes `rgba16float` for bloom and present. Bloom has five levels. The present pass adds the top bloom level, scaled by the bloom strength, to the resolved image before tone mapping.
 - A color parity kernel runs the shipped WGSL functions on supplied inputs so the e2e tests can compare them with the CPU twins.
 
-## Amendment from the interactive milestone
+## Amendment: interactive
 
 - Dynamic resolution renders into the top-left sub-rectangle of full-size targets. No texture is recreated when the scale changes. The present pass scales its texture coordinates by the valid fraction, and the first bloom level samples the same sub-rectangle stretched to the full bloom size. Accumulation restarts when the internal size changes (ADR 13).
 - The accumulation weight is `1/(n+1)`, and the first frame after a reset writes the new sample without reading the history, so a reset is exact and does not depend on stale texels.

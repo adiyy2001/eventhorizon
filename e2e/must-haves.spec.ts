@@ -77,7 +77,7 @@ async function setRange(page: Page, id: string, value: number): Promise<void> {
   }, value);
 }
 
-test.describe('every must-have of the brief, against the production build', () => {
+test.describe('every required feature, against the production build', () => {
   test.describe.configure({ timeout: 420_000 });
 
   test('a WebGPU ray tracer draws the shadow, the disk and the sky', async ({ page }) => {

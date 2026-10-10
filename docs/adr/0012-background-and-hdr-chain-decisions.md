@@ -4,7 +4,7 @@ Status: accepted
 
 ## Context
 
-The color milestone had to settle four things the plan left open: how stars are drawn when the sky is lensed, what resolution the nebula cubemap needs, what physical scale the displayed radiance has, and which defaults make the first image readable.
+Four things needed a decision for the color pipeline: how stars are drawn when the sky is lensed, what resolution the nebula cubemap needs, what physical scale the displayed radiance has, and which defaults make the first image readable.
 
 ## Decision
 
@@ -12,17 +12,17 @@ Stars are evaluated per ray, not baked. The sky is split into six cube faces, ea
 
 The nebula is baked once into a 512 by 512 `rgba16float` cube with no mip chain. It is smooth low-frequency noise (an fbm band plus warped clouds and a warm to cool hue mix) so 512 texels per face is more than the eye can resolve, and mips would only add a bake step. Sampling uses a linear sampler at the final direction.
 
-Displayed radiance is bolometric. The LUT stores linear sRGB chromaticity at unit luminance for a blackbody. The disk radiance is that color times `(T/6500)^4`, with `T` the observed temperature `g·T_emitted`. This applies the Planck invariance of `docs/physics.md` section 11 directly: bolometric intensity scales as the fourth power of the temperature. The visible-band luminance of a real blackbody grows more slowly than that for hot gas. The CPU table also stores the relative visible luminance, which the picture does not use, because the brief asks for the g⁴ scaling.
+Displayed radiance is bolometric. The LUT stores linear sRGB chromaticity at unit luminance for a blackbody. The disk radiance is that color times `(T/6500)^4`, with `T` the observed temperature `g·T_emitted`. This applies the Planck invariance of `docs/physics.md` section 11 directly: bolometric intensity scales as the fourth power of the temperature. The visible-band luminance of a real blackbody grows more slowly than that for hot gas. The CPU table also stores the relative visible luminance, which the picture does not use, because the disk model specifies g⁴ scaling.
 
-Defaults changed from the tracer milestone: observer distance 50 (was 30), disk outer radius 16 (was 20), peak temperature 5500 K (was 9000 K; ADR 15 later set 6500 K with exposure -1.5 EV). At 9000 K with exposure 0 the whole disk saturates to white after the ACES fit, which hides both the temperature gradient and the beaming. At 5500 K the disk reads warm, with the approaching side visibly brighter, and 9000 K stays available as a baseline for hot disks.
+Defaults changed after the GPU tracer: observer distance 50 (was 30), disk outer radius 16 (was 20), peak temperature 5500 K (was 9000 K; ADR 15 later set 6500 K with exposure -1.5 EV). At 9000 K with exposure 0 the whole disk saturates to white after the ACES fit, which hides both the temperature gradient and the beaming. At 5500 K the disk reads warm, with the approaching side visibly brighter, and 9000 K stays available as a baseline for hot disks.
 
 The post chain is: trace into `rgba32float`, accumulate with weight `1/(n+1)` into a ping-pong pair, resolve into `rgba16float` (clamped to 60000), bloom through five levels (13-tap downsample with a luminance-weighted first level, 3 by 3 tent upsample added back), then present, which adds the bloom scaled by its strength and applies exposure in stops, the ACES fit, the sRGB transfer function and a one-LSB triangular dither. The jitter sequence is R2.
 
 ## Alternatives
 
 - Stars baked into the cubemap. Lensing then magnifies texels instead of stars, and a 1024² face would need to be sampled far below the star size near the ring, giving blur instead of arcs.
-- A 1024² mipmapped cubemap (the plan's first figure). Four times the memory for no visible gain on a smooth nebula.
-- Luminance-correct visible-band scaling instead of `(T/6500)^4`. Closer to what a camera records for very hot gas, but the brief defines the scale as g⁴.
+- A 1024² mipmapped cubemap (the first figure considered). Four times the memory for no visible gain on a smooth nebula.
+- Luminance-correct visible-band scaling instead of `(T/6500)^4`. Closer to what a camera records for very hot gas, but the disk model defines the scale as g⁴.
 
 ## Consequences
 
@@ -30,7 +30,7 @@ The post chain is: trace into `rgba32float`, accumulate with weight `1/(n+1)` in
 - Everything on the GPU that has a CPU twin (hash, noise, nebula, stars, LUT, tone map) is compared in `e2e/color-pipeline.spec.ts`, and `src/gpu/shader-constants.spec.ts` fails if a WGSL constant drifts from its TypeScript value.
 - Results from the software adapter: LUT within 4.3e-4 relative of the CPU, tone mapper within 2.9e-7 absolute, stars within 6.7e-4 absolute, nebula within 8.8e-4 relative, hashes bit-exact, baked cubemap texels within 1.6e-2 relative on the smallest values (float16 storage).
 
-## Amendment from the fallback renderer milestone
+## Amendment: fallback renderer
 
 The recorded preview video showed faint dark hairlines along the cube edges of the nebula whenever the camera azimuth was a multiple of 45 degrees. On the software adapter, hardware cube filtering returned about half of the analytic value (a ratio of 0.52) for rays within a thousandth of a radian of a face edge. The CPU picture was smooth, so the lines came from the graphics path.
 
