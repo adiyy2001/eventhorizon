@@ -3,7 +3,7 @@ import { impactParameter } from '../physics/geodesic';
 import { pixelDirection, staticObserverRay, type ViewportSize } from '../physics/observer';
 import { traceRay } from '../physics/trace';
 import { OUTCOME_CODES } from '../validation/parity';
-import { diskRadiance, skyRadiance } from './shade';
+import { traceRadiance } from './shade';
 import { viewBasis, viewTraceOptions, type ViewDescription } from './view';
 
 export interface ReferenceImage {
@@ -43,13 +43,8 @@ export function renderReferenceImage(view: ViewDescription, size: ViewportSize):
       image.impactParameters[index] = impactParameter(start);
       if (result.diskHit !== null) {
         image.hitRadius[index] = result.diskHit.radius;
-        image.radiance.set(
-          diskRadiance(result.diskHit.radius, result.diskHit.lambda, view, lut),
-          index * 3,
-        );
-      } else if (result.outcome === 'escaped') {
-        image.radiance.set(skyRadiance(result.finalDirection, lut), index * 3);
       }
+      image.radiance.set(traceRadiance(result, view, lut), index * 3);
     }
   }
   return image;

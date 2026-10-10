@@ -1,8 +1,10 @@
 import { buildTemperatureLut } from '../color/temperature-lut';
 import { luminanceOfLinearSrgb } from '../color/xyz-srgb';
+import { pixelDirection, staticObserverRay } from '../physics/observer';
+import { traceRay, type TraceResult } from '../physics/trace';
 import { normalize, vec3 } from '../physics/vec3';
-import { BLACK, diskRadiance, skyRadiance } from './shade';
-import { defaultView } from './view';
+import { BLACK, diskRadiance, skyRadiance, traceRadiance } from './shade';
+import { defaultView, viewBasis, viewTraceOptions } from './view';
 
 const lut = buildTemperatureLut();
 const plain = { ...defaultView, gravitationalRedshift: false, doppler: false };
@@ -56,5 +58,58 @@ describe('skyRadiance', () => {
 
   it('exposes black for captured rays', () => {
     expect(BLACK).toEqual([0, 0, 0]);
+  });
+});
+
+describe('traceRadiance', () => {
+  const basis = viewBasis(defaultView);
+  const options = viewTraceOptions(defaultView);
+  const size = { width: 32, height: 32 };
+
+  function tracePixel(column: number, row: number): TraceResult {
+    const direction = pixelDirection(
+      basis,
+      defaultView.verticalFieldOfView,
+      size,
+      column + 0.5,
+      row + 0.5,
+    );
+    return traceRay(staticObserverRay(basis.position, direction), options);
+  }
+
+  function firstPixelWith(outcome: TraceResult['outcome']): TraceResult {
+    for (let row = 0; row < size.height; row += 1) {
+      for (let column = 0; column < size.width; column += 1) {
+        const result = tracePixel(column, row);
+        if (result.outcome === outcome) {
+          return result;
+        }
+      }
+    }
+    throw new Error(`no pixel with the outcome ${outcome}`);
+  }
+
+  it('is black for a captured ray', () => {
+    const captured = tracePixel(16, 16);
+    expect(captured.outcome).toBe('captured');
+    expect(traceRadiance(captured, defaultView, lut)).toEqual(BLACK);
+  });
+
+  it('is the sky along the final direction for an escaped ray', () => {
+    const escaped = firstPixelWith('escaped');
+    expect(traceRadiance(escaped, defaultView, lut)).toEqual(
+      skyRadiance(escaped.finalDirection, lut),
+    );
+  });
+
+  it('is the disk radiance at the hit for a ray that lands on the disk', () => {
+    const landed = firstPixelWith('disk');
+    const hit = landed.diskHit;
+    if (hit === null) {
+      throw new Error('a disk outcome has a hit');
+    }
+    expect(traceRadiance(landed, defaultView, lut)).toEqual(
+      diskRadiance(hit.radius, hit.lambda, defaultView, lut),
+    );
   });
 });

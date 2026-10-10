@@ -3,6 +3,7 @@ import { starRadiance } from '../background/stars';
 import { blackbodyRadiance, type TemperatureLut } from '../color/temperature-lut';
 import { type Rgb } from '../color/xyz-srgb';
 import { combineRedshift, diskTemperature, redshiftParts } from '../physics/disk';
+import { type TraceResult } from '../physics/trace';
 import { type Vec3 } from '../physics/vec3';
 import { type ViewDescription, viewDisk } from './view';
 
@@ -26,4 +27,15 @@ export function skyRadiance(direction: Vec3, lut: TemperatureLut): Rgb {
   const nebula = nebulaRadiance(direction);
   const stars = starRadiance(direction, lut);
   return [nebula[0] + stars[0], nebula[1] + stars[1], nebula[2] + stars[2]];
+}
+
+export function traceRadiance(
+  result: TraceResult,
+  view: ViewDescription,
+  lut: TemperatureLut,
+): Rgb {
+  if (result.diskHit !== null) {
+    return diskRadiance(result.diskHit.radius, result.diskHit.lambda, view, lut);
+  }
+  return result.outcome === 'escaped' ? skyRadiance(result.finalDirection, lut) : BLACK;
 }
