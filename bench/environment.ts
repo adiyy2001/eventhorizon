@@ -1,6 +1,6 @@
 import { arch, cpus, platform, release, totalmem } from 'node:os';
 import { type Browser } from '@playwright/test';
-import { webGpuLaunchArguments } from '../playwright.config';
+import { benchLaunchArguments } from './launch-arguments';
 
 export interface AdapterDescription {
   vendor: string;
@@ -24,7 +24,7 @@ export function describeHost(browser: Browser) {
 export function describeEnvironment(browser: Browser, adapter: AdapterDescription) {
   return {
     ...describeHost(browser),
-    chromiumFlags: webGpuLaunchArguments,
+    chromiumFlags: benchLaunchArguments(),
     adapter,
     software: /swiftshader|llvmpipe|software/i.test(
       `${adapter.architecture} ${adapter.description} ${adapter.vendor}`,

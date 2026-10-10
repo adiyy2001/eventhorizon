@@ -14,7 +14,7 @@ import {
   type Renderer,
 } from '../bench/lighthouse-scores';
 import { startStaticServer } from '../bench/static-server';
-import { webGpuLaunchArguments } from '../playwright.config';
+import { webGpuLaunchArguments } from '../bench/launch-arguments';
 
 const port = 4321;
 const debuggingPort = 9333;

@@ -23,7 +23,11 @@ function row(label: string, report: ParityReport): string {
   ].join(' ');
 }
 
-const server = await startStaticServer(4323);
+const externalOrigin = process.env['EVENTHORIZON_ORIGIN'];
+const server =
+  externalOrigin === undefined
+    ? await startStaticServer(4323)
+    : { origin: externalOrigin, stop: () => undefined };
 const browser = await launchWebGpuBrowser();
 let failed: boolean;
 try {

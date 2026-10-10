@@ -1,6 +1,10 @@
 import { chromium, type Browser } from '@playwright/test';
-import { webGpuLaunchArguments } from '../playwright.config';
+import { benchLaunchArguments } from './launch-arguments';
 
 export async function launchWebGpuBrowser(): Promise<Browser> {
-  return chromium.launch({ args: webGpuLaunchArguments });
+  const executablePath = process.env['EVENTHORIZON_CHROME'];
+  return chromium.launch({
+    args: benchLaunchArguments(),
+    ...(executablePath === undefined ? {} : { executablePath }),
+  });
 }
