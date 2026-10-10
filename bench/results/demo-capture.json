@@ -1,0 +1,27 @@
+{
+  "generatedAt": "2026-10-10T21:20:23.084Z",
+  "node": "v24.15.0",
+  "platform": "win32 10.0.26200 x64",
+  "cpu": "12th Gen Intel(R) Core(TM) i7-12700H",
+  "cores": 20,
+  "memoryGigabytes": 32,
+  "chromium": "154.0.8037.98",
+  "chromiumFlags": [
+    "--enable-unsafe-webgpu",
+    "--ignore-gpu-blocklist",
+    "--force_high_performance_gpu"
+  ],
+  "adapter": {
+    "vendor": "nvidia",
+    "architecture": "ampere",
+    "device": "",
+    "description": ""
+  },
+  "software": false,
+  "viewport": {
+    "width": 1280,
+    "height": 1260
+  },
+  "frames": 230,
+  "seconds": 91.28313279999999
+}
