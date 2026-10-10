@@ -16,12 +16,17 @@ export const gpuDeviceBoundFiles = [
   'src/gpu/passes/trace-pass.ts',
 ];
 
+export const workerGlueFiles = ['src/workers/cpu-render.worker.ts'];
+
+export const testSupportGlobs = ['src/**/testing/**'];
+
 export default defineConfig({
   test: {
     coverage: {
-      exclude: gpuDeviceBoundFiles,
+      exclude: [...gpuDeviceBoundFiles, ...workerGlueFiles, ...testSupportGlobs],
       thresholds: {
         'src/core/**': { lines: 90 },
+        'src/workers/**': { lines: 90 },
         'src/app/**': { lines: 80 },
         'src/gpu/**': { lines: 80 },
       },

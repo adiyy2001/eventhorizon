@@ -27,3 +27,6 @@ The coverage report measures logic only. The README says in one line which files
 
 Device acquisition turned out to be testable with a fake `navigator.gpu`, so `src/gpu/device.ts` is counted and not excluded. The exclude list (`gpuDeviceBoundFiles` in `vitest.config.ts`) starts with `src/gpu/smoke-kernel.ts` only. The boundary check lives in `scripts/check-style.ts` and runs as part of `pnpm check:style`: a source file that calls a WebGPU entry point (`createShaderModule`, `createBuffer`, `requestAdapter`, `getContext('webgpu')` and similar) must be on the exclude list, with `src/gpu/device.ts` as the one named exception.
 
+## Amendment from the fallback renderer
+
+`src/workers/**` joins the thresholds at 90 percent of lines. The message protocol and the tile handler are pure and counted. The worker entry `src/workers/cpu-render.worker.ts` only wires `message` events to the handler, needs a worker global scope that jsdom does not provide, and is listed in `workerGlueFiles` in the Vitest config. The adapter-less Playwright project runs the real worker in Chromium and covers it. Test support under `src/**/testing/**`, such as the loopback worker pool, is not counted.
