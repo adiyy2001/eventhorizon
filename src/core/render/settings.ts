@@ -161,6 +161,18 @@ export function fullModelView(view: ViewDescription): ViewDescription {
   };
 }
 
+export const gpuOnlyOverlays: readonly (keyof OverlaySettings)[] = ['photonSphere', 'isco'];
+
+export function cpuSupportedSettings(settings: RenderSettings): RenderSettings {
+  if (gpuOnlyOverlays.every((key) => !settings.overlays[key])) {
+    return settings;
+  }
+  return {
+    ...settings,
+    overlays: { ...settings.overlays, photonSphere: false, isco: false },
+  };
+}
+
 function viewEqual(left: ViewDescription, right: ViewDescription): boolean {
   return (
     left.distance === right.distance &&

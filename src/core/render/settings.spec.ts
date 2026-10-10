@@ -2,7 +2,9 @@ import { defaultView } from './view';
 import {
   cameraHash,
   clampToRange,
+  cpuSupportedSettings,
   defaultSettings,
+  gpuOnlyOverlays,
   fullModelView,
   mergeSettings,
   sanitizeSettings,
@@ -212,5 +214,39 @@ describe('derived values', () => {
       full.lensing && full.doppler && full.higherOrderImages && full.gravitationalRedshift,
     ).toBe(true);
     expect(full.distance).toBe(33);
+  });
+});
+
+describe('cpuSupportedSettings', () => {
+  it('names the overlays that only the graphics path can draw', () => {
+    expect(gpuOnlyOverlays).toEqual(['photonSphere', 'isco']);
+  });
+
+  it('returns the same object when no graphics only overlay is on', () => {
+    const settings = mergeSettings(defaultSettings, {
+      overlays: { shadowEdge: true },
+      split: { enabled: true },
+    });
+    expect(cpuSupportedSettings(settings)).toBe(settings);
+  });
+
+  it('switches the graphics only overlays off and keeps everything else', () => {
+    const settings = mergeSettings(defaultSettings, {
+      view: { distance: 33 },
+      exposure: 1,
+      overlays: { photonSphere: true, isco: true, shadowEdge: true },
+      split: { enabled: true, position: 0.4 },
+    });
+    const supported = cpuSupportedSettings(settings);
+    expect(supported.overlays).toEqual({ photonSphere: false, isco: false, shadowEdge: true });
+    expect(supported.view).toBe(settings.view);
+    expect(supported.exposure).toBe(1);
+    expect(supported.split).toEqual({ enabled: true, position: 0.4 });
+  });
+
+  it('does not change the settings it was given', () => {
+    const settings = mergeSettings(defaultSettings, { overlays: { isco: true } });
+    cpuSupportedSettings(settings);
+    expect(settings.overlays.isco).toBe(true);
   });
 });

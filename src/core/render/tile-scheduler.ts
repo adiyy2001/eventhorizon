@@ -2,6 +2,15 @@ import { type ViewportSize } from '../physics/observer';
 
 export const passSteps: readonly number[] = [8, 4, 2, 1];
 export const tileSampleEdge = 16;
+export const maxWorkers = 8;
+const fallbackCoreCount = 2;
+
+export function poolSize(hardwareConcurrency: number): number {
+  const cores = Number.isFinite(hardwareConcurrency)
+    ? Math.floor(hardwareConcurrency)
+    : fallbackCoreCount;
+  return Math.min(maxWorkers, Math.max(1, cores - 1));
+}
 
 export interface RenderPass {
   index: number;

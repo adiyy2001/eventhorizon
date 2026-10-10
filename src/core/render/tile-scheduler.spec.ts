@@ -1,6 +1,8 @@
 import {
   isNewSample,
+  maxWorkers,
   planPasses,
+  poolSize,
   RenderJob,
   tileSamples,
   tilesForPass,
@@ -148,5 +150,30 @@ describe('RenderJob', () => {
 
   it('knows no pass beyond the planned ones', () => {
     expect(new RenderJob(1, { width: 8, height: 8 }).passComplete(9)).toBe(false);
+  });
+});
+
+describe('poolSize', () => {
+  it('leaves one core to the page', () => {
+    expect(poolSize(4)).toBe(3);
+    expect(poolSize(8)).toBe(7);
+  });
+
+  it('never goes below one worker', () => {
+    expect(poolSize(1)).toBe(1);
+    expect(poolSize(2)).toBe(1);
+    expect(poolSize(0)).toBe(1);
+  });
+
+  it('stops at the largest pool', () => {
+    expect(maxWorkers).toBe(8);
+    expect(poolSize(9)).toBe(8);
+    expect(poolSize(64)).toBe(8);
+  });
+
+  it('rounds fractional core counts down and survives a missing value', () => {
+    expect(poolSize(6.9)).toBe(5);
+    expect(poolSize(Number.NaN)).toBe(1);
+    expect(poolSize(Infinity)).toBe(1);
   });
 });
