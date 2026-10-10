@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-10T19:03:25.888Z",
+  "generatedAt": "2026-10-10T21:27:51.273Z",
   "node": "v24.21.0",
   "platform": "linux 6.6.87.2-microsoft-standard-WSL2 x64",
   "cpu": "12th Gen Intel(R) Core(TM) i7-12700H",
@@ -12,261 +12,261 @@
     "height": 512
   },
   "repeats": 5,
-  "loadAverageBefore": 2.25,
+  "loadAverageBefore": 14.41,
   "results": [
     {
       "workers": 1,
-      "pageFirstImageMilliseconds": 520,
-      "pageFullImageMilliseconds": 11675,
-      "renderFirstImageMilliseconds": 421,
-      "renderFullImageMilliseconds": 11541,
-      "changeFirstImageMilliseconds": 154,
-      "changeFullImageMilliseconds": 9291,
-      "loadAverageAfter": 4.06,
+      "pageFirstImageMilliseconds": 781,
+      "pageFullImageMilliseconds": 13035,
+      "renderFirstImageMilliseconds": 624,
+      "renderFullImageMilliseconds": 12870,
+      "changeFirstImageMilliseconds": 235,
+      "changeFullImageMilliseconds": 15760,
+      "loadAverageAfter": 17.57,
       "samples": [
         {
-          "pageFirstImageMilliseconds": 874,
-          "pageFullImageMilliseconds": 19557,
-          "renderFirstImageMilliseconds": 660,
-          "renderFullImageMilliseconds": 19342
+          "pageFirstImageMilliseconds": 459,
+          "pageFullImageMilliseconds": 8785,
+          "renderFirstImageMilliseconds": 359,
+          "renderFullImageMilliseconds": 8685
         },
         {
-          "pageFirstImageMilliseconds": 625,
-          "pageFullImageMilliseconds": 11675,
-          "renderFirstImageMilliseconds": 492,
-          "renderFullImageMilliseconds": 11541
+          "pageFirstImageMilliseconds": 781,
+          "pageFullImageMilliseconds": 15837,
+          "renderFirstImageMilliseconds": 624,
+          "renderFullImageMilliseconds": 15679
         },
         {
-          "pageFirstImageMilliseconds": 520,
-          "pageFullImageMilliseconds": 11835,
-          "renderFirstImageMilliseconds": 421,
-          "renderFullImageMilliseconds": 11737
+          "pageFirstImageMilliseconds": 868,
+          "pageFullImageMilliseconds": 13035,
+          "renderFirstImageMilliseconds": 702,
+          "renderFullImageMilliseconds": 12870
         },
         {
-          "pageFirstImageMilliseconds": 425,
-          "pageFullImageMilliseconds": 10929,
-          "renderFirstImageMilliseconds": 353,
-          "renderFullImageMilliseconds": 10857
+          "pageFirstImageMilliseconds": 391,
+          "pageFullImageMilliseconds": 9355,
+          "renderFirstImageMilliseconds": 311,
+          "renderFullImageMilliseconds": 9275
         },
         {
-          "pageFirstImageMilliseconds": 508,
-          "pageFullImageMilliseconds": 9366,
-          "renderFirstImageMilliseconds": 416,
-          "renderFullImageMilliseconds": 9274
+          "pageFirstImageMilliseconds": 915,
+          "pageFullImageMilliseconds": 18494,
+          "renderFirstImageMilliseconds": 738,
+          "renderFullImageMilliseconds": 18316
         }
       ],
       "changes": [
         {
-          "firstImageMilliseconds": 469,
-          "fullImageMilliseconds": 13998
+          "firstImageMilliseconds": 142,
+          "fullImageMilliseconds": 15760
         },
         {
-          "firstImageMilliseconds": 177,
-          "fullImageMilliseconds": 9555
+          "firstImageMilliseconds": 278,
+          "fullImageMilliseconds": 15674
         },
         {
-          "firstImageMilliseconds": 154,
-          "fullImageMilliseconds": 9291
+          "firstImageMilliseconds": 136,
+          "fullImageMilliseconds": 7573
         },
         {
-          "firstImageMilliseconds": 151,
-          "fullImageMilliseconds": 9074
+          "firstImageMilliseconds": 235,
+          "fullImageMilliseconds": 17391
         },
         {
-          "firstImageMilliseconds": 141,
-          "fullImageMilliseconds": 8962
+          "firstImageMilliseconds": 279,
+          "fullImageMilliseconds": 16456
         }
       ]
     },
     {
       "workers": 2,
-      "pageFirstImageMilliseconds": 488,
-      "pageFullImageMilliseconds": 5689,
-      "renderFirstImageMilliseconds": 338,
-      "renderFullImageMilliseconds": 5540,
-      "changeFirstImageMilliseconds": 110,
-      "changeFullImageMilliseconds": 4963,
-      "loadAverageAfter": 5.72,
+      "pageFirstImageMilliseconds": 504,
+      "pageFullImageMilliseconds": 7303,
+      "renderFirstImageMilliseconds": 400,
+      "renderFullImageMilliseconds": 7180,
+      "changeFirstImageMilliseconds": 112,
+      "changeFullImageMilliseconds": 6128,
+      "loadAverageAfter": 13.23,
       "samples": [
         {
-          "pageFirstImageMilliseconds": 523,
-          "pageFullImageMilliseconds": 7235,
-          "renderFirstImageMilliseconds": 410,
-          "renderFullImageMilliseconds": 7122
+          "pageFirstImageMilliseconds": 899,
+          "pageFullImageMilliseconds": 11234,
+          "renderFirstImageMilliseconds": 687,
+          "renderFullImageMilliseconds": 11021
         },
         {
-          "pageFirstImageMilliseconds": 490,
-          "pageFullImageMilliseconds": 6689,
-          "renderFirstImageMilliseconds": 395,
-          "renderFullImageMilliseconds": 6594
+          "pageFirstImageMilliseconds": 617,
+          "pageFullImageMilliseconds": 7303,
+          "renderFirstImageMilliseconds": 493,
+          "renderFullImageMilliseconds": 7180
         },
         {
-          "pageFirstImageMilliseconds": 423,
-          "pageFullImageMilliseconds": 5579,
-          "renderFirstImageMilliseconds": 329,
-          "renderFullImageMilliseconds": 5486
+          "pageFirstImageMilliseconds": 495,
+          "pageFullImageMilliseconds": 7368,
+          "renderFirstImageMilliseconds": 393,
+          "renderFullImageMilliseconds": 7265
         },
         {
-          "pageFirstImageMilliseconds": 488,
-          "pageFullImageMilliseconds": 5689,
-          "renderFirstImageMilliseconds": 338,
-          "renderFullImageMilliseconds": 5540
+          "pageFirstImageMilliseconds": 504,
+          "pageFullImageMilliseconds": 6640,
+          "renderFirstImageMilliseconds": 400,
+          "renderFullImageMilliseconds": 6536
         },
         {
-          "pageFirstImageMilliseconds": 429,
-          "pageFullImageMilliseconds": 5554,
-          "renderFirstImageMilliseconds": 333,
-          "renderFullImageMilliseconds": 5459
+          "pageFirstImageMilliseconds": 434,
+          "pageFullImageMilliseconds": 5451,
+          "renderFirstImageMilliseconds": 346,
+          "renderFullImageMilliseconds": 5361
         }
       ],
       "changes": [
         {
-          "firstImageMilliseconds": 114,
-          "fullImageMilliseconds": 6311
+          "firstImageMilliseconds": 174,
+          "fullImageMilliseconds": 6517
         },
         {
-          "firstImageMilliseconds": 110,
-          "fullImageMilliseconds": 5516
+          "firstImageMilliseconds": 112,
+          "fullImageMilliseconds": 6128
         },
         {
-          "firstImageMilliseconds": 88,
-          "fullImageMilliseconds": 4903
+          "firstImageMilliseconds": 135,
+          "fullImageMilliseconds": 6264
         },
         {
-          "firstImageMilliseconds": 91,
-          "fullImageMilliseconds": 4963
+          "firstImageMilliseconds": 109,
+          "fullImageMilliseconds": 6006
         },
         {
-          "firstImageMilliseconds": 116,
-          "fullImageMilliseconds": 4782
+          "firstImageMilliseconds": 76,
+          "fullImageMilliseconds": 4889
         }
       ]
     },
     {
       "workers": 4,
-      "pageFirstImageMilliseconds": 440,
-      "pageFullImageMilliseconds": 3565,
-      "renderFirstImageMilliseconds": 354,
-      "renderFullImageMilliseconds": 3474,
-      "changeFirstImageMilliseconds": 79,
-      "changeFullImageMilliseconds": 3152,
-      "loadAverageAfter": 4.93,
+      "pageFirstImageMilliseconds": 408,
+      "pageFullImageMilliseconds": 3128,
+      "renderFirstImageMilliseconds": 332,
+      "renderFullImageMilliseconds": 3048,
+      "changeFirstImageMilliseconds": 62,
+      "changeFullImageMilliseconds": 2705,
+      "loadAverageAfter": 9.49,
       "samples": [
         {
-          "pageFirstImageMilliseconds": 483,
-          "pageFullImageMilliseconds": 3410,
-          "renderFirstImageMilliseconds": 384,
-          "renderFullImageMilliseconds": 3312
+          "pageFirstImageMilliseconds": 429,
+          "pageFullImageMilliseconds": 3170,
+          "renderFirstImageMilliseconds": 352,
+          "renderFullImageMilliseconds": 3092
         },
         {
-          "pageFirstImageMilliseconds": 421,
-          "pageFullImageMilliseconds": 3565,
-          "renderFirstImageMilliseconds": 330,
-          "renderFullImageMilliseconds": 3474
+          "pageFirstImageMilliseconds": 408,
+          "pageFullImageMilliseconds": 3128,
+          "renderFirstImageMilliseconds": 327,
+          "renderFullImageMilliseconds": 3048
         },
         {
-          "pageFirstImageMilliseconds": 476,
-          "pageFullImageMilliseconds": 3993,
-          "renderFirstImageMilliseconds": 382,
-          "renderFullImageMilliseconds": 3899
+          "pageFirstImageMilliseconds": 383,
+          "pageFullImageMilliseconds": 3016,
+          "renderFirstImageMilliseconds": 307,
+          "renderFullImageMilliseconds": 2940
         },
         {
-          "pageFirstImageMilliseconds": 430,
-          "pageFullImageMilliseconds": 3377,
-          "renderFirstImageMilliseconds": 345,
-          "renderFullImageMilliseconds": 3292
+          "pageFirstImageMilliseconds": 404,
+          "pageFullImageMilliseconds": 3123,
+          "renderFirstImageMilliseconds": 332,
+          "renderFullImageMilliseconds": 3048
         },
         {
-          "pageFirstImageMilliseconds": 440,
-          "pageFullImageMilliseconds": 3706,
-          "renderFirstImageMilliseconds": 354,
-          "renderFullImageMilliseconds": 3620
+          "pageFirstImageMilliseconds": 425,
+          "pageFullImageMilliseconds": 3478,
+          "renderFirstImageMilliseconds": 347,
+          "renderFullImageMilliseconds": 3400
         }
       ],
       "changes": [
         {
+          "firstImageMilliseconds": 59,
+          "fullImageMilliseconds": 2688
+        },
+        {
+          "firstImageMilliseconds": 69,
+          "fullImageMilliseconds": 2705
+        },
+        {
+          "firstImageMilliseconds": 65,
+          "fullImageMilliseconds": 2614
+        },
+        {
           "firstImageMilliseconds": 58,
-          "fullImageMilliseconds": 3171
+          "fullImageMilliseconds": 2830
         },
         {
-          "firstImageMilliseconds": 84,
-          "fullImageMilliseconds": 3002
-        },
-        {
-          "firstImageMilliseconds": 79,
-          "fullImageMilliseconds": 3152
-        },
-        {
-          "firstImageMilliseconds": 66,
-          "fullImageMilliseconds": 3299
-        },
-        {
-          "firstImageMilliseconds": 83,
-          "fullImageMilliseconds": 3092
+          "firstImageMilliseconds": 62,
+          "fullImageMilliseconds": 2956
         }
       ]
     },
     {
       "workers": 8,
-      "pageFirstImageMilliseconds": 607,
-      "pageFullImageMilliseconds": 3005,
-      "renderFirstImageMilliseconds": 529,
-      "renderFullImageMilliseconds": 2883,
-      "changeFirstImageMilliseconds": 67,
-      "changeFullImageMilliseconds": 2248,
-      "loadAverageAfter": 6.54,
+      "pageFirstImageMilliseconds": 558,
+      "pageFullImageMilliseconds": 2636,
+      "renderFirstImageMilliseconds": 469,
+      "renderFullImageMilliseconds": 2550,
+      "changeFirstImageMilliseconds": 58,
+      "changeFullImageMilliseconds": 1979,
+      "loadAverageAfter": 9.45,
       "samples": [
         {
-          "pageFirstImageMilliseconds": 604,
-          "pageFullImageMilliseconds": 2807,
-          "renderFirstImageMilliseconds": 518,
-          "renderFullImageMilliseconds": 2722
+          "pageFirstImageMilliseconds": 574,
+          "pageFullImageMilliseconds": 2671,
+          "renderFirstImageMilliseconds": 485,
+          "renderFullImageMilliseconds": 2583
         },
         {
-          "pageFirstImageMilliseconds": 733,
-          "pageFullImageMilliseconds": 3045,
-          "renderFirstImageMilliseconds": 571,
-          "renderFullImageMilliseconds": 2883
+          "pageFirstImageMilliseconds": 558,
+          "pageFullImageMilliseconds": 2677,
+          "renderFirstImageMilliseconds": 469,
+          "renderFullImageMilliseconds": 2589
         },
         {
-          "pageFirstImageMilliseconds": 606,
-          "pageFullImageMilliseconds": 3005,
-          "renderFirstImageMilliseconds": 504,
-          "renderFullImageMilliseconds": 2905
+          "pageFirstImageMilliseconds": 540,
+          "pageFullImageMilliseconds": 2539,
+          "renderFirstImageMilliseconds": 454,
+          "renderFullImageMilliseconds": 2454
         },
         {
-          "pageFirstImageMilliseconds": 640,
-          "pageFullImageMilliseconds": 3031,
-          "renderFirstImageMilliseconds": 534,
-          "renderFullImageMilliseconds": 2925
+          "pageFirstImageMilliseconds": 533,
+          "pageFullImageMilliseconds": 2630,
+          "renderFirstImageMilliseconds": 453,
+          "renderFullImageMilliseconds": 2550
         },
         {
-          "pageFirstImageMilliseconds": 607,
-          "pageFullImageMilliseconds": 2948,
-          "renderFirstImageMilliseconds": 529,
-          "renderFullImageMilliseconds": 2870
+          "pageFirstImageMilliseconds": 625,
+          "pageFullImageMilliseconds": 2636,
+          "renderFirstImageMilliseconds": 522,
+          "renderFullImageMilliseconds": 2533
         }
       ],
       "changes": [
         {
-          "firstImageMilliseconds": 68,
-          "fullImageMilliseconds": 2406
+          "firstImageMilliseconds": 58,
+          "fullImageMilliseconds": 1990
         },
         {
-          "firstImageMilliseconds": 60,
-          "fullImageMilliseconds": 2163
+          "firstImageMilliseconds": 58,
+          "fullImageMilliseconds": 1979
         },
         {
-          "firstImageMilliseconds": 67,
-          "fullImageMilliseconds": 2248
+          "firstImageMilliseconds": 65,
+          "fullImageMilliseconds": 1982
         },
         {
-          "firstImageMilliseconds": 67,
-          "fullImageMilliseconds": 2084
+          "firstImageMilliseconds": 56,
+          "fullImageMilliseconds": 1823
         },
         {
-          "firstImageMilliseconds": 69,
-          "fullImageMilliseconds": 2363
+          "firstImageMilliseconds": 54,
+          "fullImageMilliseconds": 1938
         }
       ]
     }

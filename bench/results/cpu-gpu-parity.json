@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-10T19:27:23.311Z",
+  "generatedAt": "2026-10-10T21:32:44.983Z",
   "node": "v24.21.0",
   "platform": "linux 6.6.87.2-microsoft-standard-WSL2 x64",
   "cpu": "12th Gen Intel(R) Core(TM) i7-12700H",
@@ -22,97 +22,97 @@
   "edge": 128,
   "tolerance": 0.25,
   "note": "Mean and maximum absolute difference per colour channel on a 0 to 255 scale, graphics image with one sample per pixel against the software image.",
-  "worstMean": 0.020161946614583332,
+  "worstMean": 0.017435709635416668,
   "results": [
     {
       "name": "default view",
-      "mean": 0.014261881510416666,
+      "mean": 0.006673177083333333,
       "max": 1,
       "size": 128,
       "workers": 8,
-      "gpuMilliseconds": 8509.40000000014,
-      "cpuFirstImageMilliseconds": 270.80000000004657,
-      "cpuFullImageMilliseconds": 410.10000000009313
+      "gpuMilliseconds": 10441.5,
+      "cpuFirstImageMilliseconds": 364.09999999962747,
+      "cpuFullImageMilliseconds": 532.5999999996275
     },
     {
       "name": "inclination 10 degrees",
-      "mean": 0.010721842447916666,
-      "max": 3,
+      "mean": 0.00811767578125,
+      "max": 1,
       "size": 128,
       "workers": 8,
-      "gpuMilliseconds": 1760.0999999998603,
-      "cpuFirstImageMilliseconds": 212.60000000009313,
-      "cpuFullImageMilliseconds": 344.69999999995343
+      "gpuMilliseconds": 2398.800000000745,
+      "cpuFirstImageMilliseconds": 370.80000000074506,
+      "cpuFullImageMilliseconds": 521.9000000003725
     },
     {
       "name": "inclination 85 degrees",
-      "mean": 0.017578125,
+      "mean": 0.00799560546875,
       "max": 1,
       "size": 128,
       "workers": 8,
-      "gpuMilliseconds": 1821.8999999999069,
-      "cpuFirstImageMilliseconds": 262.4000000001397,
-      "cpuFullImageMilliseconds": 408.10000000009313
+      "gpuMilliseconds": 3185.10000000149,
+      "cpuFirstImageMilliseconds": 354.5,
+      "cpuFullImageMilliseconds": 562
     },
     {
       "name": "lensing off",
-      "mean": 0.014200846354166666,
+      "mean": 0.005350748697916667,
       "max": 1,
       "size": 128,
       "workers": 8,
-      "gpuMilliseconds": 1677.1999999999534,
-      "cpuFirstImageMilliseconds": 283.0999999998603,
-      "cpuFullImageMilliseconds": 354.5
+      "gpuMilliseconds": 2541.5999999996275,
+      "cpuFirstImageMilliseconds": 357.5,
+      "cpuFullImageMilliseconds": 513.4000000003725
     },
     {
       "name": "doppler beaming and redshift off",
-      "mean": 0.015157063802083334,
+      "mean": 0.006856282552083333,
       "max": 1,
       "size": 128,
       "workers": 8,
-      "gpuMilliseconds": 1725.1999999999534,
-      "cpuFirstImageMilliseconds": 237.89999999990687,
-      "cpuFullImageMilliseconds": 392.80000000004657
+      "gpuMilliseconds": 2413.2000000011176,
+      "cpuFirstImageMilliseconds": 380.09999999962747,
+      "cpuFullImageMilliseconds": 507.5
     },
     {
       "name": "hot disk with a wide field of view",
-      "mean": 0.011088053385416666,
+      "mean": 0.00567626953125,
       "max": 1,
       "size": 128,
       "workers": 8,
-      "gpuMilliseconds": 1729.7999999998137,
-      "cpuFirstImageMilliseconds": 258.19999999995343,
-      "cpuFullImageMilliseconds": 378.0999999998603
+      "gpuMilliseconds": 2094.2999999988824,
+      "cpuFirstImageMilliseconds": 354,
+      "cpuFullImageMilliseconds": 461.5
     },
     {
       "name": "strong bloom and exposure",
-      "mean": 0.020161946614583332,
+      "mean": 0.017435709635416668,
       "max": 1,
       "size": 128,
       "workers": 8,
-      "gpuMilliseconds": 1703.8000000000466,
-      "cpuFirstImageMilliseconds": 248.89999999990687,
-      "cpuFullImageMilliseconds": 366.79999999981374
+      "gpuMilliseconds": 2247.4000000003725,
+      "cpuFirstImageMilliseconds": 365.2999999988824,
+      "cpuFullImageMilliseconds": 541.5
     },
     {
       "name": "shadow edge overlay",
-      "mean": 0.014058430989583334,
+      "mean": 0.006591796875,
       "max": 1,
       "size": 128,
       "workers": 8,
-      "gpuMilliseconds": 1713.3999999999069,
-      "cpuFirstImageMilliseconds": 280.30000000004657,
-      "cpuFullImageMilliseconds": 399.10000000009313
+      "gpuMilliseconds": 2191,
+      "cpuFirstImageMilliseconds": 323.09999999962747,
+      "cpuFullImageMilliseconds": 467.69999999925494
     },
     {
       "name": "split comparison",
-      "mean": 0.01348876953125,
+      "mean": 0.006327311197916667,
       "max": 1,
       "size": 128,
       "workers": 8,
-      "gpuMilliseconds": 1695,
-      "cpuFirstImageMilliseconds": 301.80000000004657,
-      "cpuFullImageMilliseconds": 412.89999999990687
+      "gpuMilliseconds": 2079.2999999988824,
+      "cpuFirstImageMilliseconds": 249.60000000149012,
+      "cpuFullImageMilliseconds": 451.1000000014901
     }
   ]
 }
