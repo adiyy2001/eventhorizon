@@ -1,10 +1,17 @@
 import { TestBed } from '@angular/core/testing';
 import { defaultSettings, settingRanges } from '../../core/render/settings';
+import { type GpuProbeResult } from '../../gpu/probe';
+import { GPU_PROBE } from '../gpu-status';
 import { SettingsStore } from '../state/settings.store';
-import { ControlPanel } from './control-panel';
+import { ControlPanel, softwareOverlayReason } from './control-panel';
 
-function create() {
-  TestBed.configureTestingModule({ imports: [ControlPanel] });
+const unsupported: GpuProbeResult = { status: 'unsupported', reason: 'no-adapter', detail: 'none' };
+
+function create(probe = new Promise<GpuProbeResult>(() => undefined)) {
+  TestBed.configureTestingModule({
+    imports: [ControlPanel],
+    providers: [{ provide: GPU_PROBE, useValue: () => probe }],
+  });
   const fixture = TestBed.createComponent(ControlPanel);
   const store = TestBed.inject(SettingsStore);
   fixture.detectChanges();
@@ -164,5 +171,50 @@ describe('ControlPanel', () => {
     fixture.componentInstance.helpRequested.subscribe(requested);
     root.querySelector<HTMLButtonElement>('[data-testid="open-help"]')?.click();
     expect(requested).toHaveBeenCalledOnce();
+  });
+});
+
+describe('ControlPanel without WebGPU', () => {
+  async function createSoftware() {
+    const created = create(Promise.resolve(unsupported));
+    await created.fixture.whenStable();
+    created.fixture.detectChanges();
+    return created;
+  }
+
+  it('switches off the overlays only the graphics path can draw and says why', async () => {
+    const { root } = await createSoftware();
+    for (const id of ['overlay-photon', 'overlay-isco']) {
+      expect(toggle(root, id).disabled).toBe(true);
+      const describedBy = toggle(root, id).getAttribute('aria-describedby');
+      expect(root.querySelector(`#${describedBy ?? ''}`)?.textContent.trim()).toBe(
+        softwareOverlayReason,
+      );
+    }
+  });
+
+  it('keeps the shadow edge, the comparison and the physics switches usable', async () => {
+    const { fixture, store, root } = await createSoftware();
+    for (const id of ['overlay-shadow', 'split-enabled', 'lensing', 'doppler']) {
+      expect(toggle(root, id).disabled).toBe(false);
+    }
+    toggle(root, 'overlay-shadow').click();
+    fixture.detectChanges();
+    expect(store.overlays().shadowEdge).toBe(true);
+  });
+
+  it('shows a disabled overlay as off even when the address asked for it', async () => {
+    const created = create(Promise.resolve(unsupported));
+    created.store.update({ overlays: { isco: true } });
+    await created.fixture.whenStable();
+    created.fixture.detectChanges();
+    expect(toggle(created.root, 'overlay-isco').checked).toBe(false);
+    expect(created.store.overlays().isco).toBe(true);
+  });
+
+  it('leaves every switch enabled while the check is running', () => {
+    const { root } = create();
+    expect(toggle(root, 'overlay-photon').disabled).toBe(false);
+    expect(toggle(root, 'overlay-isco').disabled).toBe(false);
   });
 });

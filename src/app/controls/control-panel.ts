@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, output } from '@angular/core';
+import { GpuStatus } from '../gpu-status';
 import { SettingsStore, type SettingsChange } from '../state/settings.store';
 import {
   controlGroups,
@@ -10,6 +11,8 @@ import {
 import { RangeField } from './range-field';
 import { ToggleField } from './toggle-field';
 
+export const softwareOverlayReason = 'Needs WebGPU. The software renderer does not draw it.';
+
 @Component({
   selector: 'app-control-panel',
   imports: [RangeField, ToggleField],
@@ -19,6 +22,9 @@ import { ToggleField } from './toggle-field';
 })
 export class ControlPanel {
   protected readonly store = inject(SettingsStore);
+  private readonly gpuStatus = inject(GpuStatus);
+  protected readonly software = computed(() => this.gpuStatus.backend() === 'cpu');
+  protected readonly softwareOverlayReason = softwareOverlayReason;
   protected readonly groups = controlGroups;
   protected readonly splitSlider = splitSlider;
   protected readonly splitSwitch = splitSwitch;
@@ -30,7 +36,11 @@ export class ControlPanel {
   }
 
   protected switchValue(spec: SwitchSpec): boolean {
-    return spec.read(this.store.settings());
+    return spec.read(this.store.settings()) && !this.unavailable(spec);
+  }
+
+  protected unavailable(spec: SwitchSpec): boolean {
+    return spec.needsGpu === true && this.software();
   }
 
   protected apply(change: SettingsChange): void {

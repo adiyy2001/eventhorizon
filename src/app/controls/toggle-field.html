@@ -4,12 +4,13 @@
     role="switch"
     [id]="fieldId()"
     [attr.data-testid]="fieldId()"
-    [checked]="checked()"
-    [attr.aria-describedby]="hint() === '' ? null : fieldId() + '-hint'"
+    [checked]="checked() && !disabled()"
+    [disabled]="disabled()"
+    [attr.aria-describedby]="note() === '' ? null : fieldId() + '-hint'"
     (change)="onChange($event)"
   />
   <label [for]="fieldId()">{{ label() }}</label>
-  @if (hint() !== '') {
-    <p class="hint" [id]="fieldId() + '-hint'">{{ hint() }}</p>
+  @if (note() !== '') {
+    <p class="hint" [id]="fieldId() + '-hint'">{{ note() }}</p>
   }
 </div>

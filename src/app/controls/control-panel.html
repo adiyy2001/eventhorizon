@@ -22,6 +22,8 @@
           [label]="spec.label"
           [hint]="spec.hint"
           [checked]="switchValue(spec)"
+          [disabled]="unavailable(spec)"
+          [unavailableReason]="softwareOverlayReason"
           (checkedChange)="apply(spec.write($event))"
           (committed)="announce($event)"
         />

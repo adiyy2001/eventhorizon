@@ -1,4 +1,5 @@
 import {
+  gpuOnlyOverlays,
   type RenderSettings,
   settingRanges,
   type OverlaySettings,
@@ -22,6 +23,7 @@ export interface SwitchSpec {
   id: string;
   label: string;
   hint: string;
+  needsGpu?: boolean;
   read: (settings: RenderSettings) => boolean;
   write: (checked: boolean) => SettingsChange;
 }
@@ -58,6 +60,7 @@ function overlaySwitch(
     id,
     label,
     hint,
+    needsGpu: gpuOnlyOverlays.includes(key),
     read: (settings) => settings.overlays[key],
     write: (checked) => ({ overlays: { [key]: checked } }),
   };

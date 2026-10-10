@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
 @Component({
   selector: 'app-toggle-field',
@@ -11,6 +11,12 @@ export class ToggleField {
   readonly label = input.required<string>();
   readonly hint = input<string>('');
   readonly checked = input.required<boolean>();
+  readonly disabled = input(false);
+  readonly unavailableReason = input('');
+
+  protected readonly note = computed(() =>
+    this.disabled() && this.unavailableReason() !== '' ? this.unavailableReason() : this.hint(),
+  );
 
   readonly checkedChange = output<boolean>();
   readonly committed = output<string>();
