@@ -3,12 +3,16 @@ import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
 import {
   baselineDirectory,
+  baselineMaxAbsoluteTolerance,
   baselineMeanAbsoluteTolerance,
   baselineSpecs,
 } from '../bench/baselines';
-import { openAutomationPage, renderOnGpu } from '../bench/gpu-parity-run';
-import { meanAbsoluteDifference } from '../bench/image-compare';
-import { defaultPost } from '../src/core/render/post';
+import { openAutomationPage, renderSettingsOnGpu } from '../bench/gpu-parity-run';
+import { compareEncodedImages } from '../bench/image-compare';
+
+function baselineBase64(name: string): string {
+  return readFileSync(join(baselineDirectory, `${name}.png`)).toString('base64');
+}
 
 test.describe('reviewed baseline renders', () => {
   test.beforeEach(async ({ page }) => {
@@ -18,37 +22,40 @@ test.describe('reviewed baseline renders', () => {
   for (const spec of baselineSpecs) {
     test(`${spec.name} matches its baseline`, async ({ page }) => {
       test.setTimeout(120_000);
-      const response = await page.evaluate(
-        async (payload) => {
-          const automation = window.eventhorizonAutomation;
-          if (automation === undefined) {
-            throw new Error('automation hook is missing');
-          }
-          return automation.renderView(payload);
-        },
-        {
-          view: spec.view,
-          size: { width: spec.size, height: spec.size },
-          frames: spec.frames,
-          post: defaultPost,
-        },
+      const response = await renderSettingsOnGpu(
+        page,
+        spec.settings,
+        { width: spec.size, height: spec.size },
+        spec.frames,
       );
-      const baseline = readFileSync(join(baselineDirectory, `${spec.name}.png`)).toString('base64');
-      const difference = await meanAbsoluteDifference(page, baseline, response.pngBase64);
-      expect(difference).toBeLessThan(baselineMeanAbsoluteTolerance);
+      const difference = await compareEncodedImages(
+        page,
+        baselineBase64(spec.name),
+        response.pngBase64,
+      );
+      expect(difference.mean).toBeLessThan(baselineMeanAbsoluteTolerance);
+      expect(difference.max).toBeLessThan(baselineMaxAbsoluteTolerance);
     });
   }
 
   test('a different temperature is not mistaken for the baseline', async ({ page }) => {
     test.setTimeout(120_000);
-    const spec = baselineSpecs[3];
-    const other = baselineSpecs[5];
-    if (spec === undefined || other === undefined) {
+    const full = baselineSpecs.find((spec) => spec.name === 'full-model');
+    const hot = baselineSpecs.find((spec) => spec.name === 'temperature-9000');
+    if (full === undefined || hot === undefined) {
       throw new Error('baseline specs are missing');
     }
-    const response = await renderOnGpu(page, other.view, { width: spec.size, height: spec.size });
-    const baseline = readFileSync(join(baselineDirectory, `${spec.name}.png`)).toString('base64');
-    const difference = await meanAbsoluteDifference(page, baseline, response.pngBase64);
-    expect(difference).toBeGreaterThan(baselineMeanAbsoluteTolerance * 10);
+    const response = await renderSettingsOnGpu(
+      page,
+      hot.settings,
+      { width: full.size, height: full.size },
+      full.frames,
+    );
+    const difference = await compareEncodedImages(
+      page,
+      baselineBase64(full.name),
+      response.pngBase64,
+    );
+    expect(difference.mean).toBeGreaterThan(baselineMeanAbsoluteTolerance * 10);
   });
 });

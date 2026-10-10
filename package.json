@@ -29,6 +29,7 @@
     "bench:cpu-gpu": "tsx bench/cpu-gpu-parity.ts",
     "bench:fallback": "tsx bench/fallback.ts",
     "render:view": "tsx scripts/render-view.ts",
+    "test:visual": "playwright test e2e/baselines.spec.ts --project chromium-webgpu",
     "capture:baselines": "tsx scripts/capture-baselines.ts",
     "record:preview": "tsx scripts/record-preview.ts"
   },
