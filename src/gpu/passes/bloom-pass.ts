@@ -1,23 +1,10 @@
 import { type ViewportSize } from '../../core/physics/observer';
+import { bloomLevelSizes } from '../../core/render/bloom';
 import { compileShader } from '../shader-compile';
 import { bloomShader } from '../shader-modules';
 
 export const bloomFormat: GPUTextureFormat = 'rgba16float';
-export const maxBloomLevels = 5;
-const smallestLevelEdge = 4;
 const regionBytes = 16;
-
-export function bloomLevelSizes(size: ViewportSize): ViewportSize[] {
-  const sizes: ViewportSize[] = [];
-  let width = Math.max(1, Math.floor(size.width / 2));
-  let height = Math.max(1, Math.floor(size.height / 2));
-  while (sizes.length < maxBloomLevels && Math.min(width, height) >= smallestLevelEdge) {
-    sizes.push({ width, height });
-    width = Math.max(1, Math.floor(width / 2));
-    height = Math.max(1, Math.floor(height / 2));
-  }
-  return sizes.length === 0 ? [{ width: 1, height: 1 }] : sizes;
-}
 
 export class BloomPass {
   readonly levels: readonly GPUTexture[];
