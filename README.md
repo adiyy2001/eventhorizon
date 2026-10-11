@@ -7,7 +7,7 @@ A real-time WebGPU ray tracer for a Schwarzschild black hole: bent light, the ph
 Live demo: https://eventhorizon.adrianturbinski.pl/ (needs a browser with WebGPU, otherwise it falls back to a slower CPU render in Web Workers).
 
 [![CI](https://github.com/adiyy2001/eventhorizon/actions/workflows/ci.yml/badge.svg)](https://github.com/adiyy2001/eventhorizon/actions/workflows/ci.yml)
-![Line coverage 98.6 percent](https://img.shields.io/badge/line%20coverage-98.6%25-brightgreen)
+![Line coverage 98.8 percent](https://img.shields.io/badge/line%20coverage-98.8%25-brightgreen)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ## Why I built this
@@ -133,7 +133,7 @@ Software picture against graphics picture over nine scenarios (`pnpm bench:cpu-g
 
 ### Lighthouse (`pnpm lighthouse`)
 
-Accessibility 1 and best practices 1 for the production build in both renderers on mobile and desktop, SEO 0.91. Performance came out between 0.64 and 0.82 in the last run. That run used the software adapter and a busy machine, so the performance score says little about real hardware.
+Accessibility 1, best practices 1 and SEO 1 for the production build in both renderers on mobile and desktop. Performance came out between 0.75 and 0.96 in the last run. That run used the software adapter and a busy machine, so the performance score says little about real hardware.
 
 ## Run it locally
 
@@ -151,9 +151,9 @@ Keys: arrows orbit and tilt, plus and minus change the distance, Home resets, `?
 
 ## Tests
 
-`pnpm verify` runs what CI runs: format check, lint, the style check (no comments, no dashes), type check, unit tests with coverage, the physics validation, a production build and the Playwright suite.
+`pnpm verify` runs what CI runs: format check, lint, the style check (no comments, no dashes, one repository owner in every link), type check, unit tests with coverage and a check that the coverage figure in this README matches the run, the physics validation, a production build, the Playwright suite, the GPU against float64 parity run and Lighthouse.
 
-- Unit tests (788 in the app, 84 for the scripts): physics, color, background, settings, URL codec, keyboard map, the CPU renderer, dynamic resolution, accumulation, uniform packing. Line coverage is 98.6 percent overall. Core logic must reach 90 percent and the rest 80 percent, enforced per directory. Files that only call WebGPU entry points are on one explicit list, and a test fails if a file outside it touches the device.
+- Unit tests (797 in the app, 97 for the scripts): physics, color, background, settings, URL codec, keyboard map, the CPU renderer, dynamic resolution, accumulation, uniform packing. Line coverage is 98.8 percent overall. Core logic must reach 90 percent and the rest 80 percent, enforced per directory. Files that only call WebGPU entry points are on one explicit list, and a test fails if a file outside it touches the device.
 - End to end (89 Playwright specs against the production build): one test per must-have, the GPU against CPU parity on SwiftShader, ten visual baselines in `e2e/baselines` compared by mean and by largest channel difference, the keyboard, the address, the physics panel with every equation, accessibility, 20 renderer create and destroy cycles on one device, and the whole no-WebGPU path in a browser launched without the flags.
 - `pnpm test:visual` runs only the baselines, and `pnpm capture:baselines` writes new ones after a deliberate change.
 

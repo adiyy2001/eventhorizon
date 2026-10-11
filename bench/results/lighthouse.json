@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-10T21:27:43.772Z",
+  "generatedAt": "2026-10-11T02:49:11.147Z",
   "node": "v24.21.0",
   "platform": "linux 6.6.87.2-microsoft-standard-WSL2 x64",
   "cpu": "12th Gen Intel(R) Core(TM) i7-12700H",
@@ -29,8 +29,8 @@
       "scores": {
         "accessibility": 1,
         "best-practices": 1,
-        "seo": 0.91,
-        "performance": 0.82
+        "seo": 1,
+        "performance": 0.88
       },
       "failedAccessibilityAudits": []
     },
@@ -40,8 +40,8 @@
       "scores": {
         "accessibility": 1,
         "best-practices": 1,
-        "seo": 0.91,
-        "performance": 0.64
+        "seo": 1,
+        "performance": 0.75
       },
       "failedAccessibilityAudits": []
     },
@@ -51,8 +51,8 @@
       "scores": {
         "accessibility": 1,
         "best-practices": 1,
-        "seo": 0.91,
-        "performance": 0.82
+        "seo": 1,
+        "performance": 0.96
       },
       "failedAccessibilityAudits": []
     },
@@ -62,8 +62,8 @@
       "scores": {
         "accessibility": 1,
         "best-practices": 1,
-        "seo": 0.91,
-        "performance": 0.76
+        "seo": 1,
+        "performance": 0.9
       },
       "failedAccessibilityAudits": []
     }
