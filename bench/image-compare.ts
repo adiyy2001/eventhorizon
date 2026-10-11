@@ -46,11 +46,3 @@ export async function compareEncodedImages(
     { first: firstBase64, second: secondBase64 },
   );
 }
-
-export async function meanAbsoluteDifference(
-  page: Page,
-  firstBase64: string,
-  secondBase64: string,
-): Promise<number> {
-  return (await compareEncodedImages(page, firstBase64, secondBase64)).mean;
-}

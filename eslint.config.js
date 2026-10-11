@@ -13,7 +13,6 @@ export default tseslint.config(
   {
     ignores: [
       'dist/**',
-      'bench/windows/**',
       '.angular/**',
       'coverage/**',
       'node_modules/**',
@@ -106,5 +105,16 @@ export default tseslint.config(
   {
     files: ['**/*.js', '**/*.mjs'],
     extends: [eslint.configs.recommended, tseslint.configs.disableTypeChecked],
+    languageOptions: {
+      globals: {
+        process: 'readonly',
+        console: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        URL: 'readonly',
+        document: 'readonly',
+        window: 'readonly',
+      },
+    },
   },
 );
