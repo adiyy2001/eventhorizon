@@ -6,13 +6,16 @@ import { gpuDeviceBoundFiles } from '../vitest.config.ts';
 export interface Violation {
   file: string;
   line: number;
-  rule: 'comment' | 'dash' | 'gpu-boundary';
+  rule: 'comment' | 'dash' | 'gpu-boundary' | 'repository-owner';
   message: string;
 }
 
 const dashPattern = new RegExp(`[${String.fromCharCode(0x2013)}${String.fromCharCode(0x2014)}]`);
-const checkedRoots = ['src', 'e2e', 'bench', 'scripts', 'docs'];
-const commentExtensions = new Set(['.ts', '.wgsl', '.html', '.css', '.scss']);
+const checkedRoots = ['src', 'e2e', 'bench', 'scripts', 'docs', '.github'];
+const checkedRootFiles = ['README.md', 'CREDITS.md', 'package.json'];
+export const repositoryOwner = 'adiyy2001';
+const repositoryUrlPattern = /github\.com\/([\w.-]+)\/eventhorizon\b/g;
+const commentExtensions = new Set(['.ts', '.mjs', '.wgsl', '.html', '.css', '.scss']);
 const dashExtensions = new Set([
   '.ts',
   '.wgsl',
@@ -79,6 +82,7 @@ function scanDelimited(
 function commentPositions(text: string, fileName: string): number[] {
   switch (extname(fileName)) {
     case '.ts':
+    case '.mjs':
       return typeScriptCommentPositions(text, fileName);
     case '.wgsl':
       return scanDelimited(text, ['//', '/*'], { '//': '\n', '/*': '*/' });
@@ -148,6 +152,19 @@ export function findBoundaryViolations(
   ];
 }
 
+export function findOwnerViolations(fileName: string, text: string): Violation[] {
+  return text.split('\n').flatMap((content, index) =>
+    [...content.matchAll(repositoryUrlPattern)]
+      .filter((match) => match[1] !== repositoryOwner)
+      .map(() => ({
+        file: fileName,
+        line: index + 1,
+        rule: 'repository-owner' as const,
+        message: `repository links must use the owner ${repositoryOwner}`,
+      })),
+  );
+}
+
 function listFiles(directory: string): string[] {
   return readdirSync(directory).flatMap((entry) => {
     const full = join(directory, entry);
@@ -155,18 +172,31 @@ function listFiles(directory: string): string[] {
   });
 }
 
+function isDirectory(path: string): boolean {
+  try {
+    return statSync(path).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
+function isFile(path: string): boolean {
+  try {
+    return statSync(path).isFile();
+  } catch {
+    return false;
+  }
+}
+
 export function collectFiles(root: string): string[] {
-  return checkedRoots
+  const directoryFiles = checkedRoots
     .map((name) => join(root, name))
-    .filter((directory) => {
-      try {
-        return statSync(directory).isDirectory();
-      } catch {
-        return false;
-      }
-    })
-    .flatMap(listFiles)
-    .filter((file) => !generatedFragments.some((fragment) => file.includes(fragment)));
+    .filter(isDirectory)
+    .flatMap(listFiles);
+  const rootFiles = checkedRootFiles.map((name) => join(root, name)).filter(isFile);
+  return [...directoryFiles, ...rootFiles].filter(
+    (file) => !generatedFragments.some((fragment) => file.includes(fragment)),
+  );
 }
 
 export function runCheck(root: string): Violation[] {
@@ -176,6 +206,7 @@ export function runCheck(root: string): Violation[] {
     return [
       ...findViolations(relativeName, text),
       ...findBoundaryViolations(relativeName, text, gpuDeviceBoundFiles),
+      ...findOwnerViolations(relativeName, text),
     ];
   });
 }

@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Equation } from './equation';
-import { githubAnchor, physicsDocumentUrl, physicsEquations } from './equations';
+import { githubAnchor, physicsEquations } from './equations';
 import { KatexRenderer } from './katex-renderer';
 import { PhysicsPanel } from './physics-panel';
 
@@ -35,7 +35,9 @@ describe('PhysicsPanel', () => {
       expect(item?.querySelector('h3')?.textContent).toBe(equation.title);
       expect(item?.querySelector('.caption')?.textContent).toBe(equation.caption);
       const link = item?.querySelector('a');
-      expect(link?.getAttribute('href')).toBe(`${physicsDocumentUrl}#${equation.section.anchor}`);
+      expect(link?.getAttribute('href')).toBe(
+        `https://github.com/adiyy2001/eventhorizon/blob/main/docs/physics.md#${equation.section.anchor}`,
+      );
       expect(link?.getAttribute('rel')).toContain('noopener');
     }
   });

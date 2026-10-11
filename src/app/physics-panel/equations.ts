@@ -12,7 +12,7 @@ export interface PhysicsEquation {
 }
 
 export const physicsDocumentUrl =
-  'https://github.com/adrianturbinski/eventhorizon/blob/main/docs/physics.md';
+  'https://github.com/adiyy2001/eventhorizon/blob/main/docs/physics.md';
 
 export function githubAnchor(heading: string): string {
   return heading

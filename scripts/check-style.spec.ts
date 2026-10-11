@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { findBoundaryViolations, findViolations } from './check-style.ts';
+import { findBoundaryViolations, findOwnerViolations, findViolations } from './check-style.ts';
 
 const emDash = String.fromCharCode(0x2014);
 const enDash = String.fromCharCode(0x2013);
@@ -24,6 +24,10 @@ describe('findViolations', () => {
     const text =
       'export const url = "http://example.com";\nexport const t = `a // b ${1} /* c */`;\n';
     expect(findViolations('a.ts', text)).toEqual([]);
+  });
+
+  it('reports comments in plain JavaScript modules', () => {
+    expect(findViolations('a.mjs', 'const x = 1;\n// note\n').map((v) => v.line)).toEqual([2]);
   });
 
   it('reports comments in WGSL', () => {
@@ -74,5 +78,24 @@ describe('findBoundaryViolations', () => {
 
   it('accepts files without device API calls', () => {
     expect(findBoundaryViolations('src/gpu/pure.ts', 'export const x = 1;', [])).toEqual([]);
+  });
+});
+
+describe('findOwnerViolations', () => {
+  const link = (owner: string) => `see https://github.com/${owner}/eventhorizon/blob/main/a.md`;
+
+  it('accepts links to the real owner', () => {
+    expect(findOwnerViolations('README.md', link('adiyy2001'))).toEqual([]);
+  });
+
+  it('rejects links to any other owner and reports the line', () => {
+    const violations = findOwnerViolations('a.ts', `first\n${link('someone-else')}`);
+    expect(violations.map((violation) => [violation.rule, violation.line])).toEqual([
+      ['repository-owner', 2],
+    ]);
+  });
+
+  it('ignores links to other repositories', () => {
+    expect(findOwnerViolations('a.md', 'https://github.com/someone-else/other')).toEqual([]);
   });
 });
