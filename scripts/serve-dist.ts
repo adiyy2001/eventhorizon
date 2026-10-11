@@ -1,7 +1,8 @@
-import { createReadStream, existsSync, statSync } from 'node:fs';
+import { createReadStream, statSync } from 'node:fs';
 import { createServer } from 'node:http';
-import { extname, join, normalize, resolve, sep } from 'node:path';
+import { extname, resolve } from 'node:path';
 import { selectByteRange } from './byte-range.ts';
+import { resolveRequestPath } from './resolve-request.ts';
 
 const host = '127.0.0.1';
 const port = Number(process.env['PORT'] ?? 4320);
@@ -24,16 +25,13 @@ const contentTypes: Record<string, string> = {
   '.wgsl': 'text/plain; charset=utf-8',
 };
 
-export function resolveRequestPath(requestUrl: string): string {
-  const pathname = decodeURIComponent(new URL(requestUrl, `http://${host}`).pathname);
-  const candidate = join(root, normalize(pathname));
-  const insideRoot = candidate === root || candidate.startsWith(root + sep);
-  const isFile = insideRoot && existsSync(candidate) && statSync(candidate).isFile();
-  return isFile ? candidate : join(root, 'index.html');
-}
-
 const server = createServer((request, response) => {
-  const file = resolveRequestPath(request.url ?? '/');
+  const file = resolveRequestPath(root, request.url ?? '/');
+  if (file === null) {
+    response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+    response.end('Not found');
+    return;
+  }
   const size = statSync(file).size;
   const selection = selectByteRange(request.headers.range, size);
   response.setHeader('Content-Type', contentTypes[extname(file)] ?? 'application/octet-stream');
