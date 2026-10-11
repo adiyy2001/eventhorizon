@@ -23,6 +23,7 @@ export const testSupportGlobs = ['src/**/testing/**'];
 export default defineConfig({
   test: {
     coverage: {
+      reporter: ['text', 'html', 'clover', 'json', 'json-summary'],
       exclude: [...gpuDeviceBoundFiles, ...workerGlueFiles, ...testSupportGlobs],
       thresholds: {
         'src/core/**': { lines: 90 },

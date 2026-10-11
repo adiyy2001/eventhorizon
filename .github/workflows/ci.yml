@@ -30,6 +30,7 @@ jobs:
       - run: pnpm check:style
       - run: pnpm typecheck
       - run: pnpm test:coverage
+      - run: pnpm check:coverage-claim
       - run: pnpm validate:physics
       - run: pnpm build:pages
       - run: pnpm exec playwright test
