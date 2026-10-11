@@ -122,6 +122,62 @@ describe('Viewport', () => {
     click.mockRestore();
   });
 
+  it('offers the export sizes and saves at the chosen one', async () => {
+    const click = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => undefined);
+    const session = fakeSession();
+    const fixture = await create(() => Promise.resolve(session));
+    const root = fixture.nativeElement as HTMLElement;
+    vi.stubGlobal(
+      'OffscreenCanvas',
+      class {
+        getContext() {
+          return { putImageData: () => undefined };
+        }
+        convertToBlob() {
+          return Promise.resolve(new Blob([new Uint8Array([1, 2, 3])]));
+        }
+      },
+    );
+    vi.stubGlobal('ImageData', vi.fn());
+    const select = root.querySelector<HTMLSelectElement>('[data-testid="export-size"]');
+    expect(select).not.toBeNull();
+    expect([...(select?.options ?? [])].map((option) => option.value)).toEqual([
+      '256',
+      '512',
+      '1024',
+      '2048',
+    ]);
+    expect(select?.value).toBe('1024');
+    if (select !== null) {
+      select.value = '256';
+      select.dispatchEvent(new Event('change'));
+    }
+    fixture.detectChanges();
+    expect(root.querySelector('[data-testid="save-image"]')?.textContent).toContain('256 px');
+    root.querySelector<HTMLButtonElement>('[data-testid="save-image"]')?.click();
+    await fixture.whenStable();
+    expect(session.exportImage).toHaveBeenCalledWith({ width: 256, height: 256 });
+    vi.unstubAllGlobals();
+    click.mockRestore();
+  });
+
+  it('ignores a size outside the offered list', async () => {
+    const fixture = await create(() => Promise.resolve(fakeSession()));
+    const root = fixture.nativeElement as HTMLElement;
+    const select = root.querySelector<HTMLSelectElement>('[data-testid="export-size"]');
+    const stray = document.createElement('option');
+    stray.value = '777';
+    select?.append(stray);
+    if (select !== null) {
+      select.value = '777';
+      select.dispatchEvent(new Event('change'));
+    }
+    fixture.detectChanges();
+    expect(root.querySelector('[data-testid="save-image"]')?.textContent).toContain('1024 px');
+  });
+
   it('reports a failed export', async () => {
     const session = fakeSession({ exportImage: () => Promise.reject(new Error('device lost')) });
     const fixture = await create(() => Promise.resolve(session));
@@ -352,6 +408,7 @@ describe('Viewport with the software backend', () => {
   it('saves at the size of the software image', async () => {
     const session = fakeSession();
     const { root, fixture } = await createSoftware(session);
+    expect(root.querySelector('[data-testid="export-size"]')).toBeNull();
     expect(root.querySelector('[data-testid="save-image"]')?.textContent).toContain(
       `${String(viewportSize)} px`,
     );

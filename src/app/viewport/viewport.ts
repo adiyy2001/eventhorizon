@@ -42,7 +42,8 @@ export type ViewportBackend = 'gpu' | 'cpu';
 export type ViewportState = 'starting' | 'rendered' | 'failed';
 export type ExportState = 'idle' | 'working' | 'done' | 'failed';
 
-export const exportEdge = 1024;
+export const exportEdges: readonly number[] = [256, 512, 1024, 2048];
+export const defaultExportEdge = 1024;
 export const exportFileName = 'eventhorizon.png';
 
 function roundedOrNull(value: number | null): number | null {
@@ -76,6 +77,7 @@ export class Viewport {
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
   private readonly current = signal<ViewportState>('starting');
   private readonly exporting = signal<ExportState>('idle');
+  private readonly chosenEdge = signal(defaultExportEdge);
   private readonly activeSession = signal<RenderSession | null>(null);
   private readonly failureText = signal('');
   private destroyed = false;
@@ -90,8 +92,9 @@ export class Viewport {
   protected readonly state = this.current.asReadonly();
   protected readonly exportState = this.exporting.asReadonly();
   protected readonly failureDetail = this.failureText.asReadonly();
+  protected readonly exportEdges = exportEdges;
   protected readonly saveEdge = computed(() =>
-    this.backend() === 'cpu' ? viewportSize : exportEdge,
+    this.backend() === 'cpu' ? viewportSize : this.chosenEdge(),
   );
   protected readonly shownSettings = computed(() =>
     this.backend() === 'cpu' ? cpuSupportedSettings(this.settings()) : this.settings(),
@@ -160,6 +163,17 @@ export class Viewport {
     event.preventDefault();
     const lineHeight = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : 1;
     this.gesture.emit(this.gestures.wheel(event.deltaY * lineHeight));
+  }
+
+  protected chooseEdge(event: Event): void {
+    const target = event.target;
+    if (!(target instanceof HTMLSelectElement)) {
+      return;
+    }
+    const edge = Number(target.value);
+    if (exportEdges.includes(edge)) {
+      this.chosenEdge.set(edge);
+    }
   }
 
   protected async saveImage(): Promise<void> {

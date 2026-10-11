@@ -244,6 +244,9 @@ test.describe('every required feature, against the production build', () => {
     });
     await page.keyboard.press('ArrowRight');
     await expect.poll(() => page.evaluate(() => window.location.search)).toContain('az=');
+    const exportEdge = 256;
+    await page.getByTestId('export-size').selectOption(String(exportEdge));
+    await expect(page.getByTestId('save-image')).toContainText(`${String(exportEdge)} px`);
     const downloading = page.waitForEvent('download');
     await page.getByTestId('save-image').click();
     const download = await downloading;
@@ -255,7 +258,8 @@ test.describe('every required feature, against the production build', () => {
     }
     const png = Buffer.concat(chunks);
     expect(png.subarray(1, 4).toString('ascii')).toBe('PNG');
-    expect(png.readUInt32BE(16)).toBeGreaterThanOrEqual(256);
+    expect(png.readUInt32BE(16)).toBe(exportEdge);
+    expect(png.readUInt32BE(20)).toBe(exportEdge);
   });
 
   test('the physics panel shows the equations typeset by KaTeX', async ({ page }) => {

@@ -50,6 +50,16 @@
   }
   <app-overlay-legend [overlays]="shownSettings().overlays" [split]="settings().split" />
   <div class="actions">
+    @if (backend() === 'gpu') {
+      <label class="export-size">
+        Export size
+        <select data-testid="export-size" (change)="chooseEdge($event)">
+          @for (edge of exportEdges; track edge) {
+            <option [value]="edge" [selected]="edge === saveEdge()">{{ edge }} px</option>
+          }
+        </select>
+      </label>
+    }
     <button
       type="button"
       data-testid="save-image"

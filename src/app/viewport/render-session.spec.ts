@@ -164,6 +164,72 @@ describe('startRenderSession', () => {
     session.destroy();
   });
 
+  it('pauses the live loop while a still renders and resumes it afterwards', async () => {
+    const device = fakeDevice();
+    const renderer = fakeRenderer();
+    const scheduler = new ManualScheduler();
+    let finish: () => void = () => undefined;
+    const renderStill = vi.fn<SessionDependencies['renderStill']>(
+      () =>
+        new Promise((resolve) => {
+          finish = () => {
+            resolve({ width: 4, height: 4, rgba: new Uint8Array(64) });
+          };
+        }),
+    );
+    const session = await startRenderSession(
+      {} as HTMLCanvasElement,
+      256,
+      defaultSettings,
+      dependencies(device, renderer, scheduler, { renderStill }),
+    );
+    const exporting = session.exportImage({ width: 64, height: 64 });
+    expect(scheduler.callback).toBeNull();
+    session.setSettings(mergeSettings(defaultSettings, { exposure: 1 }));
+    expect(scheduler.callback).toBeNull();
+    finish();
+    await exporting;
+    expect(scheduler.callback).not.toBeNull();
+    session.destroy();
+  });
+
+  it('leaves a converged loop stopped after a still', async () => {
+    const device = fakeDevice();
+    const renderer = fakeRenderer();
+    const scheduler = new ManualScheduler();
+    const session = await startRenderSession(
+      {} as HTMLCanvasElement,
+      64,
+      defaultSettings,
+      dependencies(device, renderer, scheduler, { idleAfterFrames: 1 }),
+    );
+    renderer.accumulatedFrames = 1;
+    scheduler.tick(16);
+    scheduler.tick(32);
+    expect(scheduler.callback).toBeNull();
+    await session.exportImage({ width: 64, height: 64 });
+    expect(scheduler.callback).toBeNull();
+    session.destroy();
+  });
+
+  it('resumes the loop even when the still fails', async () => {
+    const device = fakeDevice();
+    const renderer = fakeRenderer();
+    const scheduler = new ManualScheduler();
+    const renderStill = vi.fn<SessionDependencies['renderStill']>(() =>
+      Promise.reject(new Error('device lost')),
+    );
+    const session = await startRenderSession(
+      {} as HTMLCanvasElement,
+      256,
+      defaultSettings,
+      dependencies(device, renderer, scheduler, { renderStill }),
+    );
+    await expect(session.exportImage({ width: 64, height: 64 })).rejects.toThrow('device lost');
+    expect(scheduler.callback).not.toBeNull();
+    session.destroy();
+  });
+
   it('has no progress to report and no failure while the device is healthy', async () => {
     const device = fakeDevice();
     const session = await startRenderSession(

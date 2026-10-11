@@ -107,21 +107,41 @@ export async function startRenderSession(
       : { idleAfterFrames: dependencies.idleAfterFrames }),
   });
   loop.start();
+  let runningExports = 0;
+  let resumeAfterExports = false;
   return {
     setSettings: (next) => {
       loop.setSettings(next);
+      if (runningExports > 0) {
+        loop.stop();
+        resumeAfterExports = true;
+      }
     },
-    exportImage: (request) =>
-      dependencies.renderStill(
-        acquired.device,
-        renderer.sky,
-        {
-          settings: loop.currentSettings,
-          size: { width: request.width, height: request.height },
-          ...(request.frames === undefined ? {} : { frames: request.frames }),
-        },
-        canvasSize,
-      ),
+    exportImage: async (request) => {
+      if (runningExports === 0) {
+        resumeAfterExports = loop.running;
+        loop.stop();
+      }
+      runningExports += 1;
+      try {
+        return await dependencies.renderStill(
+          acquired.device,
+          renderer.sky,
+          {
+            settings: loop.currentSettings,
+            size: { width: request.width, height: request.height },
+            ...(request.frames === undefined ? {} : { frames: request.frames }),
+          },
+          canvasSize,
+        );
+      } finally {
+        runningExports -= 1;
+        if (runningExports === 0 && resumeAfterExports) {
+          resumeAfterExports = false;
+          loop.start();
+        }
+      }
+    },
     resolutionLog: () => loop.log,
     progress: signal<RenderProgress | null>(null).asReadonly(),
     failure: failure.asReadonly(),
