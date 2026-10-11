@@ -29,7 +29,7 @@ The workgroup shape of the tracer was measured on the discrete GPU (`bench/resul
 
 Renderer lifetime. A hook creates and destroys the renderer a given number of times on one device and reports whether the device was lost. The end-to-end test runs it 20 times.
 
-Pages. The build uses base href `/` and ships a `CNAME` file for `eventhorizon.adrianturbinski.pl` from `public/`. `pnpm build:pages` builds and then checks the artifact: the base href, every local reference, the video and its poster, and the host in `CNAME`. The workflow `pages.yml` uploads `dist/eventhorizon/browser` and deploys it. `ci.yml` runs the whole verification, the physics validation, the parity run and Lighthouse, and keeps the bench results as an artifact.
+Pages. The build uses base href `/` and ships a `CNAME` file for `eventhorizon.adrianturbinski.pl` from `public/`. `pnpm build:pages` builds and then checks the artifact: the base href, every local reference, the video and its poster, and the host in `CNAME`. The workflow `pages.yml` starts only after `ci.yml` has finished successfully on main (or by hand), then uploads `dist/eventhorizon/browser` and deploys it, so a red commit never goes live. `ci.yml` runs the whole verification, the physics validation, the parity run and Lighthouse, and keeps the bench results as an artifact.
 
 Elliptic integrals. `deflectionByElliptic` computes the exact deflection from the closed form with Carlson's $R_F$. It agrees with the quadrature to about 6e-15 radians, and `pnpm validate:physics` checks it with a limit of 1e-10. It is a validation extra and is not used for rendering.
 

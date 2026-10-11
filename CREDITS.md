@@ -43,6 +43,7 @@ Runtime and development dependencies are listed in `package.json`, and the exact
 - Apache 2.0: RxJS, Playwright, Lighthouse, TypeScript.
 - BSD 3-Clause: `@webgpu/types`.
 - 0BSD: tslib.
+- Transitive development tools under other terms: axe-core (through Lighthouse) and lightningcss (through the Angular build) are MPL-2.0, and the caniuse-lite data package is CC-BY-4.0. They are used unmodified, are not shipped in the build and nothing from them is copied into this repository.
 
 KaTeX ships with the physics side panel. Its package license is MIT. The font files in the build come from the KaTeX package, and the font sources in the KaTeX repository carry SIL Open Font License 1.1 headers, so the fonts are redistributed under those terms. The production build writes `3rdpartylicenses.txt` next to the application for the code it bundles.
 

@@ -24,3 +24,4 @@ Angular 22 ships `@angular/build:unit-test` with Vitest as the runner. The proje
 - One runner for the math tests and the component tests, started with `ng test`, and one browser tool for everything else.
 - Visual regression is pinned to the Chromium that the lockfile resolves, which is what makes SwiftShader output comparable between this machine and CI.
 - `@axe-core/playwright` is not used (MPL-2.0). Accessibility is measured with Lighthouse (Apache-2.0), which bundles axe itself.
+- The runtime dependencies are all permissive (MIT, Apache-2.0, 0BSD). The full development tree still contains two MPL-2.0 packages (axe-core through Lighthouse, lightningcss through the Angular build) and one CC-BY-4.0 data package (caniuse-lite). They are unmodified transitive tools, they are not shipped in the build and nothing from them is copied into the repository.
