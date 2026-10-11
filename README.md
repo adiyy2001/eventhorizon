@@ -12,8 +12,6 @@ Live demo: https://eventhorizon.adrianturbinski.pl/ (needs a browser with WebGPU
 
 ## Why I built this
 
-<!-- ADRIAN: confirm this angle before publishing, and add one sentence on why a black hole in particular. -->
-
 My day job is software that generates single-line diagrams of high-voltage electrical substations: Angular and diagram rendering on the front end, Java 21 and Quarkus on the back end. This project is a deliberate change of scale from that: one scene, one equation and a result I can check against a textbook.
 
 It is also a self-contained test of three things I wanted to do end to end: numerical integration, GPU programming and color science. Every pixel has to agree with general relativity, which makes the result easy to check and hard to fake. That is why the project has a float64 reference integrator that the tests, the parity runs and the fallback all share.
