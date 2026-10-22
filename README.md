@@ -1,6 +1,6 @@
 # Event horizon
 
-A real-time WebGPU ray tracer for a Schwarzschild black hole: bent light, the photon ring and an accretion disk with Doppler beaming and gravitational redshift, plus switches that show what each effect contributes.
+A WebGPU ray tracer running in real time that depicts a Schwarzschild black hole. It includes bent light, the photon ring and an accretion disk with Doppler beaming and gravitational redshift, and switches that show what each effect contributes.
 
 ![Orbit around the black hole, then Doppler beaming and lensing switched off and on with the split slider](docs/media/demo.gif)
 
@@ -12,31 +12,31 @@ Live demo: https://eventhorizon.adrianturbinski.pl/ (needs a browser with WebGPU
 
 ## Why I built this
 
-My day job is software that generates single-line diagrams of high-voltage electrical substations: Angular and diagram rendering on the front end, Java 21 and Quarkus on the back end. This project is a deliberate change of scale from that: one scene, one equation and a result I can check against a textbook.
+My day job involves writing software that generates single-line diagrams of high-voltage electrical substations: Angular and diagram rendering on the frontend, Java 21 and Quarkus on the backend. This project is a deliberate change of scale from that: one scene, one equation and a result I can verify against a textbook.
 
-It is also a self-contained test of three things I wanted to do end to end: numerical integration, GPU programming and color science. Every pixel has to agree with general relativity, which makes the result easy to check and hard to fake. That is why the project has a float64 reference integrator that the tests, the parity runs and the fallback all share.
+It's also a self-contained exercise in three things I wanted to do end to end: numerical integration, GPU programming and color science. Every pixel has to line up with general relativity, which makes the result easy to verify and hard to fake. That is why it has a float64 reference integrator shared by the tests, the parity runs and the fallback.
 
 ## What's hard about it
 
 ### Float32 near the photon sphere
 
-A ray that passes close to the critical impact parameter winds around the hole and leaves in a direction that depends on the last digits of its start. The shader works in float32, so it cannot agree with float64 there. The parity set leaves out rays within 0.02 of the critical value and says so. For everything else I check the GPU against the float64 reference and against a `Math.fround` twin of the shader on the CPU, which shows that the remaining error is rounding and not a porting mistake.
+A ray with an impact parameter near the critical value spirals around the hole and exits in a direction that depends on the last digits of its initial conditions. Since the shader uses float32 math, it cannot agree with float64 there. The parity set leaves out rays within 0.02 of the critical value and says so. For everything else I verify the GPU output against the float64 reference and against a `Math.fround` copy of the shader running on the CPU, which shows that the remaining error is rounding and not a bug in the port.
 
 ### One sign decides which side of the disk is bright
 
-The tracer runs backwards from the camera, so the photon travels along minus the traced tangent. Getting the sign of the photon's angular momentum wrong swaps the bright and dim sides and still looks plausible. The sign has hand-computed unit tests and a physical test: on a tilted view the side moving towards the camera must come out brighter and bluer (`docs/physics.md`, section 9).
+The tracer runs backwards from the camera, so the photon travels along minus the traced tangent. Getting the sign of the photon's angular momentum wrong just flips the bright and dim sides and still looks convincing. The sign is covered by hand-computed unit tests and a physical test: on a tilted view, the side moving towards the camera must come out brighter and bluer (`docs/physics.md`, section 9).
 
 ### A step size that is accurate and cheap
 
-Fixed steps either waste work far from the hole or lose the ring near it. The step scales with the radius and shrinks where the ray turns fast. I swept the constants against the capture boundary and the deflection angle, and took the row that keeps the shadow edge more than three orders of magnitude inside the 1e-4 target at about 108 steps per ray (`pnpm validate:steps`).
+Fixed steps either waste work far from the hole or miss the ring near it. The step size scales with the radius and shrinks where the ray bends quickly. I swept the constants against the capture boundary and the deflection angle, and picked the row that keeps the shadow edge more than three orders of magnitude inside the 1e-4 target at about 108 steps per ray (`pnpm validate:steps`).
 
 ### Stars under strong lensing
 
-Stars baked into a cubemap blur when lensing magnifies them. Stars are evaluated per ray at the final direction instead, so a star near the ring becomes an arc once the sub-pixel jitter accumulates. A bug turned up on the way: hardware cube filtering returned half the value within a thousandth of a radian of a face edge, which drew faint dark hairlines in the preview video. The nebula is now baked with a one texel border and read as a 2D array layer (ADR 12).
+Stars baked into a cubemap blur when lensing magnifies them. Instead, stars are evaluated per ray at the ray's final direction, so a star near the ring is smeared into an arc once the sub-pixel jitter accumulates. One bug turned up on the way: hardware cube filtering returned only half the value within a thousandth of a radian of a face edge, which drew faint dark hairlines across the preview video. The nebula is now baked with a one texel border and sampled as a 2D array layer (ADR 12).
 
 ### No WebGPU
 
-The same float64 integrator runs in a pool of Web Workers, progressively from coarse to fine passes, and the main thread applies the same bloom, tone map and dither as the GPU path. A test compares the two pictures (worst mean difference 0.017 of 255), so the fallback is a check on the shader as well as a plan B.
+The same float64 integrator runs in a pool of Web Workers, stepping through coarse-to-fine passes, and the main thread applies the same bloom, tone map and dither as the GPU path. A test compares the two pictures (worst mean difference 0.017 of 255), so the fallback is a correctness check on the shader as well as a plan B.
 
 ## How it works
 
